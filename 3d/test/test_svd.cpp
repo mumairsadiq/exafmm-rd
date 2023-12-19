@@ -107,7 +107,11 @@ int main(int argc, char* argv[])
     lwork = (int)wkopt;
     work = (double*)malloc( lwork*sizeof(double) );
 
-    /* Compute SVD */
+    /* 
+        Compute SVD 
+        WARNING : lapack use coulum-major like fortran, so m and n is reversed when using C/C++
+    */
+
     dgesvd_(&jobu, &jobvt, &n, &m, a, &n, s, vt, &n, u, &k, work, &lwork,&info );
 
     /* Check for convergence */
