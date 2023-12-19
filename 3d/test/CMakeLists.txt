@@ -15,6 +15,7 @@ set(exec
     test_surface
     test_blas
     test_lapack
+    test_svd
 )
 
 foreach(filename IN LISTS exec)
