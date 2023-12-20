@@ -3,7 +3,7 @@
 
 void rtfmm::print_body(const Body3& b)
 {
-    printf("[%d],(%.4f,%.4f,%.4f),%.4f,%.4f,(%.4f,%.4f,%.4f)\n", 
+    printf("[%d],(%.4f,%.4f,%.4f),%.4f,%.8f,(%.8f,%.8f,%.8f)\n", 
         b.idx,
         b.x[0],b.x[1],b.x[2],
         b.q,
@@ -14,6 +14,7 @@ void rtfmm::print_body(const Body3& b)
 
 void rtfmm::print_bodies(const rtfmm::Bodies3& bs, int num, int offset)
 {
+    printf("bodies : \n");
     if(num == -1) num = bs.size();
     int s = std::min(num, (int)bs.size());
     for(int i = offset; i < offset + s; i++)
@@ -26,9 +27,7 @@ rtfmm::Bodies3 rtfmm::generate_random_bodies(int num, rtfmm::real r, vec3r offse
 {
     Bodies3 bodies;
     double q_avg = 0;
-    std::random_device rdevice;
     srand48(0);
-    std::default_random_engine rengine(1);
 	for(int i = 0; i < num; i++)
 	{
         Body3 body;

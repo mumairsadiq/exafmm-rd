@@ -2,6 +2,7 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <iostream>
+#include <math.h>
 
 namespace rtfmm
 {
@@ -252,8 +253,8 @@ public:
     }
 };
 
-typedef vec<2, real> vec2r;
-typedef vec<3, real> vec3r;
+using vec2r = vec<2, real>;
+using vec3r = vec<3, real>;
 
 struct OffsetAndNumber
 {

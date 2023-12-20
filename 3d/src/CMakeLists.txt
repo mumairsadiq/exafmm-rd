@@ -5,6 +5,9 @@ message("configure src")
 add_library(core
     body.cpp
     surface.cpp
+    fmm.cpp
+    kernel.cpp
+    mathfunc.cpp
 )
 
 target_include_directories(

@@ -15,4 +15,6 @@ struct Cell3
     OffsetAndNumber body;
 };
 
+using Cells3 = std::vector<Cell3>;
+
 }
