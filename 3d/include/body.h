@@ -27,6 +27,33 @@ using Bodies3 = std::vector<Body3>;
  */
 Bodies3 generate_random_bodies(int num, real r, vec3r offset = vec3r(0,0,0));
 
+/**
+ * @brief extract x from bodies
+ * 
+ * @param bs bodies
+ * 
+ * @return vector of x
+ */
+std::vector<vec3r> get_bodies_x(Bodies3& bs);
+
+/**
+ * @brief extract q from bodies
+ * 
+ * @param bs bodies
+ * 
+ * @return vector of q
+ */
+std::vector<real> get_bodies_q(Bodies3& bs);
+
+
+/**
+ * @brief set potential of bodies from ps
+ * 
+ * @param bs bodies
+ * @param ps potentials
+ */
+void set_boides_p(Bodies3& bs, std::vector<real>& ps);
+
 
 /**
  * @brief Print one body.

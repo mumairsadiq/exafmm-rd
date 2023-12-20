@@ -18,6 +18,7 @@ set(exec
     test_svd
     test_cell
     test_p2p
+    test_p2m
 )
 
 foreach(filename IN LISTS exec)

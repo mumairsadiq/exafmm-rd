@@ -15,7 +15,10 @@ public:
         fmm
     };
     LaplaceKernel();
+
     void p2p(Bodies3& bs_src, Bodies3& bs_tar, Cell3& cell_src, Cell3& cell_tar, KernelType type);
+    
+    void p2m(int P, Bodies3& bs_src, Cell3& cell_src);
 
 private:
     void get_p2p_matrix(

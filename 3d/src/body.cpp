@@ -23,6 +23,37 @@ void rtfmm::print_bodies(const rtfmm::Bodies3& bs, int num, int offset)
     }
 }
 
+std::vector<rtfmm::vec3r> rtfmm::get_bodies_x(rtfmm::Bodies3& bs)
+{
+    int num = bs.size();
+    std::vector<rtfmm::vec3r> res(num);
+    for(int i = 0; i < num; i++)
+    {
+        res[i] = bs[i].x;
+    }
+    return res;
+}
+
+std::vector<rtfmm::real> rtfmm::get_bodies_q(rtfmm::Bodies3& bs)
+{
+    int num = bs.size();
+    std::vector<rtfmm::real> res(num);
+    for(int i = 0; i < num; i++)
+    {
+        res[i] = bs[i].q;
+    }
+    return res;
+}
+
+void rtfmm::set_boides_p(Bodies3& bs, std::vector<real>& ps)
+{
+    int num = bs.size();
+    for(int i = 0; i < num; i++)
+    {
+        bs[i].p = ps[i];
+    }
+}
+
 rtfmm::Bodies3 rtfmm::generate_random_bodies(int num, rtfmm::real r, vec3r offset)
 {
     Bodies3 bodies;

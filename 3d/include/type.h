@@ -3,6 +3,7 @@
 #include <cuda_runtime.h>
 #include <iostream>
 #include <math.h>
+#include <vector>
 
 namespace rtfmm
 {
@@ -255,6 +256,7 @@ public:
 
 using vec2r = vec<2, real>;
 using vec3r = vec<3, real>;
+using matrix = std::vector<real>;
 
 struct OffsetAndNumber
 {
