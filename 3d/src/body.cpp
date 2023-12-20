@@ -12,11 +12,11 @@ void rtfmm::print_body(const Body3& b)
     );
 }
 
-void rtfmm::print_bodies(const rtfmm::Bodies3& bs, int num)
+void rtfmm::print_bodies(const rtfmm::Bodies3& bs, int num, int offset)
 {
     if(num == -1) num = bs.size();
     int s = std::min(num, (int)bs.size());
-    for(int i = 0; i < s; i++)
+    for(int i = offset; i < offset + s; i++)
     {
         print_body(bs[i]);
     }

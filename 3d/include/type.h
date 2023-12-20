@@ -255,5 +255,13 @@ public:
 typedef vec<2, real> vec2r;
 typedef vec<3, real> vec3r;
 
+struct OffsetAndNumber
+{
+    int offset;
+    int number;
+
+    OffsetAndNumber(){}
+    OffsetAndNumber(int offset_, int number_) : offset(offset_), number(number_){}
+};
 
 }

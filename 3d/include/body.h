@@ -41,7 +41,8 @@ void print_body(const Body3& b);
  * 
  * @param bs bodies
  * @param num if -1, print all; else, print min(num,bs.size()) bodies
+ * @param offset offset
  */
-void print_bodies(const Bodies3& bs, int num = -1);
+void print_bodies(const Bodies3& bs, int num = -1, int offset = 0);
 
 }
