@@ -2,6 +2,7 @@
 
 std::vector<rtfmm::vec3r> rtfmm::get_surface_points(int p, real r, vec3r x)
 {
+    int num = 6*(p-1)*(p-1)+2;
     std::vector<rtfmm::vec3r> points;
     for(int i = 0; i < p; i++)
     {
@@ -20,6 +21,11 @@ std::vector<rtfmm::vec3r> rtfmm::get_surface_points(int p, real r, vec3r x)
     {
         vec3r& p = points[i];
         p = p * r + x;
+    }
+    if(points.size() != num)
+    {
+        printf("point number error ! %ld, %d\n", points.size(), num);
+        exit(0);
     }
     return points;
 }

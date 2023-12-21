@@ -2,6 +2,7 @@
 
 void rtfmm::mat_vec(int m, int n, matrix A, matrix b, matrix& c, MathType type)
 {
+    matrix C(m * 1);
     if(type == MathType::naive)
     {
         for(int j = 0; j < m; j++)
@@ -11,18 +12,19 @@ void rtfmm::mat_vec(int m, int n, matrix A, matrix b, matrix& c, MathType type)
             {
                 res += A[j * n + i] * b[i];
             }
-            c[j] = res;
+            C[j] = res;
         }
     }
     else if(type == MathType::blas)
     {
         //cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, m, 1, n, 1.0, A.data(), n, b.data(), 1, 0.0, c.data(), 1);
-        cblas_dgemv(CblasRowMajor, CblasNoTrans, m, n, 1.0, A.data(), n, b.data(), 1, 0.0, c.data(), 1);
+        cblas_dgemv(CblasRowMajor, CblasNoTrans, m, n, 1.0, A.data(), n, b.data(), 1, 0.0, C.data(), 1);
     }
     else
     {
 
     }
+    c = C;
 }
 
 void rtfmm::mat_mat(int m, int n, int k, matrix A, matrix B, matrix& C, MathType type)

@@ -13,6 +13,9 @@ struct Cell3
     vec3r x;
     OffsetAndNumber child;
     OffsetAndNumber body;
+
+    matrix q_equiv;
+    matrix p_check;
 };
 
 using Cells3 = std::vector<Cell3>;

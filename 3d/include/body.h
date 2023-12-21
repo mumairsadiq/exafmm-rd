@@ -54,6 +54,14 @@ std::vector<real> get_bodies_q(Bodies3& bs);
  */
 void set_boides_p(Bodies3& bs, std::vector<real>& ps);
 
+/**
+ * @brief set force of bodies from ps
+ * 
+ * @param bs bodies
+ * @param fs potentials
+ */
+void set_boides_f(Bodies3& bs, std::vector<vec3r>& fs);
+
 
 /**
  * @brief Print one body.

@@ -3,7 +3,7 @@
 
 void rtfmm::print_body(const Body3& b)
 {
-    printf("[%d],(%.4f,%.4f,%.4f),%.4f,%.8f,(%.8f,%.8f,%.8f)\n", 
+    printf("[%d],(%.4f,%.4f,%.4f),%.4f,%.12f,(%.8f,%.8f,%.8f)\n", 
         b.idx,
         b.x[0],b.x[1],b.x[2],
         b.q,
@@ -51,6 +51,15 @@ void rtfmm::set_boides_p(Bodies3& bs, std::vector<real>& ps)
     for(int i = 0; i < num; i++)
     {
         bs[i].p = ps[i];
+    }
+}
+
+void rtfmm::set_boides_f(Bodies3& bs, std::vector<vec3r>& fs)
+{
+    int num = bs.size();
+    for(int i = 0; i < num; i++)
+    {
+        bs[i].f = fs[i];
     }
 }
 
