@@ -34,17 +34,17 @@ int main(int argc, char* argv[])
     cell_tar.x = x_tar;
     cell_tar.child = {0,0};
     cell_tar.body = {0,num_body_tar};
-    
-    rtfmm::LaplaceKernel kernel;
+
+    rtfmm::Bodies3 bs_tar2 = bs_tar;
+    rtfmm::Cell3 cell_tar2 = cell_tar;
 
     /* FMM */
+    rtfmm::LaplaceKernel kernel;
     kernel.p2m(p, bs_src, cell_src);
     kernel.m2l(p, cell_src, cell_tar);
     kernel.l2p(p, bs_tar, cell_tar);
 
     /* naive */
-    rtfmm::Bodies3 bs_tar2 = bs_tar;
-    rtfmm::Cell3 cell_tar2 = cell_tar;
     kernel.p2p(bs_src, bs_tar2, cell_src, cell_tar2, rtfmm::LaplaceKernel::KernelType::naive);
 
     /* compare */
