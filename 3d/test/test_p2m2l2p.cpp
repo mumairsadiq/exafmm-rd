@@ -9,11 +9,12 @@ int main(int argc, char* argv[])
 
     int p = argc > 1 ? atoi(argv[1]) : 4;
     int s = argc > 2 ? atoi(argv[2]) : 10;
-    printf("[p = %d, s = %d]\n", p, s);
+    int t = argc > 3 ? atoi(argv[3]) : 5;
+    printf("[p = %d, s = %d, t = %d]\n", p, s, t);
 
     rtfmm::real r = 1.0;
     int num_body_src = s;
-    int num_body_tar = 5;
+    int num_body_tar = t;
     rtfmm::vec3r x_src(-3,0,0);
     rtfmm::vec3r x_tar(3,0,0);
 
@@ -40,16 +41,24 @@ int main(int argc, char* argv[])
 
     /* FMM */
     rtfmm::LaplaceKernel kernel;
+    TIME_BEGIN(p2m);
     kernel.p2m(p, bs_src, cell_src);
+    TIME_END(p2m);
+    TIME_BEGIN(m2l);
     kernel.m2l(p, cell_src, cell_tar);
+    TIME_END(m2l);
+    TIME_BEGIN(l2p);
     kernel.l2p(p, bs_tar, cell_tar);
+    TIME_END(l2p);
 
     /* naive */
-    kernel.p2p(bs_src, bs_tar2, cell_src, cell_tar2, rtfmm::LaplaceKernel::KernelType::naive);
+    TIME_BEGIN(p2p);
+    kernel.p2p(bs_src, bs_tar2, cell_src, cell_tar2);
+    TIME_END(p2p);
 
     /* compare */
-    rtfmm::print_bodies(bs_tar, num_body_tar);
-    rtfmm::print_bodies(bs_tar2, num_body_tar);
+    //rtfmm::print_bodies(bs_tar, num_body_tar);
+    //rtfmm::print_bodies(bs_tar2, num_body_tar);
     rtfmm::real perr = 0.0, ferr = 0.0f;
     rtfmm::real fdif = 0.0, fnrm = 0.0;
     for(int i = 0; i < num_body_tar; i++)

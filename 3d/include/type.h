@@ -4,6 +4,13 @@
 #include <iostream>
 #include <math.h>
 #include <vector>
+#include <chrono>
+
+#define TIME_BEGIN(a) auto time_begin_##a = std::chrono::high_resolution_clock::now()
+
+#define TIME_END(a)   auto time_end_##a = std::chrono::high_resolution_clock::now();\
+					  auto elapse_##a = std::chrono::duration_cast<std::chrono::nanoseconds>(time_end_##a - time_begin_##a);\
+                      printf("[%s time measured : %.5f seconds.]\n", #a, elapse_##a.count() * 1e-9)
 
 namespace rtfmm
 {

@@ -55,7 +55,7 @@ void rtfmm::svd(int m, int n, matrix A, matrix& U, matrix& S, matrix& VT)
     VT = vt;
 }
 
-rtfmm::matrix rtfmm::transpose(int m, int n, matrix& A)
+rtfmm::matrix rtfmm::transpose(int m, int n, matrix A)
 {
     matrix res(n * m);
     for(int j = 0; j < m; j++)
@@ -66,6 +66,33 @@ rtfmm::matrix rtfmm::transpose(int m, int n, matrix& A)
         }
     }
     return res;
+}
+
+rtfmm::matrix rtfmm::linear_equation_system_svd(int m, int n, matrix A, matrix b)
+{
+    int k = std::min(m, n);
+    matrix U(m * m), S(k), VT(n * n);
+    svd(m, n, A, U, S, VT);
+    matrix UT = transpose(m, m, U);
+    matrix V = transpose(n, n, VT);
+    matrix Sinv(m * n);
+    for(int j = 0; j < m; j++)
+    {
+        for(int i = 0; i < n; i++)
+        {
+            if(i == j && j < k) Sinv[j * n + i] = 1.0 / S[j];
+            else Sinv[j * n + i] = 0;
+        }
+    }
+    Sinv = transpose(m, n, Sinv);
+    /* x = V * S^-1 * U^T * b */
+    matrix x(n * 1); 
+    matrix UTp(m * 1);
+    matrix SinvUTp(n * 1);
+    mat_vec(m, m, UT, b, UTp, MathType::blas);
+    mat_vec(n, m, Sinv, UTp, SinvUTp, MathType::blas);
+    mat_vec(n, m, V, SinvUTp, x, MathType::blas);
+    return x;
 }
 
 void rtfmm::print_matrix(int m, int n, matrix& A)

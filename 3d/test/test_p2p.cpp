@@ -32,7 +32,7 @@ int main(int argc, char* argv[])
     cell_tar.body = {0,num_body_tar};
     
     rtfmm::LaplaceKernel kernel;
-    kernel.p2p(bs_src, bs_tar, cell_src, cell_tar, rtfmm::LaplaceKernel::KernelType::matrix);
+    kernel.p2p(bs_src, bs_tar, cell_src, cell_tar);
     rtfmm::print_bodies(bs_tar, cell_tar.body.number, cell_tar.body.offset);
 
     return 0;

@@ -29,7 +29,7 @@ enum class MathType
  * @param c m by 1 vector
  * @param type underlaying math function type
  */
-void mat_vec(int m, int n, matrix A, matrix b, matrix& c, MathType type); 
+void mat_vec(int m, int n, matrix A, matrix b, matrix& c, MathType type = MathType::blas); 
 
 /**
  * @brief matrix X matrix. 
@@ -42,11 +42,32 @@ void mat_vec(int m, int n, matrix A, matrix b, matrix& c, MathType type);
  * @param C m by k matrix
  * @param type underlaying math function type
  */
-void mat_mat(int m, int n, int k, matrix A, matrix B, matrix& C, MathType type); 
+void mat_mat(int m, int n, int k, matrix A, matrix B, matrix& C, MathType type = MathType::blas); 
 
+/**
+ * @brief solve A = U x S x VT
+ * 
+ * @param m rows of A
+ * @param n cols of A
+ * @param A input matrix A (m x n)
+ * @param U output matrix U (m x m)
+ * @param S output vector S (k x 1, k = min(m,n)) 
+ * @param VT output matrix VT (n x n)
+ */
 void svd(int m, int n, matrix A, matrix& U, matrix& S, matrix& VT);
 
-matrix transpose(int m, int n, matrix& A);
+matrix transpose(int m, int n, matrix A);
+
+/**
+ * @brief solve Ax = b using svd
+ * 
+ * @param m rows of A
+ * @param n cols of A
+ * @param A matrix A (m x n)
+ * @param b vector b (m x 1)
+ * @return x (n x 1)
+ */
+matrix linear_equation_system_svd(int m, int n, matrix A, matrix b);
 
 void print_matrix(int m, int n, matrix& A);
 

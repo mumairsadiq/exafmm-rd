@@ -8,15 +8,11 @@ namespace rtfmm
 class LaplaceKernel
 {
 public:
-    enum class KernelType
-    {
-        naive,
-        matrix,
-        fmm
-    };
     LaplaceKernel();
 
-    void p2p(Bodies3& bs_src, Bodies3& bs_tar, Cell3& cell_src, Cell3& cell_tar, KernelType type);
+    void p2p(Bodies3& bs_src, Bodies3& bs_tar, Cell3& cell_src, Cell3& cell_tar);
+
+    void p2p_matrix(Bodies3& bs_src, Bodies3& bs_tar, Cell3& cell_src, Cell3& cell_tar);
     
     void p2m(int P, Bodies3& bs_src, Cell3& cell_src);
 
