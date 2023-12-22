@@ -11,9 +11,8 @@ struct Cell3
     int depth;
     real r;
     vec3r x;
-    OffsetAndNumber child;
-    OffsetAndNumber body;
-
+    Range crange;
+    Range brange;
     matrix q_equiv;
     matrix p_check;
 };

@@ -21,12 +21,12 @@ rtfmm::LaplaceFMM::LaplaceFMM(
     cell.depth = 0;
     cell.r = r;
     cell.x = {0,0,0};
-    cell.child = {0,0};
-    cell.body = {0,num_body};
+    cell.crange = {0,0};
+    cell.brange = {0,num_body};
 
     cells.push_back(cell);
 
-    rtfmm::print_bodies(bs, cells[0].body.number, cells[0].body.offset);
+    rtfmm::print_bodies(bs, cells[0].brange.number, cells[0].brange.offset);
 }
 
 void rtfmm::LaplaceFMM::solve()

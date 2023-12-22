@@ -34,7 +34,7 @@ Bodies3 generate_random_bodies(int num, real r, vec3r offset = vec3r(0,0,0));
  * 
  * @return vector of x
  */
-std::vector<vec3r> get_bodies_x(Bodies3& bs);
+std::vector<vec3r> get_bodies_x(Bodies3& bs, Range range);
 
 /**
  * @brief extract q from bodies
@@ -43,7 +43,7 @@ std::vector<vec3r> get_bodies_x(Bodies3& bs);
  * 
  * @return vector of q
  */
-std::vector<real> get_bodies_q(Bodies3& bs);
+std::vector<real> get_bodies_q(Bodies3& bs, Range range);
 
 
 /**
@@ -52,7 +52,7 @@ std::vector<real> get_bodies_q(Bodies3& bs);
  * @param bs bodies
  * @param ps potentials
  */
-void set_boides_p(Bodies3& bs, std::vector<real>& ps);
+void set_boides_p(Bodies3& bs, std::vector<real>& ps, Range range);
 
 /**
  * @brief set force of bodies from ps
@@ -60,7 +60,7 @@ void set_boides_p(Bodies3& bs, std::vector<real>& ps);
  * @param bs bodies
  * @param fs potentials
  */
-void set_boides_f(Bodies3& bs, std::vector<vec3r>& fs);
+void set_boides_f(Bodies3& bs, std::vector<vec3r>& fs, Range range);
 
 
 /**

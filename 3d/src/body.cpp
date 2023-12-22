@@ -1,5 +1,6 @@
 #include "body.h"
 #include <random>
+#include <assert.h>
 
 void rtfmm::print_body(const Body3& b)
 {
@@ -23,43 +24,43 @@ void rtfmm::print_bodies(const rtfmm::Bodies3& bs, int num, int offset)
     }
 }
 
-std::vector<rtfmm::vec3r> rtfmm::get_bodies_x(rtfmm::Bodies3& bs)
+std::vector<rtfmm::vec3r> rtfmm::get_bodies_x(rtfmm::Bodies3& bs, Range range)
 {
-    int num = bs.size();
-    std::vector<rtfmm::vec3r> res(num);
-    for(int i = 0; i < num; i++)
+    std::vector<rtfmm::vec3r> res(range.number);
+    for(int i = 0; i < range.number; i++)
     {
-        res[i] = bs[i].x;
+        res[i] = bs[range.offset + i].x;
     }
     return res;
 }
 
-std::vector<rtfmm::real> rtfmm::get_bodies_q(rtfmm::Bodies3& bs)
+std::vector<rtfmm::real> rtfmm::get_bodies_q(rtfmm::Bodies3& bs, Range range)
 {
-    int num = bs.size();
-    std::vector<rtfmm::real> res(num);
-    for(int i = 0; i < num; i++)
+    std::vector<rtfmm::real> res(range.number);
+    for(int i = 0; i < range.number; i++)
     {
-        res[i] = bs[i].q;
+        res[i] = bs[range.offset + i].q;
     }
     return res;
 }
 
-void rtfmm::set_boides_p(Bodies3& bs, std::vector<real>& ps)
+void rtfmm::set_boides_p(Bodies3& bs, std::vector<real>& ps, Range range)
 {
+    assert(ps.size() == range.number);
     int num = bs.size();
     for(int i = 0; i < num; i++)
     {
-        bs[i].p = ps[i];
+        bs[range.offset + i].p = ps[i];
     }
 }
 
-void rtfmm::set_boides_f(Bodies3& bs, std::vector<vec3r>& fs)
+void rtfmm::set_boides_f(Bodies3& bs, std::vector<vec3r>& fs, Range range)
 {
+    assert(fs.size() == range.number);
     int num = bs.size();
     for(int i = 0; i < num; i++)
     {
-        bs[i].f = fs[i];
+        bs[range.offset + i].f = fs[i];
     }
 }
 

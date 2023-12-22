@@ -5,7 +5,7 @@
 
 int main(int argc, char* argv[])
 {
-    std::cout<<"rtfmm_3d_test_m2l"<<std::endl;
+    std::cout<<"rtfmm_3d_test_fmm"<<std::endl;
 
     int p = argc > 1 ? atoi(argv[1]) : 4;
     int s = argc > 2 ? atoi(argv[2]) : 10;

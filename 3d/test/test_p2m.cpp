@@ -22,8 +22,8 @@ int main(int argc, char* argv[])
     cell_src.depth = 0;
     cell_src.r = r;
     cell_src.x = x_src;
-    cell_src.child = {0,0};
-    cell_src.body = {0,num_body_src};
+    cell_src.crange = {0,0};
+    cell_src.brange = {0,num_body_src};
 
     rtfmm::Bodies3 bs_tar = rtfmm::generate_random_bodies(num_body_tar, r, x_tar);
     rtfmm::Cell3 cell_tar;
@@ -31,8 +31,8 @@ int main(int argc, char* argv[])
     cell_tar.depth = 0;
     cell_tar.r = r;
     cell_tar.x = x_tar;
-    cell_tar.child = {0,0};
-    cell_tar.body = {0,num_body_tar};
+    cell_tar.crange = {0,0};
+    cell_tar.brange = {0,num_body_tar};
     
     rtfmm::LaplaceKernel kernel;
     kernel.p2m(p, bs_src, cell_src);

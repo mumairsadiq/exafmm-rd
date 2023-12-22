@@ -20,6 +20,7 @@ set(exec
     test_p2p
     test_p2m
     test_p2m2l2p
+    test_fmm
 )
 
 foreach(filename IN LISTS exec)

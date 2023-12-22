@@ -274,4 +274,6 @@ struct OffsetAndNumber
     OffsetAndNumber(int offset_, int number_) : offset(offset_), number(number_){}
 };
 
+using Range = OffsetAndNumber;
+
 }
