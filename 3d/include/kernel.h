@@ -1,7 +1,7 @@
 #pragma once
 #include "type.h"
 #include "body.h"
-#include "cell.h"
+#include "tree.h"
 
 namespace rtfmm
 {
@@ -16,7 +16,11 @@ public:
     
     void p2m(int P, Bodies3& bs_src, Cell3& cell_src);
 
+    void m2m(int P, Cell3& cell_src);
+
     void m2l(int P, Cell3& cell_src, Cell3& cell_tar);
+
+    void l2l(int P, Cell3& cell_tar);
 
     void l2p(int P, Bodies3& bs_tar, Cell3& cell_tar);
 

@@ -1,6 +1,6 @@
 #include "type.h"
 #include "body.h"
-#include "cell.h"
+#include "tree.h"
 #include "kernel.h"
 
 int main(int argc, char* argv[])

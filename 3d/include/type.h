@@ -5,6 +5,7 @@
 #include <math.h>
 #include <vector>
 #include <chrono>
+#include <assert.h>
 
 #define TIME_BEGIN(a) auto time_begin_##a = std::chrono::high_resolution_clock::now()
 

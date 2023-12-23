@@ -71,6 +71,12 @@ void rtfmm::LaplaceKernel::p2m(int P, Bodies3& bs_src, Cell3& cell_src)
 }
 
 
+void rtfmm::LaplaceKernel::m2m(int P, Cell3& cell_src)
+{
+
+}
+
+
 void rtfmm::LaplaceKernel::m2l(int P, Cell3& cell_src, Cell3& cell_tar)
 {
     /* get src equivalent to tar check matrix */
@@ -81,8 +87,14 @@ void rtfmm::LaplaceKernel::m2l(int P, Cell3& cell_src, Cell3& cell_tar)
     matrix matrix_e2c(num_check * num_equiv);
     get_p2p_matrix(x_equiv, x_check, matrix_e2c);
 
-    // source cell equivalent charge to target cell potential
+    // source cell equivalent charge to target cell check potential
     mat_vec(num_check, num_equiv, matrix_e2c, cell_src.q_equiv, cell_tar.p_check, MathType::blas);
+}
+
+
+void rtfmm::LaplaceKernel::l2l(int P, Cell3& cell_tar)
+{
+
 }
 
 
@@ -105,7 +117,7 @@ void rtfmm::LaplaceKernel::l2p(int P, Bodies3& bs_tar, Cell3& cell_tar)
     matrix matrix_e2t(num_tar * num_equiv);
     get_p2p_matrix(x_equiv, x_tar, matrix_e2t);
 
-    /* get target potential */
+    /* get target potential and force */
     matrix p_tar(num_tar * 1);
     mat_vec(num_tar, num_equiv, matrix_e2t, q_equiv, p_tar, MathType::blas);
     set_boides_p(bs_tar, p_tar, cell_tar.brange);

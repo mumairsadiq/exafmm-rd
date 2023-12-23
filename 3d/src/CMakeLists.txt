@@ -8,6 +8,7 @@ add_library(core
     fmm.cpp
     kernel.cpp
     mathfunc.cpp
+    tree.cpp
 )
 
 target_include_directories(

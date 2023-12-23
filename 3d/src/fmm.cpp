@@ -1,35 +1,25 @@
 #include "fmm.h"
+#include "tree.h"
 
-rtfmm::LaplaceFMM::LaplaceFMM()
+rtfmm::LaplaceFMM::LaplaceFMM(const Bodies3& bs_, const Argument& args_) 
+    : bs(bs_), args(args_)
 {
-    printf("nonpara-LaplaceFMM\n");
+    assert(bs.size() == args.n);
 }
 
-rtfmm::LaplaceFMM::LaplaceFMM(
-    Bodies3& bs,
-    int P_,
-    vec3r x_,
-    real r_
-) : bodies(bs), P(P_), x(x_), r(r_)
+rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
 {
-    printf("LaplaceFMM\n");
+    Tree tree;
+    tree.build(bs, args.x, args.r, 3, Tree::TreeType::uniform);
+    cells = tree.get_cells();
+    printf("cells.size() = %ld\n", cells.size());
 
-    num_body = bodies.size();
+    kernel.p2p(bs, bs, cells[0], cells[0]);
+    //kernel.p2m(args.P, bs, cells[0]);
+    //kernel.m2l(args.P, cells[0], cells[0]);
+    //kernel.l2p(args.P, bs, cells[0]);
 
-    rtfmm::Cell3 cell;
-    cell.idx = 0;
-    cell.depth = 0;
-    cell.r = r;
-    cell.x = {0,0,0};
-    cell.crange = {0,0};
-    cell.brange = {0,num_body};
+    Bodies3 res = sort_bodies_by_idx(bs);
 
-    cells.push_back(cell);
-
-    rtfmm::print_bodies(bs, cells[0].brange.number, cells[0].brange.offset);
-}
-
-void rtfmm::LaplaceFMM::solve()
-{
-    printf("solve\n");
+    return res;
 }

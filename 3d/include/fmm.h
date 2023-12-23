@@ -1,7 +1,9 @@
 #pragma once
 #include "type.h"
 #include "body.h"
-#include "cell.h"
+#include "tree.h"
+#include "argument.h"
+#include "kernel.h"
 
 namespace rtfmm
 {
@@ -9,24 +11,15 @@ namespace rtfmm
 class LaplaceFMM
 {
 public:
-    LaplaceFMM();
+    LaplaceFMM(const Bodies3& bs_, const Argument& args_);
 
-    LaplaceFMM(
-        Bodies3& bs,
-        int P_,
-        vec3r x_,
-        real r_
-    );
-
-    void solve();
+    Bodies3 solve();
 
 private:
-    Bodies3 bodies;
-    int num_body;
-    int P;
-    vec3r x;
-    real r;
+    Argument args;
+    Bodies3 bs;
     Cells3 cells;
+    LaplaceKernel kernel;
 };
 
 }

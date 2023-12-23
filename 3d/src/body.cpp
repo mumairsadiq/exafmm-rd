@@ -1,6 +1,6 @@
 #include "body.h"
 #include <random>
-#include <assert.h>
+#include <algorithm>
 
 void rtfmm::print_body(const Body3& b)
 {
@@ -13,9 +13,9 @@ void rtfmm::print_body(const Body3& b)
     );
 }
 
-void rtfmm::print_bodies(const rtfmm::Bodies3& bs, int num, int offset)
+void rtfmm::print_bodies(const rtfmm::Bodies3& bs, int num, int offset, std::string name)
 {
-    printf("bodies : \n");
+    std::cout<<"\n"<<name<<":"<<std::endl;
     if(num == -1) num = bs.size();
     int s = std::min(num, (int)bs.size());
     for(int i = offset; i < offset + s; i++)
@@ -90,6 +90,54 @@ rtfmm::Bodies3 rtfmm::generate_random_bodies(int num, rtfmm::real r, vec3r offse
 	{
         bodies[i].q -= q_avg;
     }
+
+    return bodies;
+}
+
+rtfmm::BodyCompareResult rtfmm::compare(const Bodies3& bs1, const Bodies3& bs2, std::string name1, std::string name2)
+{
+    assert(bs1.size() == bs2.size());
+
+    BodyCompareResult res;
+    res.name1 = name1;
+    res.name2 = name2;
+
+    int num = bs1.size();
+
+    real psum1 = 0, psum2 = 0, rmsp = 0;
+    real fdif = 0, fnrm = 0;
+    for(int i = 0; i < num; i++)
+    {
+        Body3 b1 = bs1[i];
+        Body3 b2 = bs2[i];
+        psum1 += b1.p * b1.q;                   
+        psum2 += b2.p * b2.q;
+        rmsp += std::pow(b1.p - b2.p, 2);
+        fdif += (b1.f - b2.f).norm();
+        fnrm += b1.f.norm();
+    }
+
+    res.rmsp = std::sqrt(rmsp / num);
+    res.rmsf = std::sqrt(fdif / num);
+    res.l2p = sqrt(std::pow(psum1 - psum2, 2) / psum1 / psum1);  
+    res.l2f = std::sqrt(fdif / fnrm);
+    res.epot1 = psum1;
+    res.epot2 = psum2;
+
+    return res;
+}
+
+rtfmm::Bodies3 rtfmm::sort_bodies_by_idx(const Bodies3& bs)
+{
+    rtfmm::Bodies3 bodies = bs;
+    std::sort(
+        bodies.begin(), 
+        bodies.end(),
+        [](const Body3& a, const Body3& b)
+        {
+            return a.idx < b.idx; 
+        }
+    );
 
     return bodies;
 }

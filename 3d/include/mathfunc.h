@@ -56,6 +56,12 @@ void mat_mat(int m, int n, int k, matrix A, matrix B, matrix& C, MathType type =
  */
 void svd(int m, int n, matrix A, matrix& U, matrix& S, matrix& VT);
 
+/**
+ * @brief transpose matrix A
+ * @param m rows
+ * @param n cols
+ * @param A matrix A
+ */
 matrix transpose(int m, int n, matrix A);
 
 /**

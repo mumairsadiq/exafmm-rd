@@ -14,6 +14,28 @@ struct Body3
     vec3r f;
 };
 
+struct BodyCompareResult
+{
+    real rmsp;
+    real rmsf;
+    real l2p;
+    real l2f;
+    real epot1;
+    real epot2;
+    std::string name1;
+    std::string name2;
+
+    void show()
+    {
+        std::cout<<"\n---------- "<< name1 << " vs " << name2 << " ----------" << std::endl;
+        printf("%-8s : %8.5e   %-8s : %8.5e\n", "L2  (p)", l2p , "L2  (f)", l2p); 
+        printf("%-8s : %8.5e   %-8s : %8.5e\n", "Rms (p)", rmsp, "Rms (f)", rmsf);
+        printf("p-energy1 : %8.5e\n", epot1);
+        printf("p-energy2 : %8.5e\n", epot2);
+        printf("\n");
+    }
+};
+
 using Bodies3 = std::vector<Body3>;
 
 /**
@@ -78,6 +100,24 @@ void print_body(const Body3& b);
  * @param num if -1, print all; else, print min(num,bs.size()) bodies
  * @param offset offset
  */
-void print_bodies(const Bodies3& bs, int num = -1, int offset = 0);
+void print_bodies(const Bodies3& bs, int num = -1, int offset = 0, std::string name = "bodies");
+
+
+/**
+ * @brief compare two Bodies's potential and force to get information(rms-error, l2-error, potential-energy)
+ * 
+ * @param bs1 bodies1
+ * @param bs2 bodies2
+ * @param name1 name of bs1
+ * @param name2 name of bs2
+ * 
+ * @return result of body data comparison
+ */
+BodyCompareResult compare(const Bodies3& bs1, const Bodies3& bs2, std::string name1, std::string name2);
+
+/**
+ * @brief RT
+ */
+Bodies3 sort_bodies_by_idx(const Bodies3& bs);
 
 }
