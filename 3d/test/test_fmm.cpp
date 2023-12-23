@@ -26,8 +26,8 @@ int main(int argc, char* argv[])
     kernel.p2p(bs, res_direct, cell, cell);
 
     /* compare */
-    rtfmm::print_bodies(res_fmm, args.n, 0, "res_fmm");
-    rtfmm::print_bodies(res_direct, args.n, 0, "res_direct");
+    rtfmm::print_bodies(res_fmm, 3, 0, "res_fmm");
+    rtfmm::print_bodies(res_direct, 3, 0, "res_direct");
     rtfmm::compare(res_fmm, res_direct, "FMM", "Direct").show();
 
     return 0;

@@ -16,6 +16,7 @@
 namespace rtfmm
 {
 
+using Indices = std::vector<int>;
 
 using real = double;
 

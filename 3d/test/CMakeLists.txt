@@ -2,14 +2,6 @@ cmake_minimum_required(VERSION 3.20)
 
 message("configure test")
 
-find_package(BLAS REQUIRED)
-message(STATUS BLAS found: ${BLAS_LIBRARIES})
-
-find_package(LAPACK REQUIRED)
-message(STATUS LAPACK found: ${LAPACK_LIBRARIES})
-
-find_package(OpenMP REQUIRED)
-
 set(exec
     test_body
     test_surface
@@ -35,8 +27,5 @@ foreach(filename IN LISTS exec)
     )
     target_link_libraries(${filename} 
         core 
-        OpenMP::OpenMP_CXX
-        LAPACK::LAPACK
-        BLAS::BLAS
     )
 endforeach()

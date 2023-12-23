@@ -18,8 +18,11 @@ public:
 private:
     Argument args;
     Bodies3 bs;
-    Cells3 cells;
     LaplaceKernel kernel;
+
+private:
+    void check_tree(const Cells3& cells);
+    Indices get_leaf_cell_indices(const Cells3& cells);
 };
 
 }
