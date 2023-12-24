@@ -47,20 +47,40 @@ rtfmm::Matrix rtfmm::get_bodies_q(rtfmm::Bodies3& bs, Range range)
 void rtfmm::set_boides_p(Bodies3& bs, Matrix& ps, Range range)
 {
     assert(ps.m * ps.n == range.number);
-    int num = bs.size();
+    int num = range.number;
     for(int i = 0; i < num; i++)
     {
         bs[range.offset + i].p = ps[i];
     }
 }
 
+void rtfmm::add_boides_p(Bodies3& bs, Matrix& ps, Range range)
+{
+    assert(ps.m * ps.n == range.number);
+    int num = range.number;
+    for(int i = 0; i < num; i++)
+    {
+        bs[range.offset + i].p += ps[i];
+    }
+}
+
 void rtfmm::set_boides_f(Bodies3& bs, Matriv& fs, Range range)
 {
     assert(fs.m * fs.n == range.number);
-    int num = bs.size();
+    int num = range.number;
     for(int i = 0; i < num; i++)
     {
         bs[range.offset + i].f = fs[i];
+    }
+}
+
+void rtfmm::add_boides_f(Bodies3& bs, Matriv& fs, Range range)
+{
+    assert(fs.m * fs.n == range.number);
+    int num = range.number;
+    for(int i = 0; i < num; i++)
+    {
+        bs[range.offset + i].f += fs[i];
     }
 }
 

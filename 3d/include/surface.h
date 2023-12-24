@@ -5,6 +5,8 @@
 namespace rtfmm
 {
 
+int get_surface_point_num(int p);
+
 /**
 *@brief generate surface points warpping a box
 *@param p number of points in each direction

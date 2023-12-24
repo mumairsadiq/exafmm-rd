@@ -15,7 +15,6 @@ int main(int argc, char* argv[])
 
     rtfmm::Bodies3 bs_src = rtfmm::generate_random_bodies(num_body_src, r, x_src);
     rtfmm::Cell3 cell_src;
-    cell_src.idx = 0;
     cell_src.depth = 0;
     cell_src.r = r;
     cell_src.x = {0,0,0};
@@ -24,7 +23,6 @@ int main(int argc, char* argv[])
 
     rtfmm::Bodies3 bs_tar = rtfmm::generate_random_bodies(num_body_tar, r, x_tar);
     rtfmm::Cell3 cell_tar;
-    cell_tar.idx = 0;
     cell_tar.depth = 0;
     cell_tar.r = r;
     cell_tar.x = {0,0,0};

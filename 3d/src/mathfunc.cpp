@@ -1,36 +1,34 @@
 #include "mathfunc.h"
 
-rtfmm::Matrix rtfmm::mat_vec(Matrix A, Matrix b, MathType type)
+rtfmm::Matrix rtfmm::mat_vec_mul(Matrix A, Matrix b)
 {
     int m = A.m, n = A.n;
     Matrix C(m, 1);
-    if(type == MathType::naive)
-    {
-        for(int j = 0; j < m; j++)
-        {
-            real res = 0.0;
-            for(int i = 0; i < n; i++)
-            {
-                res += A[j * n + i] * b[i];
-            }
-            C[j] = res;
-        }
-    }
-    else if(type == MathType::blas)
-    {
-        cblas_dgemv(CblasRowMajor, CblasNoTrans, m, n, 1.0, A.d.data(), n, b.d.data(), 1, 0.0, C.d.data(), 1);
-    }
-    else
-    {
+    cblas_dgemv(CblasRowMajor, CblasNoTrans, m, n, 1.0, A.d.data(), n, b.d.data(), 1, 0.0, C.d.data(), 1);
+    return C;
+}
 
+rtfmm::Matrix rtfmm::mat_mat_add(Matrix A, Matrix B)
+{
+    assert(A.m == B.m && A.n == B.n);
+    int m = A.m, n = A.n;
+    Matrix C(m,n);
+    for(int j = 0; j < m; j++)
+    {
+        for(int i = 0; i < n; i++)
+        {
+            C[j * n + i] = A[j * n + i] + B[j * n + i];
+        }
     }
     return C;
 }
 
-void rtfmm::mat_mat(Matrix A, Matrix B, Matrix& C, MathType type)
+rtfmm::Matrix rtfmm::mat_mat_mul(Matrix A, Matrix B)
 {
     int m = A.m, n = A.n, k = B.n;
+    Matrix C(m,k);
     cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, m, k, n, 1.0, A.d.data(), n, B.d.data(), k, 0.0, C.d.data(), k);
+    return C;
 }
 
 void rtfmm::svd(Matrix A, Matrix& U, Matrix& S, Matrix& VT)
@@ -91,9 +89,9 @@ rtfmm::Matrix rtfmm::linear_equation_system_svd(Matrix A, Matrix b)
     }
     Sinv = transpose(Sinv);
     /* x = V * S^-1 * U^T * b */
-    Matrix UTp = mat_vec(UT, b, MathType::blas);
-    Matrix SinvUTp = mat_vec(Sinv, UTp, MathType::blas);
-    Matrix x = mat_vec(V, SinvUTp, MathType::blas);
+    Matrix UTp = mat_vec_mul(UT, b);
+    Matrix SinvUTp = mat_vec_mul(Sinv, UTp);
+    Matrix x = mat_vec_mul(V, SinvUTp);
     return x;
 }
 
@@ -106,6 +104,21 @@ void rtfmm::print_matrix(Matrix& A)
         for(int i = 0; i < A.n; i++)
         {
             printf("%.4f,", A[j * A.n + i]);
+        }
+        printf("}\n");
+    }
+    printf("}\n");
+}
+
+void rtfmm::print_matriv(Matriv& A)
+{
+    printf("{\n");
+    for(int j = 0; j < A.m; j++)
+    {
+        printf("{");
+        for(int i = 0; i < A.n; i++)
+        {
+            printf("(%.4f,%.4f,%.4f),", A[j * A.n + i][0], A[j * A.n + i][1], A[j * A.n + i][2]);
         }
         printf("}\n");
     }

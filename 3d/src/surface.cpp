@@ -1,8 +1,13 @@
 #include "surface.h"
 
+int rtfmm::get_surface_point_num(int p)
+{
+    return 6 * (p - 1) * (p - 1) + 2;
+}
+
 std::vector<rtfmm::vec3r> rtfmm::get_surface_points(int p, real r, vec3r x)
 {
-    int num = 6*(p-1)*(p-1)+2;
+    int num = get_surface_point_num(p);
     std::vector<rtfmm::vec3r> points;
     for(int i = 0; i < p; i++)
     {

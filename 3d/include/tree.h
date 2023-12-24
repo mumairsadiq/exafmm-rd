@@ -8,7 +8,6 @@ namespace rtfmm
 
 struct Cell3
 {
-    int idx;
     int depth;
     real r;
     vec3r x;
@@ -42,7 +41,7 @@ public:
     
     /**
      * @brief build tree from bodies
-     * @warning this function will shuffle the bodies, so DON'T FORGET to re-sort the bodies in the end
+     * @warning this function will shuffle the bodies, so DO NOT FORGET to re-sort the bodies in the end
      * @param bodies bodies
      * @param x center of box
      * @param r half size of box

@@ -36,6 +36,7 @@ private:
 private:
     void check_tree(const Cells3& cells);
     void check_traverser(Traverser& traverser);
+    void init_cell_matrix(Cells3& cells);
     int get_max_depth(const Cells3& cells);
     Indices get_leaf_cell_indices(const Cells3& cells);
     Indices get_nonleaf_cell_indices(const Cells3& cells, int depth);

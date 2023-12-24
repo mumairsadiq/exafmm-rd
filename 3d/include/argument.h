@@ -15,10 +15,11 @@ public:
         P = argc > 1 ? atoi(argv[1]) : 4;
         n = argc > 2 ? atoi(argv[2]) : 1000;
         ncrit = argc > 3 ? atoi(argv[3]) : 16;
+        timing = argc > 4 ? atoi(argv[4]) : 0;
     }
     void show()
     {
-        printf("[P = %d, n = %d, r = %.4f, x = (%.3f,%.3f,%.3f), ncrit = %d]\n", P, n, r, x[0], x[1], x[2], ncrit);
+        printf("[P = %d, n = %d, r = %.4f, x = (%.3f,%.3f,%.3f), ncrit = %d, timing = %d]\n", P, n, r, x[0], x[1], x[2], ncrit, timing);
     }
 
 public:
@@ -27,6 +28,7 @@ public:
     int n;
     int P;
     int ncrit;
+    int timing;
 };
 
 }

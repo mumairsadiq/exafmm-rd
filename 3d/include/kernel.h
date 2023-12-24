@@ -16,13 +16,17 @@ public:
     
     void p2m(int P, Bodies3& bs_src, Cell3& cell_src);
 
-    void m2m(int P, Cell3& cell_src);
+    void m2m(int P, Cell3& cell_parent, Cells3& cs);
 
     void m2l(int P, Cell3& cell_src, Cell3& cell_tar);
 
-    void l2l(int P, Cell3& cell_tar);
+    void l2l(int P, Cell3& cell_parent, Cells3& cs);
 
     void l2p(int P, Bodies3& bs_tar, Cell3& cell_tar);
+
+    void m2p(int P, Bodies3& bs_tar, Cell3& cell_src, Cell3& cell_tar);
+
+    void p2l(int P, Bodies3& bs_src, Cell3& cell_src, Cell3& cell_tar);
 
 private:
     Matrix get_p2p_matrix(

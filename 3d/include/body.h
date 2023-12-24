@@ -27,7 +27,7 @@ struct BodyCompareResult
 
     void show()
     {
-        std::cout<<"\n---------- "<< name1 << " vs " << name2 << " ----------" << std::endl;
+        std::cout<<"\n---------------- "<< name1 << " vs " << name2 << " ----------------" << std::endl;
         printf("%-8s : %8.5e   %-8s : %8.5e\n", "L2  (p)", l2p , "L2  (f)", l2f); 
         printf("%-8s : %8.5e   %-8s : %8.5e\n", "Rms (p)", rmsp, "Rms (f)", rmsf);
         printf("p-energy1 : %8.5e\n", epot1);
@@ -68,21 +68,13 @@ std::vector<vec3r> get_bodies_x(Bodies3& bs, Range range);
 Matrix get_bodies_q(Bodies3& bs, Range range);
 
 
-/**
- * @brief set potential of bodies from ps
- * 
- * @param bs bodies
- * @param ps potentials
- */
 void set_boides_p(Bodies3& bs, Matrix& ps, Range range);
 
-/**
- * @brief set force of bodies from ps
- * 
- * @param bs bodies
- * @param fs potentials
- */
 void set_boides_f(Bodies3& bs, Matriv& fs, Range range);
+
+void add_boides_p(Bodies3& bs, Matrix& ps, Range range);
+
+void add_boides_f(Bodies3& bs, Matriv& fs, Range range);
 
 
 /**

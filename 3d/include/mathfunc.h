@@ -12,32 +12,32 @@ extern "C" {
 namespace rtfmm
 {
 
-enum class MathType
-{
-    naive,
-    blas,
-    cublas
-};
-
 /**
  * @brief c = A x b
  * 
  * @param A m by n matrix
  * @param b n by 1 vector
- * @param type underlaying math function type
  * @return m by 1 vector
  */
-Matrix mat_vec(Matrix A, Matrix b, MathType type = MathType::blas); 
+Matrix mat_vec_mul(Matrix A, Matrix b); 
+
+/**
+ * @brief C = A + B
+ * 
+ * @param A m by n matrix
+ * @param B m by n matrix
+ * @return m by n matrix
+ */
+Matrix mat_mat_add(Matrix A, Matrix B); 
 
 /**
  * @brief C = A x B
  * 
  * @param A m by n matrix
  * @param B n by k matrix
- * @param C m by k matrix
- * @param type underlaying math function type
+ * @return m by k matrix
  */
-void mat_mat(Matrix A, Matrix B, Matrix& C, MathType type = MathType::blas); 
+Matrix mat_mat_mul(Matrix A, Matrix B); 
 
 /**
  * @brief solve A = U x S x VT
@@ -65,5 +65,7 @@ Matrix transpose(Matrix A);
 Matrix linear_equation_system_svd(Matrix A, Matrix b);
 
 void print_matrix(Matrix& mat);
+
+void print_matriv(Matriv& mav);
 
 }
