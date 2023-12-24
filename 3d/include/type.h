@@ -265,7 +265,29 @@ public:
 
 using vec2r = vec<2, real>;
 using vec3r = vec<3, real>;
-using matrix = std::vector<real>;
+
+template<typename T>
+struct MatrixBase
+{
+    MatrixBase() {}
+    MatrixBase(int rows, int cols)
+    {
+        m = rows;
+        n = cols;
+        d.resize(m * n);
+    }
+    int m;
+    int n;
+    std::vector<T> d;
+
+    T& operator[](int idx)
+    {
+        return d[idx];
+    }
+};
+
+using Matrix = MatrixBase<real>;
+using Matriv = MatrixBase<vec3r>;
 
 struct OffsetAndNumber
 {

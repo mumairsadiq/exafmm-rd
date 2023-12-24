@@ -34,9 +34,9 @@ std::vector<rtfmm::vec3r> rtfmm::get_bodies_x(rtfmm::Bodies3& bs, Range range)
     return res;
 }
 
-std::vector<rtfmm::real> rtfmm::get_bodies_q(rtfmm::Bodies3& bs, Range range)
+rtfmm::Matrix rtfmm::get_bodies_q(rtfmm::Bodies3& bs, Range range)
 {
-    std::vector<rtfmm::real> res(range.number);
+    Matrix res(range.number, 1);
     for(int i = 0; i < range.number; i++)
     {
         res[i] = bs[range.offset + i].q;
@@ -44,9 +44,9 @@ std::vector<rtfmm::real> rtfmm::get_bodies_q(rtfmm::Bodies3& bs, Range range)
     return res;
 }
 
-void rtfmm::set_boides_p(Bodies3& bs, std::vector<real>& ps, Range range)
+void rtfmm::set_boides_p(Bodies3& bs, Matrix& ps, Range range)
 {
-    assert(ps.size() == range.number);
+    assert(ps.m * ps.n == range.number);
     int num = bs.size();
     for(int i = 0; i < num; i++)
     {
@@ -54,9 +54,9 @@ void rtfmm::set_boides_p(Bodies3& bs, std::vector<real>& ps, Range range)
     }
 }
 
-void rtfmm::set_boides_f(Bodies3& bs, std::vector<vec3r>& fs, Range range)
+void rtfmm::set_boides_f(Bodies3& bs, Matriv& fs, Range range)
 {
-    assert(fs.size() == range.number);
+    assert(fs.m * fs.n == range.number);
     int num = bs.size();
     for(int i = 0; i < num; i++)
     {

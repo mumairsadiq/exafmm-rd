@@ -14,7 +14,7 @@ public:
         x = vec3r(0,0,0);
         P = argc > 1 ? atoi(argv[1]) : 4;
         n = argc > 2 ? atoi(argv[2]) : 1000;
-        ncrit = argc > 3 ? atoi(argv[3]) : 64;
+        ncrit = argc > 3 ? atoi(argv[3]) : 16;
     }
     void show()
     {

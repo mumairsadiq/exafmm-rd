@@ -14,8 +14,17 @@ struct Cell3
     vec3r x;
     Range crange;
     Range brange;
-    matrix q_equiv;
-    matrix p_check;
+    Matrix q_equiv;
+    Matrix p_check;
+
+    int M;
+    int L;
+
+    Cell3()
+    {
+        M = 0;
+        L = 0;
+    }
 };
 
 using Cells3 = std::vector<Cell3>;

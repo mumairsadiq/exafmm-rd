@@ -5,7 +5,7 @@
 
 int main(int argc, char* argv[])
 {
-    std::cout<<"rtfmm_3d_test_m2l"<<std::endl;
+    std::cout<<"rtfmm_3d_test_p2m2l2p"<<std::endl;
 
     int p = argc > 1 ? atoi(argv[1]) : 4;
     int s = argc > 2 ? atoi(argv[2]) : 10;
@@ -57,19 +57,7 @@ int main(int argc, char* argv[])
     TIME_END(p2p);
 
     /* compare */
-    //rtfmm::print_bodies(bs_tar, num_body_tar);
-    //rtfmm::print_bodies(bs_tar2, num_body_tar);
-    rtfmm::real perr = 0.0, ferr = 0.0f;
-    rtfmm::real fdif = 0.0, fnrm = 0.0;
-    for(int i = 0; i < num_body_tar; i++)
-    {
-        perr += std::pow(bs_tar[i].p - bs_tar2[i].p, 2);
-        fdif += (bs_tar[i].f - bs_tar2[i].f).norm();
-        fnrm += bs_tar2[i].f.norm();
-    }
-    perr = std::sqrt(perr / num_body_tar);
-    ferr = std::sqrt(fdif / fnrm);
-    std::cout<<"L2p = "<<perr<<", L2f = "<<ferr<<std::endl;
+    rtfmm::compare(bs_tar2, bs_tar, "Direct", "FMM").show();
 
     return 0;
 }

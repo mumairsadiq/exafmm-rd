@@ -1,8 +1,9 @@
 #include "mathfunc.h"
 
-void rtfmm::mat_vec(int m, int n, matrix A, matrix b, matrix& c, MathType type)
+rtfmm::Matrix rtfmm::mat_vec(Matrix A, Matrix b, MathType type)
 {
-    matrix C(m * 1);
+    int m = A.m, n = A.n;
+    Matrix C(m, 1);
     if(type == MathType::naive)
     {
         for(int j = 0; j < m; j++)
@@ -17,47 +18,50 @@ void rtfmm::mat_vec(int m, int n, matrix A, matrix b, matrix& c, MathType type)
     }
     else if(type == MathType::blas)
     {
-        //cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, m, 1, n, 1.0, A.data(), n, b.data(), 1, 0.0, c.data(), 1);
-        cblas_dgemv(CblasRowMajor, CblasNoTrans, m, n, 1.0, A.data(), n, b.data(), 1, 0.0, C.data(), 1);
+        cblas_dgemv(CblasRowMajor, CblasNoTrans, m, n, 1.0, A.d.data(), n, b.d.data(), 1, 0.0, C.d.data(), 1);
     }
     else
     {
 
     }
-    c = C;
+    return C;
 }
 
-void rtfmm::mat_mat(int m, int n, int k, matrix A, matrix B, matrix& C, MathType type)
+void rtfmm::mat_mat(Matrix A, Matrix B, Matrix& C, MathType type)
 {
-    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, m, k, n, 1.0, A.data(), n, B.data(), k, 0.0, C.data(), k);
+    int m = A.m, n = A.n, k = B.n;
+    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, m, k, n, 1.0, A.d.data(), n, B.d.data(), k, 0.0, C.d.data(), k);
 }
 
-void rtfmm::svd(int m, int n, matrix A, matrix& U, matrix& S, matrix& VT)
+void rtfmm::svd(Matrix A, Matrix& U, Matrix& S, Matrix& VT)
 {
+    int m = A.m, n = A.n;
     int k = std::min(m,n);
     
-    matrix u(m * m);
-    matrix vt(n * n);
-    matrix s(k);
+    Matrix u(m,m);
+    Matrix vt(n,n);
+    Matrix s(k,1);
 
     char jobu = 'S';
     char jobvt = 'S';
     double wkopt;
     int info;
     int lwork = -1;
-    dgesvd_(&jobu, &jobvt, &n, &m, A.data(), &n, s.data(), vt.data(), &n, u.data(), &k, &wkopt, &lwork,&info);
+    dgesvd_(&jobu, &jobvt, &n, &m, A.d.data(), &n, s.d.data(), vt.d.data(), &n, u.d.data(), &k, &wkopt, &lwork,&info);
     lwork = (int)wkopt;
-    matrix wbuff(lwork);
-    dgesvd_(&jobu, &jobvt, &n, &m, A.data(), &n, s.data(), vt.data(), &n, u.data(), &k, wbuff.data(), &lwork,&info);
+    Matrix wbuff(lwork, 1);
+    dgesvd_(&jobu, &jobvt, &n, &m, A.d.data(), &n, s.d.data(), vt.d.data(), &n, u.d.data(), &k, wbuff.d.data(), &lwork,&info);
 
     U = u;
     S = s;
     VT = vt;
 }
 
-rtfmm::matrix rtfmm::transpose(int m, int n, matrix A)
+rtfmm::Matrix rtfmm::transpose(Matrix A)
 {
-    matrix res(n * m);
+    int m = A.m;
+    int n = A.n;
+    Matrix res(n,m);
     for(int j = 0; j < m; j++)
     {
         for(int i = 0; i < n; i++)
@@ -68,14 +72,15 @@ rtfmm::matrix rtfmm::transpose(int m, int n, matrix A)
     return res;
 }
 
-rtfmm::matrix rtfmm::linear_equation_system_svd(int m, int n, matrix A, matrix b)
+rtfmm::Matrix rtfmm::linear_equation_system_svd(Matrix A, Matrix b)
 {
+    int m = A.m, n = A.n;
     int k = std::min(m, n);
-    matrix U(m * m), S(k), VT(n * n);
-    svd(m, n, A, U, S, VT);
-    matrix UT = transpose(m, m, U);
-    matrix V = transpose(n, n, VT);
-    matrix Sinv(m * n);
+    Matrix U(m,m), S(k,1), VT(n,n);
+    svd(A, U, S, VT);
+    Matrix UT = transpose(U);
+    Matrix V = transpose(VT);
+    Matrix Sinv(m,n);
     for(int j = 0; j < m; j++)
     {
         for(int i = 0; i < n; i++)
@@ -84,26 +89,23 @@ rtfmm::matrix rtfmm::linear_equation_system_svd(int m, int n, matrix A, matrix b
             else Sinv[j * n + i] = 0;
         }
     }
-    Sinv = transpose(m, n, Sinv);
+    Sinv = transpose(Sinv);
     /* x = V * S^-1 * U^T * b */
-    matrix x(n * 1); 
-    matrix UTp(m * 1);
-    matrix SinvUTp(n * 1);
-    mat_vec(m, m, UT, b, UTp, MathType::blas);
-    mat_vec(n, m, Sinv, UTp, SinvUTp, MathType::blas);
-    mat_vec(n, m, V, SinvUTp, x, MathType::blas);
+    Matrix UTp = mat_vec(UT, b, MathType::blas);
+    Matrix SinvUTp = mat_vec(Sinv, UTp, MathType::blas);
+    Matrix x = mat_vec(V, SinvUTp, MathType::blas);
     return x;
 }
 
-void rtfmm::print_matrix(int m, int n, matrix& A)
+void rtfmm::print_matrix(Matrix& A)
 {
     printf("{\n");
-    for(int j = 0; j < m; j++)
+    for(int j = 0; j < A.m; j++)
     {
         printf("{");
-        for(int i = 0; i < n; i++)
+        for(int i = 0; i < A.n; i++)
         {
-            printf("%.4f,", A[j * n + i]);
+            printf("%.4f,", A[j * A.n + i]);
         }
         printf("}\n");
     }

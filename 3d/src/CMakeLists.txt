@@ -17,6 +17,7 @@ add_library(core
     kernel.cpp
     mathfunc.cpp
     tree.cpp
+    traverser.cpp
 )
 
 target_include_directories(
