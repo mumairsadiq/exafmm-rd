@@ -133,8 +133,16 @@ rtfmm::BodyCompareResult rtfmm::compare(const Bodies3& bs1, const Bodies3& bs2, 
         psum1 += b1.p * b1.q;                   
         psum2 += b2.p * b2.q;
         rmsp += std::pow(b1.p - b2.p, 2);
-        fdif += (b1.f - b2.f).norm();
+        vec3r diff = b1.f - b2.f;
+        fdif += diff.norm();
         fnrm += b1.f.norm();
+        int flag = diff.r() > 1 ? 1 : 0;
+        /*printf("[%d]  %d  %.4f(%.4f,%.4f,%.4f)      %.12f (%.12f,%.12f,%.12f)   %.12f (%.12f,%.12f,%.12f)   %.12f (%.12f,%.12f,%.12f)\n", 
+            i, flag,
+            b1.q, b1.x[0], b1.x[1], b1.x[2],
+            b1.p, b1.f[0], b1.f[1], b1.f[2],
+            b2.p, b2.f[0], b2.f[1], b2.f[2],
+            std::abs(b1.p - b2.p), diff[0], diff[1], diff[2]);*/
     }
 
     res.rmsp = std::sqrt(rmsp / num);

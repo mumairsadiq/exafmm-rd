@@ -43,7 +43,7 @@ void rtfmm::LaplaceKernel::p2p_matrix(Bodies3& bs_src, Bodies3& bs_tar, Cell3& c
 void rtfmm::LaplaceKernel::p2m(int P, Bodies3& bs_src, Cell3& cell_src)
 {
     /* get source to check matrix */
-    std::vector<rtfmm::vec3r> x_check = get_surface_points(P, cell_src.r * 2.95, cell_src.x);
+    std::vector<vec3r> x_check = get_surface_points(P, cell_src.r * 2.95, cell_src.x);
     std::vector<vec3r> x_src = get_bodies_x(bs_src, cell_src.brange);
     Matrix s2c = get_p2p_matrix(x_src, x_check);
 

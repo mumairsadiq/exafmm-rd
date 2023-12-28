@@ -79,11 +79,17 @@ rtfmm::Matrix rtfmm::linear_equation_system_svd(Matrix A, Matrix b)
     Matrix UT = transpose(U);
     Matrix V = transpose(VT);
     Matrix Sinv(m,n);
+    real s_max = 0;
+    const real EPS = 1e-16;
+    for(int i = 0; i < k; i++)
+    {
+        s_max = std::max(s_max, S[i]);
+    }
     for(int j = 0; j < m; j++)
     {
         for(int i = 0; i < n; i++)
         {
-            if(i == j && j < k) Sinv[j * n + i] = 1.0 / S[j];
+            if(i == j && j < k) Sinv[j * n + i] = S[j] > s_max * EPS * 4 ? 1.0 / S[j] : 0.0;
             else Sinv[j * n + i] = 0;
         }
     }
