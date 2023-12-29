@@ -1,4 +1,5 @@
 #include "tree.h"
+#include "argument.h"
 #include <queue>
 
 rtfmm::Tree::Tree()
@@ -20,7 +21,7 @@ void rtfmm::Tree::build(Bodies3& bodies, vec3r x, real r, int m, TreeType type)
 
 void rtfmm::Tree::build_uniform_octree(Bodies3& bodies, vec3r x, real r, int max_depth)
 {
-    std::cout<<"build complete balanced octree"<<std::endl;
+    if(verbose) std::cout<<"build complete balanced octree"<<std::endl;
     std::queue<int> big_cells;
     int num_body = bodies.size();
     Cell3 root;
@@ -103,7 +104,7 @@ void rtfmm::Tree::build_uniform_octree(Bodies3& bodies, vec3r x, real r, int max
 
 void rtfmm::Tree::build_nonuniform_octree(Bodies3& bodies, vec3r x, real r, int max_n_per_cell)
 {
-    std::cout<<"build adaptive octree"<<std::endl;
+    if(verbose) std::cout<<"build adaptive octree"<<std::endl;
 
     std::queue<int> big_cells;
     int num_body = bodies.size();

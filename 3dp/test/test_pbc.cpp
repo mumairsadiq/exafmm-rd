@@ -3,6 +3,7 @@
 #include "tree.h"
 #include "fmm.h"
 #include "argument.h"
+#include "ewald.h"
 
 int main(int argc, char* argv[])
 {
@@ -18,6 +19,10 @@ int main(int argc, char* argv[])
     rtfmm::LaplaceFMM fmm(bs, args);
     rtfmm::Bodies3 res_fmm = fmm.solve();
 
+    /* solve by ewald */
+    rtfmm::EwaldSolver ewald(bs, args);
+    rtfmm::Bodies3 res_ewald = ewald.solve();
+
     /* solve directly */
     rtfmm::Bodies3 res_direct = bs;
     rtfmm::LaplaceKernel kernel;
@@ -26,12 +31,14 @@ int main(int argc, char* argv[])
     kernel.p2p(bs, res_direct, cell, cell);
 
     /* compare */
-    #ifdef TEST_TREE
-    rtfmm::print_bodies(res_fmm, 5, 0, "res_fmm");
-    //rtfmm::print_bodies(res_direct, -1, 0, "res_direct");
-    #else
+    if(rtfmm::verbose)
+    {
+        rtfmm::print_bodies(res_fmm, 3, 0, "fmm");
+        rtfmm::print_bodies(res_direct, 3, 0, "direct");
+        rtfmm::print_bodies(res_ewald, 3, 0, "ewald");
+    }
     rtfmm::compare(res_fmm, res_direct, "FMM", "Direct").show();
-    #endif
+    rtfmm::compare(res_fmm, res_ewald, "FMM", "Ewald").show();
 
     return 0;
 }

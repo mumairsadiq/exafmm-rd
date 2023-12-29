@@ -18,6 +18,8 @@ add_library(core
     mathfunc.cpp
     tree.cpp
     traverser.cpp
+    ewald.cpp
+    argument.cpp
 )
 
 target_include_directories(

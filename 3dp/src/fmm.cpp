@@ -16,12 +16,12 @@ rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
     Tree tree;
     tree.build(bs, args.x, args.r, args.ncrit, Tree::TreeType::nonuniform);
     cs = tree.get_cells();
-    check_tree(cs);
+    if(verbose) check_tree(cs);
     init_cell_matrix(cs);
 
     /* traverse to get interaction list */
     traverser.traverse(tree);
-    check_traverser(traverser);
+    if(verbose) check_traverser(traverser);
 
     /* upward */
     P2M();
