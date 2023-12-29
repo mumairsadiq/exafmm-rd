@@ -84,11 +84,11 @@ void rtfmm::add_boides_f(Bodies3& bs, Matriv& fs, Range range)
     }
 }
 
-rtfmm::Bodies3 rtfmm::generate_random_bodies(int num, rtfmm::real r, vec3r offset)
+rtfmm::Bodies3 rtfmm::generate_random_bodies(int num, rtfmm::real r, vec3r offset, int seed)
 {
     Bodies3 bodies;
     double q_avg = 0;
-    srand48(0);
+    srand48(seed);
 	for(int i = 0; i < num; i++)
 	{
         Body3 body;
@@ -124,18 +124,20 @@ rtfmm::BodyCompareResult rtfmm::compare(const Bodies3& bs1, const Bodies3& bs2, 
 
     int num = bs1.size();
 
-    real psum1 = 0, psum2 = 0, rmsp = 0;
+    real pdif = 0, pnrm = 0;
     real fdif = 0, fnrm = 0;
+    real esum1 = 0, esum2 = 0;
     for(int i = 0; i < num; i++)
     {
         Body3 b1 = bs1[i];
         Body3 b2 = bs2[i];
-        psum1 += b1.p * b1.q;                   
-        psum2 += b2.p * b2.q;
-        rmsp += std::pow(b1.p - b2.p, 2);
+        esum1 += b1.p * b1.q;                   
+        esum2 += b2.p * b2.q;
+        pdif += std::pow(b1.p - b2.p, 2);
+        pnrm += std::pow(b2.p, 2);
         vec3r diff = b1.f - b2.f;
         fdif += diff.norm();
-        fnrm += b1.f.norm();
+        fnrm += b2.f.norm();
         int flag = diff.r() > 1 ? 1 : 0;
         /*printf("[%d]  %d  %.4f(%.4f,%.4f,%.4f)      %.12f (%.12f,%.12f,%.12f)   %.12f (%.12f,%.12f,%.12f)   %.12f (%.12f,%.12f,%.12f)\n", 
             i, flag,
@@ -145,12 +147,13 @@ rtfmm::BodyCompareResult rtfmm::compare(const Bodies3& bs1, const Bodies3& bs2, 
             std::abs(b1.p - b2.p), diff[0], diff[1], diff[2]);*/
     }
 
-    res.rmsp = std::sqrt(rmsp / num);
+    res.rmsp = std::sqrt(pdif / num);
     res.rmsf = std::sqrt(fdif / num);
-    res.l2p = sqrt(std::pow(psum1 - psum2, 2) / psum1 / psum1);  
+    res.l2p = std::sqrt(pdif / pnrm);
     res.l2f = std::sqrt(fdif / fnrm);
-    res.epot1 = psum1;
-    res.epot2 = psum2;
+    res.epot1 = esum1;
+    res.epot2 = esum2;
+    res.l2e = std::sqrt(std::pow(esum1 - esum2, 2) / esum2 / esum2);
 
     return res;
 }

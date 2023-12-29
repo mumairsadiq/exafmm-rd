@@ -12,7 +12,7 @@ int main(int argc, char* argv[])
     args.show();
 
     /* prepare bodies */
-    rtfmm::Bodies3 bs = rtfmm::generate_random_bodies(args.n, args.r, args.x);
+    rtfmm::Bodies3 bs = rtfmm::generate_random_bodies(args.n, args.r, args.x, 5);
 
     /* solve by FMM */
     rtfmm::LaplaceFMM fmm(bs, args);
