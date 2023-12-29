@@ -24,12 +24,12 @@ void rtfmm::print_bodies(const rtfmm::Bodies3& bs, int num, int offset, std::str
     }
 }
 
-std::vector<rtfmm::vec3r> rtfmm::get_bodies_x(rtfmm::Bodies3& bs, Range range)
+std::vector<rtfmm::vec3r> rtfmm::get_bodies_x(rtfmm::Bodies3& bs, Range range, vec3r offset)
 {
     std::vector<rtfmm::vec3r> res(range.number);
     for(int i = 0; i < range.number; i++)
     {
-        res[i] = bs[range.offset + i].x;
+        res[i] = bs[range.offset + i].x + offset;
     }
     return res;
 }

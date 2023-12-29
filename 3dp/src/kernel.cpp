@@ -17,7 +17,7 @@ void rtfmm::LaplaceKernel::p2p(Bodies3& bs_src, Bodies3& bs_tar, Cell3& cell_src
         for(int i = 0; i < cell_src.brange.number; i++)
         {
             Body3& bsrc = bs_src[cell_src.brange.offset + i];
-            vec3r dx = btar.x - bsrc.x;
+            vec3r dx = btar.x - bsrc.x - offset;
             real r = dx.r();
             real invr = r == 0 ? 0 : 1 / r;
             potential += bsrc.q * invr;
@@ -30,7 +30,7 @@ void rtfmm::LaplaceKernel::p2p(Bodies3& bs_src, Bodies3& bs_tar, Cell3& cell_src
 
 void rtfmm::LaplaceKernel::p2p_matrix(Bodies3& bs_src, Bodies3& bs_tar, Cell3& cell_src, Cell3& cell_tar, vec3r offset)
 {
-    std::vector<vec3r> x_src = get_bodies_x(bs_src, cell_src.brange);
+    std::vector<vec3r> x_src = get_bodies_x(bs_src, cell_src.brange, offset);
     std::vector<vec3r> x_tar = get_bodies_x(bs_tar, cell_tar.brange);
     Matrix q_src = get_bodies_q(bs_src, cell_src.brange);
     Matrix matrix_p2p = get_p2p_matrix(x_src, x_tar);
@@ -86,7 +86,7 @@ void rtfmm::LaplaceKernel::m2m(int P, Cell3& cell_parent, Cells3& cs)
 void rtfmm::LaplaceKernel::m2l(int P, Cell3& cell_src, Cell3& cell_tar, vec3r offset)
 {
     /* get src equivalent to tar check matrix */
-    std::vector<rtfmm::vec3r> x_equiv = get_surface_points(P, cell_src.r * 1.05, cell_src.x);
+    std::vector<rtfmm::vec3r> x_equiv = get_surface_points(P, cell_src.r * 1.05, cell_src.x + offset);
     std::vector<rtfmm::vec3r> x_check = get_surface_points(P, cell_tar.r * 1.05, cell_tar.x);
     Matrix e2c = get_p2p_matrix(x_equiv, x_check);
 
@@ -141,7 +141,7 @@ void rtfmm::LaplaceKernel::l2p(int P, Bodies3& bs_tar, Cell3& cell_tar)
 
 void rtfmm::LaplaceKernel::m2p(int P, Bodies3& bs_tar, Cell3& cell_src, Cell3& cell_tar, vec3r offset)
 {
-    std::vector<rtfmm::vec3r> x_equiv_src = get_surface_points(P, cell_src.r * 1.05, cell_src.x);
+    std::vector<rtfmm::vec3r> x_equiv_src = get_surface_points(P, cell_src.r * 1.05, cell_src.x + offset);
     std::vector<vec3r> x_tar = get_bodies_x(bs_tar, cell_tar.brange);
     Matrix e2t = get_p2p_matrix(x_equiv_src, x_tar);
     Matrix p_tar = mat_vec_mul(e2t, cell_src.q_equiv);
@@ -153,7 +153,7 @@ void rtfmm::LaplaceKernel::m2p(int P, Bodies3& bs_tar, Cell3& cell_src, Cell3& c
 
 void rtfmm::LaplaceKernel::p2l(int P, Bodies3& bs_src, Cell3& cell_src, Cell3& cell_tar, vec3r offset)
 {
-    std::vector<vec3r> x_src = get_bodies_x(bs_src, cell_src.brange);
+    std::vector<vec3r> x_src = get_bodies_x(bs_src, cell_src.brange, offset);
     Matrix q_src = get_bodies_q(bs_src, cell_src.brange);
     std::vector<rtfmm::vec3r> x_check_tar = get_surface_points(P, cell_tar.r * 1.05, cell_tar.x);
     Matrix s2c = get_p2p_matrix(x_src, x_check_tar);

@@ -1,38 +1,56 @@
 #include "traverser.h"
 
+rtfmm::InteractionPair rtfmm::make_pair(int tar, int src)
+{
+    return std::make_pair(tar, src);
+}
+
+rtfmm::PeriodicInteractionPair rtfmm::make_pair(int tar, int src, vec3r offset)
+{
+    return std::make_pair(tar, std::make_pair(src, offset));
+}
+
 rtfmm::Traverser::Traverser()
 {
     
 }
 
-void rtfmm::Traverser::traverse(Tree& tree)
+void rtfmm::Traverser::traverse(Tree& tree, real cycle, int images)
 {
     cells = tree.get_cells();
-    horizontal(0,0,0,0);
+    if(images == 0)
+    {
+        horizontal_origin(0,0,0,0);
+    }
+    else if(images > 0)
+    {
+        horizontal_periodic_near(cycle);
+        horizontal_periodic_far(cycle,images);
+    }
 }
 
-void rtfmm::Traverser::horizontal(int tc, int sc, int tcp, int scp)
+void rtfmm::Traverser::horizontal_origin(int tc, int sc, int tcp, int scp, vec3r offset)
 {
     int divide = 0; // 0: nodivide, 1:tc, 2:sc
-    if(!adjacent(tc, sc))
+    if(!adjacent(tc, sc, offset))
     {
-        if(adjacent(tc, scp) && is_leaf(tc) && cells[scp].depth >= cells[tc].depth)
+        if(adjacent(tc, scp, offset) && is_leaf(tc) && cells[scp].depth >= cells[tc].depth)
         {
-            M2P_pairs.push_back(std::make_pair(tc, sc));
+            M2P_pairs.push_back(make_pair(tc, sc, offset));
         }
-        else if(adjacent(tcp, sc) && is_leaf(sc) && cells[tcp].depth >= cells[sc].depth)
+        else if(adjacent(tcp, sc, offset) && is_leaf(sc) && cells[tcp].depth >= cells[sc].depth)
         {
-            P2L_pairs.push_back(std::make_pair(tc, sc));
+            P2L_pairs.push_back(make_pair(tc, sc, offset));
         }
-        else if(neighbour(tcp, scp))
+        else if(neighbour(tcp, scp, offset))
         {
-            M2L_pairs.push_back(std::make_pair(tc, sc));
+            M2L_pairs.push_back(make_pair(tc, sc, offset));
         }
         else
         {
             if(is_leaf(tc) && is_leaf(sc))
             {
-                //M2L_pairs.push_back(std::make_pair(tc, sc));
+                //M2L_pairs.push_back(make_pair(tc, sc));
                 printf("here\n");
             }
             else if(!is_leaf(tc) && is_leaf(sc))
@@ -53,7 +71,7 @@ void rtfmm::Traverser::horizontal(int tc, int sc, int tcp, int scp)
     {
         if(is_leaf(tc) && is_leaf(sc))
         {
-            P2P_pairs.push_back(std::make_pair(tc, sc));
+            P2P_pairs.push_back(make_pair(tc, sc, offset));
         }
         else if(!is_leaf(tc) && is_leaf(sc))
         {
@@ -73,7 +91,7 @@ void rtfmm::Traverser::horizontal(int tc, int sc, int tcp, int scp)
         Cell3 c = cells[tc];
         for(int i = 0; i < c.crange.number; i++)
         {
-            horizontal(c.crange.offset + i, sc, tc, scp);
+            horizontal_origin(c.crange.offset + i, sc, tc, scp, offset);
         }
     }
     else if(divide == 2)
@@ -81,8 +99,69 @@ void rtfmm::Traverser::horizontal(int tc, int sc, int tcp, int scp)
         Cell3 c = cells[sc];
         for(int i = 0; i < c.crange.number; i++)
         {
-            horizontal(tc, c.crange.offset + i, tcp, sc);
+            horizontal_origin(tc, c.crange.offset + i, tcp, sc, offset);
         }
+    }
+}
+
+void rtfmm::Traverser::horizontal_periodic_near(real cycle)
+{
+    for(int pz = -1; pz <= 1; pz++)
+    {
+        for(int py = -1; py <= 1; py++)
+        {
+            for(int px = -1; px <= 1; px++)
+            {
+                horizontal_origin(0,0,0,0, vec3r(px,py,pz) * cycle);
+            }   
+        }
+    }
+}
+
+void rtfmm::Traverser::horizontal_periodic_far(real cycle, int images)
+{
+    int child_idx = 0;
+    int idx = cells.size();
+    for(int m = 0; m < images - 1; m++)
+    {
+        Cell3 c;
+        c.depth = -1 - m;
+        c.r = cells[child_idx].r * 3;
+        c.x = cells[child_idx].x;
+        c.crange = Range(child_idx, 1);
+        cells.push_back(c);
+        child_idx = cells.size() - 1;
+    }
+    for(int m = 0; m < images - 1; m++)
+    {
+        for(int pz = -1; pz <= 1; pz++)
+        {
+            for(int py = -1; py <= 1; py++)
+            {
+                for(int px = -1; px <= 1; px++)
+                {
+                    if(px == 0 && py == 0 && pz == 0) 
+                        continue;
+                    for(int cz = -1; cz <= 1; cz++)
+                    {
+                        for(int cy = -1; cy <= 1; cy++)
+                        {
+                            for(int cx = -1; cx <= 1; cx++)
+                            {
+                                int ox = px * 3 + cx;
+                                int oy = py * 3 + cy;
+                                int oz = pz * 3 + cz;
+                                int icell_idx = cells[idx].crange.offset;
+                                //if(cells[icell_idx].body_info.number > 0)
+                                M2L_pairs.push_back(make_pair(0,icell_idx,vec3r(ox,oy,oz) * cycle));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        idx++;
+        cycle *= 3;
     }
 }
 
@@ -105,7 +184,7 @@ int rtfmm::Traverser::is_leaf(int c)
     return cells[c].crange.number == 0;
 }
 
-rtfmm::InteractionPairs rtfmm::Traverser::get_pairs(OperatorType type)
+rtfmm::PeriodicInteractionPairs rtfmm::Traverser::get_pairs(OperatorType type)
 {
     switch(type)
     {

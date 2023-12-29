@@ -5,7 +5,12 @@ namespace rtfmm
 {
 
 using InteractionPair = std::pair<int, int>;
+using PeriodicInteractionPair = std::pair<int, std::pair<int, vec3r>>;
 using InteractionPairs = std::vector<InteractionPair>;
+using PeriodicInteractionPairs = std::vector<PeriodicInteractionPair>;
+
+InteractionPair make_pair(int tar, int src);
+PeriodicInteractionPair make_pair(int tar, int src, vec3r offset);
 
 enum class OperatorType
 {
@@ -21,9 +26,11 @@ class Traverser
 public:
     Traverser();
 
-    void traverse(Tree& tree);
+    void traverse(Tree& tree, real cycle = 2 * M_PI, int images = 0);
 
-    InteractionPairs get_pairs(OperatorType type);
+    PeriodicInteractionPairs get_pairs(OperatorType type);
+
+    Cells3 get_cells() {return cells;}
 
 private:
     
@@ -34,7 +41,11 @@ private:
      * @param tcp target cell's parent cell idx
      * @param scp source cell's parent cell idx
     */
-    void horizontal(int tc, int sc, int tcp, int scp);
+    void horizontal_origin(int tc, int sc, int tcp, int scp, vec3r offset = vec3r(0,0,0));
+
+    void horizontal_periodic_near(real cycle);
+
+    void horizontal_periodic_far(real cycle, int image);
 
     int adjacent(int a, int b, vec3r offset = vec3r(0,0,0));
 
@@ -45,10 +56,10 @@ private:
     Cells3 cells;
 
 public:
-    InteractionPairs P2P_pairs;
-    InteractionPairs M2L_pairs;
-    InteractionPairs M2P_pairs;
-    InteractionPairs P2L_pairs;
+    PeriodicInteractionPairs P2P_pairs;
+    PeriodicInteractionPairs M2L_pairs;
+    PeriodicInteractionPairs M2P_pairs;
+    PeriodicInteractionPairs P2L_pairs;
 };
 
 }

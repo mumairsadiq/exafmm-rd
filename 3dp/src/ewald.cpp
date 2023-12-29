@@ -3,7 +3,7 @@
 rtfmm::EwaldSolver::EwaldSolver(const Bodies3& bs_, const Argument& args_) 
 : bs(bs_), args(args_)
 {
-    ksize = 21;
+    ksize = 11;
     scale = 2 * M_PI / args.cycle;
     alpha = ksize / args.cycle;
     cutoff = args.cycle / 2;

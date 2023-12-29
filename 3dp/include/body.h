@@ -57,7 +57,7 @@ Bodies3 generate_random_bodies(int num, real r, vec3r offset = vec3r(0,0,0), int
  * 
  * @return vector of x
  */
-std::vector<vec3r> get_bodies_x(Bodies3& bs, Range range);
+std::vector<vec3r> get_bodies_x(Bodies3& bs, Range range, vec3r offset = vec3r(0,0,0));
 
 /**
  * @brief extract q from bodies
