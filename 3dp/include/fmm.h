@@ -41,7 +41,6 @@ private:
     int get_max_depth(const Cells3& cells);
     Indices get_leaf_cell_indices(const Cells3& cells);
     Indices get_nonleaf_cell_indices(const Cells3& cells, int depth);
-    void dipole_correction();
 };
 
 }

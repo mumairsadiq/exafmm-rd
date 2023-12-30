@@ -1,6 +1,7 @@
 #include "kernel.h"
 #include "mathfunc.h"
 #include "surface.h"
+#include "argument.h"
 
 rtfmm::LaplaceKernel::LaplaceKernel()
 {
@@ -79,6 +80,34 @@ void rtfmm::LaplaceKernel::m2m(int P, Cell3& cell_parent, Cells3& cs)
         /* parent check potential to parent equivalent charge */
         Matrix q_equiv_parent = linear_equation_system_svd(pe2pc, p_check_parent);
         cell_parent.q_equiv = mat_mat_add(cell_parent.q_equiv, q_equiv_parent);
+    }
+}
+
+void rtfmm::LaplaceKernel::m2m_img(int P, Cell3& cell_parent, Cells3& cs, real cycle)
+{
+    /* parent equiv to parent check matrix */
+    std::vector<rtfmm::vec3r> x_equiv_parent = get_surface_points(P, cell_parent.r * 1.05, cell_parent.x);
+    std::vector<rtfmm::vec3r> x_check_parent = get_surface_points(P, cell_parent.r * 2.95, cell_parent.x);
+    Matrix pe2pc = get_p2p_matrix(x_equiv_parent, x_check_parent);
+
+    for(int pz = -1; pz <= 1; pz++)
+    {
+        for(int py = -1; py <= 1; py++)
+        {
+            for(int px = -1; px <= 1; px++)
+            {
+                Cell3& cell_child = cs[cell_parent.crange.offset];
+
+                /* child equivalent to parent check */
+                std::vector<rtfmm::vec3r> x_equiv_child = get_surface_points(P, cell_child.r * 1.05, cell_child.x + vec3r(px,py,pz) * cycle);
+                Matrix ce2pc = get_p2p_matrix(x_equiv_child, x_check_parent);
+                Matrix p_check_parent = mat_vec_mul(ce2pc, cell_child.q_equiv);
+
+                /* parent check potential to parent equivalent charge */
+                Matrix q_equiv_parent = linear_equation_system_svd(pe2pc, p_check_parent);
+                cell_parent.q_equiv = mat_mat_add(cell_parent.q_equiv, q_equiv_parent);
+            }
+        }
     }
 }
 
@@ -205,4 +234,22 @@ rtfmm::Matriv rtfmm::LaplaceKernel::get_force_naive(
         res[j] = force;
     }
     return res;
+}
+
+void rtfmm::dipole_correction(Bodies3& bs, real cycle)
+{
+    if(verbose) std::cout<<"dipole correction"<<std::endl;
+    int num_body = bs.size();
+    real coef = 4 * M_PI / (3 * cycle * cycle * cycle);
+    vec3r dipole(0,0,0);
+    for (int i = 0; i < num_body; i++) 
+    {
+        dipole += bs[i].x * bs[i].q;
+    }
+    real dnorm = dipole.norm();
+    for (int i = 0; i < num_body; i++) 
+    { 
+        bs[i].p -= coef * dnorm / num_body / bs[i].q; 
+        bs[i].f -= coef * dipole;
+    }
 }

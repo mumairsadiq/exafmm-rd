@@ -5,6 +5,7 @@
 
 namespace rtfmm
 {
+    void dipole_correction(Bodies3& bs, real cycle);
 class LaplaceKernel
 {
 public:
@@ -17,6 +18,8 @@ public:
     void p2m(int P, Bodies3& bs_src, Cell3& cell_src);
 
     void m2m(int P, Cell3& cell_parent, Cells3& cs);
+
+    void m2m_img(int P, Cell3& cell_parent, Cells3& cs, real cycle);
 
     void m2l(int P, Cell3& cell_src, Cell3& cell_tar, vec3r offset = vec3r(0,0,0));
 

@@ -47,6 +47,8 @@ private:
 
     void horizontal_periodic_far(real cycle, int image);
 
+    void horizontal_periodic_far2(real cycle, int image);
+
     int adjacent(int a, int b, vec3r offset = vec3r(0,0,0));
 
     int neighbour(int a, int b, vec3r offset = vec3r(0,0,0));

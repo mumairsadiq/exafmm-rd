@@ -1,4 +1,5 @@
 #include "traverser.h"
+#include "argument.h"
 
 rtfmm::InteractionPair rtfmm::make_pair(int tar, int src)
 {
@@ -20,12 +21,16 @@ void rtfmm::Traverser::traverse(Tree& tree, real cycle, int images)
     cells = tree.get_cells();
     if(images == 0)
     {
+        if(verbose) printf("horizontal_origin\n");
         horizontal_origin(0,0,0,0);
     }
-    else if(images > 0)
+    else if(images >= 1)
     {
         horizontal_periodic_near(cycle);
-        horizontal_periodic_far(cycle,images);
+        if(images >= 2)
+        {
+            horizontal_periodic_far(cycle,images);
+        }
     }
 }
 
@@ -106,13 +111,24 @@ void rtfmm::Traverser::horizontal_origin(int tc, int sc, int tcp, int scp, vec3r
 
 void rtfmm::Traverser::horizontal_periodic_near(real cycle)
 {
+    if(verbose) printf("horizontal_periodic_near\n");
+    /* images == 1 */
+    Cell3 c;
+    c.depth = -1;
+    c.r = cells[0].r * 3;
+    c.x = cells[0].x;
+    c.crange = Range(0, 1);
+    c.brange = Range(0, cells[0].brange.number);
+    cells.push_back(c);
+    int cidx = cells.size() - 1;
+    printf("add cell %ld, r = %.4f, depth = %d, child = %d\n", cells.size()-1, c.r, c.depth, c.crange.offset);
     for(int pz = -1; pz <= 1; pz++)
     {
         for(int py = -1; py <= 1; py++)
         {
             for(int px = -1; px <= 1; px++)
             {
-                horizontal_origin(0,0,0,0, vec3r(px,py,pz) * cycle);
+                horizontal_origin(0,0,cidx,cidx, vec3r(px,py,pz) * cycle);
             }   
         }
     }
@@ -120,9 +136,11 @@ void rtfmm::Traverser::horizontal_periodic_near(real cycle)
 
 void rtfmm::Traverser::horizontal_periodic_far(real cycle, int images)
 {
-    int child_idx = 0;
-    int idx = cells.size();
-    for(int m = 0; m < images - 1; m++)
+    if(verbose) printf("horizontal_periodic_far\n");
+    /* images >= 2 */
+    int child_idx = cells.size() - 1;
+    int idx = cells.size() - 1;
+    for(int m = 1; m < images; m++)
     {
         Cell3 c;
         c.depth = -1 - m;
@@ -131,9 +149,12 @@ void rtfmm::Traverser::horizontal_periodic_far(real cycle, int images)
         c.crange = Range(child_idx, 1);
         cells.push_back(c);
         child_idx = cells.size() - 1;
+        printf("add cell %ld, r = %.4f, depth = %d, child = %d\n", cells.size()-1, c.r, c.depth, c.crange.offset);
     }
     for(int m = 0; m < images - 1; m++)
     {
+        int icell_idx = cells[idx].crange.offset;
+        printf("icell_idx = %d, cycle = %.4f\n", icell_idx, cycle);
         for(int pz = -1; pz <= 1; pz++)
         {
             for(int py = -1; py <= 1; py++)
@@ -151,8 +172,6 @@ void rtfmm::Traverser::horizontal_periodic_far(real cycle, int images)
                                 int ox = px * 3 + cx;
                                 int oy = py * 3 + cy;
                                 int oz = pz * 3 + cz;
-                                int icell_idx = cells[idx].crange.offset;
-                                //if(cells[icell_idx].body_info.number > 0)
                                 M2L_pairs.push_back(make_pair(0,icell_idx,vec3r(ox,oy,oz) * cycle));
                             }
                         }
@@ -161,7 +180,39 @@ void rtfmm::Traverser::horizontal_periodic_far(real cycle, int images)
             }
         }
         idx++;
+
         cycle *= 3;
+    }
+}
+
+void rtfmm::Traverser::horizontal_periodic_far2(real cycle, int images)
+{
+    if(verbose) printf("horizontal_periodic_far2\n");
+    int pdm = (std::pow(3, images - 1) - 1) / 2;
+    printf("pdm = %d\n", pdm);
+    for(int pz = -pdm; pz <= pdm; pz++)
+    {
+        for(int py = -pdm; py <= pdm; py++)
+        {
+            for(int px = -pdm; px <= pdm; px++)
+            {
+                if(px == 0 && py == 0 && pz == 0) 
+                    continue;
+                for(int cz = -1; cz <= 1; cz++)
+                {
+                    for(int cy = -1; cy <= 1; cy++)
+                    {
+                        for(int cx = -1; cx <= 1; cx++)
+                        {
+                            int ox = px * 3 + cx;
+                            int oy = py * 3 + cy;
+                            int oz = pz * 3 + cz;
+                            M2L_pairs.push_back(make_pair(0,0,vec3r(ox,oy,oz) * cycle));
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 

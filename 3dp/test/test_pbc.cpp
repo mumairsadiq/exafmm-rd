@@ -28,7 +28,21 @@ int main(int argc, char* argv[])
     rtfmm::LaplaceKernel kernel;
     rtfmm::Cell3 cell;
     cell.brange = {0, args.n};
-    kernel.p2p(bs, res_direct, cell, cell);
+    TIME_BEGIN(direct);
+    int dm = (std::pow(3, args.images) - 1) / 2;
+    printf("dm = %d\n", dm);
+    for(int pz = -dm; pz <= dm; pz++)
+    {
+        for(int py = -dm; py <= dm; py++)
+        {
+            for(int px = -dm; px <= dm; px++)
+            {
+                kernel.p2p(bs, res_direct, cell, cell, rtfmm::vec3r(px,py,pz) * args.cycle);
+            }   
+        }
+    }
+    rtfmm::dipole_correction(res_direct, args.cycle);
+    if(args.timing) {TIME_END(direct);}
 
     /* compare */
     if(rtfmm::verbose)
@@ -39,6 +53,7 @@ int main(int argc, char* argv[])
     }
     rtfmm::compare(res_fmm, res_direct, "FMM", "Direct").show();
     rtfmm::compare(res_fmm, res_ewald, "FMM", "Ewald").show();
+    rtfmm::compare(res_direct, res_ewald, "Direct", "Ewald").show();
 
     return 0;
 }

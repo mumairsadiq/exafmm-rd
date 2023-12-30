@@ -14,6 +14,7 @@ set(exec
     test_p2m2l2p
     test_fmm
     test_pbc
+    test_p2m2m2l2p
 )
 
 foreach(filename IN LISTS exec)

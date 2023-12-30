@@ -18,9 +18,12 @@ rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
     cs = tree.get_cells();
     if(verbose) check_tree(cs);
 
+    printf("cs[0].crange = %d,%d\n", cs[0].crange.offset, cs[0].crange.number);
+
     /* traverse to get interaction list */
     traverser.traverse(tree, args.cycle, args.images);
     cs = traverser.get_cells();
+    printf("cell.size() = %ld\n", cs.size());
     if(verbose) check_traverser(traverser);
 
     init_cell_matrix(cs);
@@ -44,8 +47,7 @@ rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
     }
     #endif
 
-    if(args.images > 0) 
-        dipole_correction();
+    dipole_correction(bs, args.cycle);
         
     return sort_bodies_by_idx(bs);
 }
@@ -87,7 +89,10 @@ void rtfmm::LaplaceFMM::M2M()
         {
             Cell3& ci = cs[nlcidx[i]];
             #ifndef TEST_TREE
-            kernel.m2m(args.P, ci, cs);
+            if(depth >= 0)
+                kernel.m2m(args.P, ci, cs);
+            else
+                kernel.m2m_img(args.P, ci, cs, args.cycle * std::pow(3, -depth - 1));
             #else
             for(int j = 0; j < ci.crange.number; j++)
             {
@@ -294,23 +299,6 @@ rtfmm::Indices rtfmm::LaplaceFMM::get_nonleaf_cell_indices(const Cells3& cells, 
         }
     }
     return res;
-}
-
-void rtfmm::LaplaceFMM::dipole_correction()
-{
-    int num_body = bs.size();
-    real coef = 4 * M_PI / (3 * args.cycle * args.cycle * args.cycle);
-    vec3r dipole(0,0,0);
-    for (int i = 0; i < num_body; i++) 
-    {
-        dipole += bs[i].x * bs[i].q;
-    }
-    real dnorm = dipole.norm();
-    for (int i = 0; i < num_body; i++) 
-    { 
-        bs[i].p -= coef * dnorm / num_body / bs[i].q; 
-        bs[i].f -= coef * dipole;
-    }
 }
 
 void rtfmm::LaplaceFMM::check_tree(const Cells3& cells)
