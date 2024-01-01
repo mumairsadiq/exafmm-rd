@@ -16,6 +16,7 @@ struct Body3
 
 struct BodyCompareResult
 {
+    int num_compared;
     real rmsp;
     real rmsf;
     real l2p;
@@ -28,7 +29,7 @@ struct BodyCompareResult
 
     void show()
     {
-        std::cout<<"\n---------------- "<< name1 << " vs " << name2 << " ----------------" << std::endl;
+        std::cout<<"\n---------------- "<< name1 << " vs " << name2 << " ----------------[" << num_compared << "]" << std::endl;
         printf("%-8s : %8.5e   %-8s : %8.5e   %-8s : %8.5e\n", "L2  (p)", l2p , "L2  (f)", l2f, "L2  (e)", l2e); 
         printf("%-8s : %8.5e   %-8s : %8.5e\n", "Rms (p)", rmsp, "Rms (f)", rmsf);
         printf("p-energy1 : %8.5e\n", epot1);
@@ -103,12 +104,13 @@ void print_bodies(const Bodies3& bs, int num = -1, int offset = 0, std::string n
  * @param bs2 bodies2
  * @param name1 name of bs1
  * @param name2 name of bs2
+ * @param num_compare number of comparison(-1 means all)
  * 
  * @return result of body data comparison
  * 
  * @warning bs2 is used to calculate norm
  */
-BodyCompareResult compare(const Bodies3& bs1, const Bodies3& bs2, std::string name1, std::string name2);
+BodyCompareResult compare(const Bodies3& bs1, const Bodies3& bs2, std::string name1, std::string name2, int num_compare = -1);
 
 /**
  * @brief RT

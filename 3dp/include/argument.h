@@ -23,6 +23,10 @@ public:
     int timing;
     int images;
     real cycle;
+    int seed;
+    int num_compare;
+    int ewald_ksize;
+    int th_num;
 };
 
 }

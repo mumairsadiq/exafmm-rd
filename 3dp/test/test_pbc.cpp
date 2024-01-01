@@ -4,6 +4,7 @@
 #include "fmm.h"
 #include "argument.h"
 #include "ewald.h"
+#include <omp.h>
 
 int main(int argc, char* argv[])
 {
@@ -12,8 +13,11 @@ int main(int argc, char* argv[])
     rtfmm::Argument args(argc, argv);
     args.show();
 
+    omp_set_num_threads(args.th_num);
+    printf("# of threads = %d\n", omp_get_max_threads());
+
     /* prepare bodies */
-    rtfmm::Bodies3 bs = rtfmm::generate_random_bodies(args.n, args.r, args.x, 5);
+    rtfmm::Bodies3 bs = rtfmm::generate_random_bodies(args.n, args.r, args.x, args.seed);
 
     /* solve by FMM */
     rtfmm::LaplaceFMM fmm(bs, args);
@@ -26,18 +30,21 @@ int main(int argc, char* argv[])
     /* solve directly */
     rtfmm::Bodies3 res_direct = bs;
     rtfmm::LaplaceKernel kernel;
-    rtfmm::Cell3 cell;
-    cell.brange = {0, args.n};
+    rtfmm::Cell3 cell_src;
+    cell_src.brange = {0, args.n};
+    rtfmm::Cell3 cell_tar;
+    cell_tar.brange = {0, args.num_compare};
     TIME_BEGIN(direct);
     int dm = (std::pow(3, args.images) - 1) / 2;
     printf("dm = %d\n", dm);
     for(int pz = -dm; pz <= dm; pz++)
     {
+        printf("pz = %d\n", pz);
         for(int py = -dm; py <= dm; py++)
         {
             for(int px = -dm; px <= dm; px++)
             {
-                kernel.p2p(bs, res_direct, cell, cell, rtfmm::vec3r(px,py,pz) * args.cycle);
+                kernel.p2p(bs, res_direct, cell_src, cell_tar, rtfmm::vec3r(px,py,pz) * args.cycle);
             }   
         }
     }
@@ -51,9 +58,9 @@ int main(int argc, char* argv[])
         rtfmm::print_bodies(res_direct, 3, 0, "direct");
         rtfmm::print_bodies(res_ewald, 3, 0, "ewald");
     }
-    rtfmm::compare(res_fmm, res_direct, "FMM", "Direct").show();
-    rtfmm::compare(res_fmm, res_ewald, "FMM", "Ewald").show();
-    rtfmm::compare(res_direct, res_ewald, "Direct", "Ewald").show();
+    rtfmm::compare(res_fmm, res_direct, "FMM", "Direct", args.num_compare).show();
+    rtfmm::compare(res_fmm, res_ewald, "FMM", "Ewald", args.num_compare).show();
+    rtfmm::compare(res_direct, res_ewald, "Direct", "Ewald", args.num_compare).show();
 
     return 0;
 }

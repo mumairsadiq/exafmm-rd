@@ -114,7 +114,7 @@ rtfmm::Bodies3 rtfmm::generate_random_bodies(int num, rtfmm::real r, vec3r offse
     return bodies;
 }
 
-rtfmm::BodyCompareResult rtfmm::compare(const Bodies3& bs1, const Bodies3& bs2, std::string name1, std::string name2)
+rtfmm::BodyCompareResult rtfmm::compare(const Bodies3& bs1, const Bodies3& bs2, std::string name1, std::string name2, int num_compare)
 {
     assert(bs1.size() == bs2.size());
 
@@ -122,7 +122,8 @@ rtfmm::BodyCompareResult rtfmm::compare(const Bodies3& bs1, const Bodies3& bs2, 
     res.name1 = name1;
     res.name2 = name2;
 
-    int num = bs1.size();
+    int num = num_compare == -1 ? bs1.size() : std::min(num_compare, (int)bs1.size());
+    res.num_compared = num;
 
     real pdif = 0, pnrm = 0;
     real fdif = 0, fnrm = 0;

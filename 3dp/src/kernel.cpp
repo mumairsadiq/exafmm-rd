@@ -2,14 +2,16 @@
 #include "mathfunc.h"
 #include "surface.h"
 #include "argument.h"
+#include <omp.h>
 
 rtfmm::LaplaceKernel::LaplaceKernel()
 {
-
+    
 }
 
 void rtfmm::LaplaceKernel::p2p(Bodies3& bs_src, Bodies3& bs_tar, Cell3& cell_src, Cell3& cell_tar, vec3r offset)
 {
+    #pragma omp parallel for
     for(int j = 0; j < cell_tar.brange.number; j++)
     {
         Body3& btar = bs_tar[cell_tar.brange.offset + j];
