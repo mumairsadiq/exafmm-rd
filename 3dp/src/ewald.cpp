@@ -1,13 +1,18 @@
 #include "ewald.h"
+#include <omp.h>
+
+//#define EWALD_USE_HALF
 
 rtfmm::EwaldSolver::EwaldSolver(const Bodies3& bs_, const Argument& args_) 
 : bs(bs_), args(args_)
 {
     ksize = args.ewald_ksize;
-    printf("ksize = %d\n", ksize);
+    if(verbose) printf("ksize = %d\n", ksize);
     scale = 2 * M_PI / args.cycle;
+    if(verbose) printf("scale = %.4f\n", scale);
     alpha = ksize / args.cycle;
     cutoff = args.cycle / 2;
+    #ifndef EWALD_USE_HALF
     for (int k = -ksize; k <= ksize; k++)
     {                               
         for (int m = -ksize; m <= ksize; m++)
@@ -18,10 +23,36 @@ rtfmm::EwaldSolver::EwaldSolver(const Bodies3& bs_, const Argument& args_)
                 Wave wave;
                 wave.K = rtfmm::vec3r(k,m,p);
                 wave.val = std::complex<double>(0,0);
+                //if(wave.K.norm() <= ksize * ksize)
                 waves.push_back(wave);
             }
         }
     }
+    #else
+    int kmaxsq = ksize * ksize;
+    int kmax = ksize;
+    for (int l=0; l<=kmax; l++)
+    {
+        int mmin = -kmax;
+        if (l==0) mmin = 0;
+        for (int m=mmin; m<=kmax; m++)
+        {
+            int nmin = -kmax;
+            if (l==0 && m==0) nmin=1;
+            for (int n=nmin; n<=kmax; n++) 
+            {
+                real ksq = l * l + m * m + n * n;
+                if (ksq <= kmaxsq) 
+                {
+                    Wave wave;
+                    wave.K = vec3r(l,m,n);
+                    wave.val = std::complex<double>(0,0);
+                    waves.push_back(wave);
+                }
+            }
+        }
+    }
+    #endif
 }
 
 rtfmm::Bodies3 rtfmm::EwaldSolver::solve()
@@ -63,10 +94,15 @@ void rtfmm::EwaldSolver::real_part(int this_cell_idx, int that_cell_idx)
 void rtfmm::EwaldSolver::fourier_part()
 {
     DFT(waves,bs);
+    #ifndef EWALD_USE_HALF
     rtfmm::real coef = 4 * M_PI / std::pow(args.cycle,3);
+    #else
+    rtfmm::real coef = 8 * M_PI / std::pow(args.cycle,3);
+    #endif
+    #pragma omp parllel for
     for (int w = 0; w < waves.size(); w++) 
     {
-        rtfmm::real k2 = waves[w].K.norm();
+        rtfmm::real k2 = waves[w].K.norm() * scale * scale;
         waves[w].val *= coef * std::exp(-k2 / (4 * alpha * alpha)) / k2;
     }
     IDFT(waves,bs);
@@ -140,6 +176,7 @@ void rtfmm::EwaldSolver::real_p2p(int this_cell_idx, int that_cell_idx, rtfmm::v
 
 void rtfmm::EwaldSolver::DFT(std::vector<Wave>& ws, std::vector<rtfmm::Body3>& bs)
 {
+    #pragma omp paralle for
     for (int w = 0; w < ws.size(); w++) 
     {                     
         for (int i = 0; i < bs.size(); i++)  
@@ -153,6 +190,7 @@ void rtfmm::EwaldSolver::DFT(std::vector<Wave>& ws, std::vector<rtfmm::Body3>& b
 
 void rtfmm::EwaldSolver::IDFT(std::vector<Wave>& ws, std::vector<rtfmm::Body3>& bs)
 {
+    #pragma omp paralle for
     for (int i = 0; i < bs.size(); i++)
     {
         for (int w = 0; w < ws.size(); w++)

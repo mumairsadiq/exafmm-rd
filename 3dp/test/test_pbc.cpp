@@ -20,47 +20,61 @@ int main(int argc, char* argv[])
     rtfmm::Bodies3 bs = rtfmm::generate_random_bodies(args.n, args.r, args.x, args.seed);
 
     /* solve by FMM */
-    rtfmm::LaplaceFMM fmm(bs, args);
-    rtfmm::Bodies3 res_fmm = fmm.solve();
+    rtfmm::Bodies3 res_fmm;
+    if(args.enable_fmm)
+    {
+        rtfmm::LaplaceFMM fmm(bs, args);
+        res_fmm = fmm.solve();
+    }
 
     /* solve by ewald */
-    rtfmm::EwaldSolver ewald(bs, args);
-    rtfmm::Bodies3 res_ewald = ewald.solve();
+    rtfmm::Bodies3 res_ewald;
+    if(args.enable_ewald)
+    {
+        rtfmm::EwaldSolver ewald(bs, args);
+        res_ewald = ewald.solve();
+    }
 
     /* solve directly */
     rtfmm::Bodies3 res_direct = bs;
-    rtfmm::LaplaceKernel kernel;
-    rtfmm::Cell3 cell_src;
-    cell_src.brange = {0, args.n};
-    rtfmm::Cell3 cell_tar;
-    cell_tar.brange = {0, args.num_compare};
-    TIME_BEGIN(direct);
-    int dm = (std::pow(3, args.images) - 1) / 2;
-    printf("dm = %d\n", dm);
-    for(int pz = -dm; pz <= dm; pz++)
+    if(args.enable_direct)
     {
-        printf("pz = %d\n", pz);
-        for(int py = -dm; py <= dm; py++)
+        rtfmm::LaplaceKernel kernel;
+        rtfmm::Cell3 cell_src;
+        cell_src.brange = {0, args.n};
+        rtfmm::Cell3 cell_tar;
+        cell_tar.brange = {0, args.num_compare};
+        TIME_BEGIN(direct);
+        int dm = (std::pow(3, args.images) - 1) / 2;
+        if(rtfmm::verbose) printf("dm = %d\n", dm);
+        for(int pz = -dm; pz <= dm; pz++)
         {
-            for(int px = -dm; px <= dm; px++)
+            if(rtfmm::verbose) printf("pz = %d\n", pz);
+            for(int py = -dm; py <= dm; py++)
             {
-                kernel.p2p(bs, res_direct, cell_src, cell_tar, rtfmm::vec3r(px,py,pz) * args.cycle);
-            }   
+                for(int px = -dm; px <= dm; px++)
+                {
+                    kernel.p2p(bs, res_direct, cell_src, cell_tar, rtfmm::vec3r(px,py,pz) * args.cycle);
+                }   
+            }
         }
+        rtfmm::dipole_correction(res_direct, args.cycle);
+        if(args.timing) {TIME_END(direct);}
     }
-    rtfmm::dipole_correction(res_direct, args.cycle);
-    if(args.timing) {TIME_END(direct);}
 
     /* compare */
     if(rtfmm::verbose)
     {
-        rtfmm::print_bodies(res_fmm, 3, 0, "fmm");
-        rtfmm::print_bodies(res_direct, 3, 0, "direct");
-        rtfmm::print_bodies(res_ewald, 3, 0, "ewald");
+        if(args.enable_fmm) rtfmm::print_bodies(res_fmm, 3, 0, "fmm");
+        if(args.enable_direct) rtfmm::print_bodies(res_direct, 3, 0, "direct");
+        if(args.enable_ewald) rtfmm::print_bodies(res_ewald, 3, 0, "ewald");
     }
-    rtfmm::compare(res_fmm, res_direct, "FMM", "Direct", args.num_compare).show();
-    rtfmm::compare(res_fmm, res_ewald, "FMM", "Ewald", args.num_compare).show();
-    rtfmm::compare(res_direct, res_ewald, "Direct", "Ewald", args.num_compare).show();
+    if(args.enable_fmm && args.enable_direct)
+        rtfmm::compare(res_fmm, res_direct, "FMM", "Direct", args.num_compare).show();
+    if(args.enable_fmm && args.enable_ewald)
+        rtfmm::compare(res_fmm, res_ewald, "FMM", "Ewald", args.num_compare).show();
+    if(args.enable_direct && args.enable_ewald)
+        rtfmm::compare(res_direct, res_ewald, "Direct", "Ewald", args.num_compare).show();
 
     return 0;
 }

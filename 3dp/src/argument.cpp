@@ -1,5 +1,7 @@
 #include "argument.h"
 
+#define CONTAINS(str, sub_str) (str.find(sub_str) != std::string::npos)
+
 int rtfmm::verbose;
 
 rtfmm::Argument::Argument(int argc, char* argv[])
@@ -17,6 +19,7 @@ rtfmm::Argument::Argument(int argc, char* argv[])
     cmd.add<int>("ewald_ksize", 0, "ksize of ewald DFT", false, 11);
     cmd.add<int>("th_num", 0, "number of omp threads", false, 4);
     cmd.add<int>("seed", 0, "random seed", false, 5);
+    cmd.add<std::string>("algorithm", 'a', "algorithms", false, "fde");
     cmd.parse_check(argc, argv);
     P = cmd.get<int>("P");
     n = cmd.get<int>("nbody");
@@ -32,6 +35,11 @@ rtfmm::Argument::Argument(int argc, char* argv[])
     th_num = cmd.get<int>("th_num");
     seed = cmd.get<int>("seed");
 
+    std::string algo = cmd.get<std::string>("algorithm");
+    enable_fmm = CONTAINS(algo, "f") ? 1 : 0;
+    enable_direct = CONTAINS(algo, "d") ? 1 : 0;
+    enable_ewald = CONTAINS(algo, "e") ? 1 : 0;
+
     x = vec3r(0,0,0);
     r = cycle / 2;
 }
@@ -39,5 +47,5 @@ rtfmm::Argument::Argument(int argc, char* argv[])
 void rtfmm::Argument::show()
 {
     printf("[P=%d, n=%d, r=%.4f, x=(%.3f,%.3f,%.3f), ncrit=%d, timing=%d, images=%d, cycle=%.4f, verbose=%d]\n", P, n, r, x[0], x[1], x[2], ncrit, timing, images, cycle, verbose);
-    printf("[num_compare = %d, ewald_ksize = %d, th_num = %d, seed = %d]\n", num_compare, ewald_ksize, th_num, seed);
+    printf("[num_compare = %d, ewald_ksize = %d, th_num = %d, seed = %d, (f,d,e) = (%d,%d,%d)]\n", num_compare, ewald_ksize, th_num, seed, enable_fmm, enable_direct, enable_ewald);
 }

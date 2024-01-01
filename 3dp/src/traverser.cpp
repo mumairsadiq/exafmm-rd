@@ -121,7 +121,7 @@ void rtfmm::Traverser::horizontal_periodic_near(real cycle)
     c.brange = Range(0, cells[0].brange.number);
     cells.push_back(c);
     int cidx = cells.size() - 1;
-    printf("add cell %ld, r = %.4f, depth = %d, child = %d\n", cells.size()-1, c.r, c.depth, c.crange.offset);
+    if(verbose) printf("add cell %ld, r = %.4f, depth = %d, child = %d\n", cells.size()-1, c.r, c.depth, c.crange.offset);
     for(int pz = -1; pz <= 1; pz++)
     {
         for(int py = -1; py <= 1; py++)
@@ -149,12 +149,12 @@ void rtfmm::Traverser::horizontal_periodic_far(real cycle, int images)
         c.crange = Range(child_idx, 1);
         cells.push_back(c);
         child_idx = cells.size() - 1;
-        printf("add cell %ld, r = %.4f, depth = %d, child = %d\n", cells.size()-1, c.r, c.depth, c.crange.offset);
+        if(verbose) printf("add cell %ld, r = %.4f, depth = %d, child = %d\n", cells.size()-1, c.r, c.depth, c.crange.offset);
     }
     for(int m = 0; m < images - 1; m++)
     {
         int icell_idx = cells[idx].crange.offset;
-        printf("icell_idx = %d, cycle = %.4f\n", icell_idx, cycle);
+        if(verbose) printf("icell_idx = %d, cycle = %.4f\n", icell_idx, cycle);
         for(int pz = -1; pz <= 1; pz++)
         {
             for(int py = -1; py <= 1; py++)
@@ -189,7 +189,7 @@ void rtfmm::Traverser::horizontal_periodic_far2(real cycle, int images)
 {
     if(verbose) printf("horizontal_periodic_far2\n");
     int pdm = (std::pow(3, images - 1) - 1) / 2;
-    printf("pdm = %d\n", pdm);
+    if(verbose) printf("pdm = %d\n", pdm);
     for(int pz = -pdm; pz <= pdm; pz++)
     {
         for(int py = -pdm; py <= pdm; py++)

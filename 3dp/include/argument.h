@@ -27,6 +27,10 @@ public:
     int num_compare;
     int ewald_ksize;
     int th_num;
+
+    int enable_fmm;
+    int enable_direct;
+    int enable_ewald;
 };
 
 }

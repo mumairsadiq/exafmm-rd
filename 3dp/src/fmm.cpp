@@ -18,12 +18,12 @@ rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
     cs = tree.get_cells();
     if(verbose) check_tree(cs);
 
-    printf("cs[0].crange = %d,%d\n", cs[0].crange.offset, cs[0].crange.number);
+    if(verbose) printf("cs[0].crange = %d,%d\n", cs[0].crange.offset, cs[0].crange.number);
 
     /* traverse to get interaction list */
     traverser.traverse(tree, args.cycle, args.images);
     cs = traverser.get_cells();
-    printf("cell.size() = %ld\n", cs.size());
+    if(verbose) printf("cell.size() = %ld\n", cs.size());
     if(verbose) check_traverser(traverser);
 
     init_cell_matrix(cs);
@@ -80,7 +80,7 @@ void rtfmm::LaplaceFMM::M2M()
     TIME_BEGIN(M2M);
     int min_depth = get_min_depth(cs);
     int max_depth = get_max_depth(cs);
-    printf("min_depth = %d, max_depth = %d\n", min_depth, max_depth);
+    if(verbose) printf("min_depth = %d, max_depth = %d\n", min_depth, max_depth);
     for(int depth = max_depth; depth >= min_depth; depth--)
     {
         Indices nlcidx = get_nonleaf_cell_indices(cs, depth);
@@ -131,7 +131,7 @@ void rtfmm::LaplaceFMM::L2L()
     TIME_BEGIN(L2L);
     int min_depth = get_min_depth(cs);
     int max_depth = get_max_depth(cs);
-    printf("min_depth = %d, max_depth = %d\n", min_depth, max_depth);
+    if(verbose) printf("min_depth = %d, max_depth = %d\n", min_depth, max_depth);
     for(int depth = min_depth; depth <= max_depth; depth++)
     {
         Indices nlcidx = get_nonleaf_cell_indices(cs, depth);

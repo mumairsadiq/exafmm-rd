@@ -24,6 +24,7 @@ int main(int argc, char* argv[])
     rtfmm::Cell3 cell;
     cell.brange = {0, args.n};
     kernel.p2p(bs, res_direct, cell, cell);
+    rtfmm::dipole_correction(res_direct, args.cycle);
 
     /* compare */
     rtfmm::print_bodies(res_fmm, 3, 0, "res_fmm");
