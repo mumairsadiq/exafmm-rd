@@ -9,7 +9,7 @@ rtfmm::Argument::Argument(int argc, char* argv[])
     
     cmdline::parser cmd;
     cmd.add<int>("P", 'P', "point number per edge of surface point box", false, 4, cmdline::range(2, 32));
-    cmd.add<int>("nbody", 'n', "number of bodies", false, 1000, cmdline::range(1, (int)std::pow(2,16)));
+    cmd.add<int>("nbody", 'n', "number of bodies", false, 1000);
     cmd.add<int>("ncrit", 'm', "minimum number of bodies per leaf box", false, 16);
     cmd.add<int>("timing", 't', "if measure execution time of computational steps", false, 1);
     cmd.add<int>("images", 'i', "periodic images depth", false, 0, cmdline::range(0, 20));
@@ -20,6 +20,7 @@ rtfmm::Argument::Argument(int argc, char* argv[])
     cmd.add<int>("th_num", 0, "number of omp threads", false, 4);
     cmd.add<int>("seed", 0, "random seed", false, 5);
     cmd.add<std::string>("algorithm", 'a', "algorithms", false, "fde");
+    cmd.add<int>("check_tree", 0, "if check tree", false, 1);
     cmd.parse_check(argc, argv);
     P = cmd.get<int>("P");
     n = cmd.get<int>("nbody");
@@ -39,6 +40,7 @@ rtfmm::Argument::Argument(int argc, char* argv[])
     enable_fmm = CONTAINS(algo, "f") ? 1 : 0;
     enable_direct = CONTAINS(algo, "d") ? 1 : 0;
     enable_ewald = CONTAINS(algo, "e") ? 1 : 0;
+    check_tree = cmd.get<int>("check_tree");
 
     x = vec3r(0,0,0);
     r = cycle / 2;
@@ -47,5 +49,5 @@ rtfmm::Argument::Argument(int argc, char* argv[])
 void rtfmm::Argument::show()
 {
     printf("[P=%d, n=%d, r=%.4f, x=(%.3f,%.3f,%.3f), ncrit=%d, timing=%d, images=%d, cycle=%.4f, verbose=%d]\n", P, n, r, x[0], x[1], x[2], ncrit, timing, images, cycle, verbose);
-    printf("[num_compare = %d, ewald_ksize = %d, th_num = %d, seed = %d, (f,d,e) = (%d,%d,%d)]\n", num_compare, ewald_ksize, th_num, seed, enable_fmm, enable_direct, enable_ewald);
+    printf("[num_compare = %d, ewald_ksize = %d, th_num = %d, seed = %d, (f,d,e) = (%d,%d,%d), check_tree = %d]\n", num_compare, ewald_ksize, th_num, seed, enable_fmm, enable_direct, enable_ewald, check_tree);
 }

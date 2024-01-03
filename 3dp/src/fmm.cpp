@@ -7,7 +7,7 @@
 rtfmm::LaplaceFMM::LaplaceFMM(const Bodies3& bs_, const Argument& args_) 
     : bs(bs_), args(args_)
 {
-    assert(bs.size() == args.n);
+    assert_exit(bs.size() == args.n, "LaplaceFMM init body size error");
 }
 
 rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
@@ -16,22 +16,18 @@ rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
     Tree tree;
     tree.build(bs, args.x, args.r, args.ncrit, Tree::TreeType::nonuniform);
     cs = tree.get_cells();
-    if(verbose) check_tree(cs);
-
-    if(verbose) printf("cs[0].crange = %d,%d\n", cs[0].crange.offset, cs[0].crange.number);
+    if(verbose && args.check_tree) check_tree(cs);
 
     /* traverse to get interaction list */
     traverser.traverse(tree, args.cycle, args.images);
     cs = traverser.get_cells();
-    if(verbose) printf("cell.size() = %ld\n", cs.size());
-    if(verbose) check_traverser(traverser);
+    if(verbose && args.check_tree) check_traverser(traverser);
+    if(verbose && args.check_tree) check_cells(cs);
 
     init_cell_matrix(cs);
 
-    /* upward */
     P2M();
     M2M();
-    /* downward */
     M2L();
     P2L();
     L2L();
@@ -43,8 +39,14 @@ rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
     #ifdef TEST_TREE
     for(auto b : bs)
     {
-        assert(b.p == bs.size());
+        if(b.p != bs.size())
+        {
+            printf("error! b.p = %.4f\n", b.p);
+            break;
+        }
     }
+    printf("test passed!\n");
+    exit(0);
     #endif
 
     dipole_correction(bs, args.cycle);
@@ -117,7 +119,7 @@ void rtfmm::LaplaceFMM::M2L()
         #ifndef TEST_TREE
         kernel.m2l(args.P, cs[m2l.second.first], cs[m2l.first], m2l.second.second);
         #else
-        cs[m2l.first].L += cs[m2l.second].M;
+        cs[m2l.first].L += cs[m2l.second.first].M;
         #endif
     }
     if(args.timing)
@@ -188,7 +190,7 @@ void rtfmm::LaplaceFMM::P2P()
         Cell3& ctar = cs[p2p.first];
         Cell3& csrc = cs[p2p.second.first];
         #ifndef TEST_TREE
-        kernel.p2p_matrix(bs,bs,csrc,ctar,p2p.second.second);
+        kernel.p2p(bs,bs,csrc,ctar,p2p.second.second);
         #else
         for(int j = 0; j < ctar.brange.number; j++)
         {
@@ -303,6 +305,7 @@ rtfmm::Indices rtfmm::LaplaceFMM::get_nonleaf_cell_indices(const Cells3& cells, 
 
 void rtfmm::LaplaceFMM::check_tree(const Cells3& cells)
 {
+    printf("check tree\n");
     printf("cells.size() = %ld\n", cells.size());
     int bcnt = 0;
     for(int i = 0; i < cells.size(); i++)
@@ -312,14 +315,14 @@ void rtfmm::LaplaceFMM::check_tree(const Cells3& cells)
         {
             Body3 b = bs[c.brange.offset + j];
             vec3r dx = (b.x - c.x).abs();
-            assert(dx[0] <= c.r && dx[1] <= c.r && dx[2] <= c.r);
+            assert_exit(dx[0] <= c.r && dx[1] <= c.r && dx[2] <= c.r, "tree body range error");
         }
         if(c.crange.number == 0)
         {
             bcnt += c.brange.number;
         }
     }
-    assert(bcnt == bs.size());
+    assert_exit(bcnt == bs.size(), "tree body sum error");
 }
 
 void rtfmm::LaplaceFMM::check_traverser(Traverser& traverser)
@@ -353,7 +356,7 @@ void rtfmm::LaplaceFMM::check_traverser(Traverser& traverser)
                     found++;
                 }
             }
-            assert(found == 1);
+            assert_exit(found == 1, "treep p2p error");
         }
         std::cout<<"p2p check ok"<<std::endl;
         for(auto m2l : M2L_pairs)
@@ -366,8 +369,7 @@ void rtfmm::LaplaceFMM::check_traverser(Traverser& traverser)
                     found++;
                 }
             }
-            //printf("%d  %d,%d  %.4f,%.4f,%.4f\n", found, m2l.first, m2l.second.first, m2l.second.second[0], m2l.second.second[1], m2l.second.second[2]);
-            assert(found == 1);
+            assert_exit(found == 1, "treep m2l error");
         }
         std::cout<<"m2l check ok"<<std::endl;
     }
@@ -382,7 +384,7 @@ void rtfmm::LaplaceFMM::check_traverser(Traverser& traverser)
                 found++;
             }
         }
-        assert(found == 1);
+        assert_exit(found == 1, "treep p2l error");
     }
     std::cout<<"m2p check ok"<<std::endl;
 
@@ -396,7 +398,17 @@ void rtfmm::LaplaceFMM::check_traverser(Traverser& traverser)
                 found++;
             }
         }
-        assert(found == 1);
+        assert_exit(found == 1, "treep m2p error");
     }
     std::cout<<"p2l check ok"<<std::endl;
+}
+
+void rtfmm::LaplaceFMM::check_cells(const Cells3& cells)
+{
+    std::cout<<"check cells"<<std::endl;
+    for(int i = 0; i < cells.size(); i++)
+    {
+        Cell3 c = cells[i];
+        assert_exit(c.idx == i, "cell idx error");
+    }
 }

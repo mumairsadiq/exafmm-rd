@@ -25,6 +25,7 @@ void rtfmm::Tree::build_uniform_octree(Bodies3& bodies, vec3r x, real r, int max
     std::queue<int> big_cells;
     int num_body = bodies.size();
     Cell3 root;
+    root.idx = 0;
     root.depth = 0;
     root.r = r;
     root.x = x;
@@ -83,6 +84,7 @@ void rtfmm::Tree::build_uniform_octree(Bodies3& bodies, vec3r x, real r, int max
             for(int i = 0; i < 8; i++)
             {
                 Cell3 child_cell;
+                child_cell.idx = this->cells.size();
                 child_cell.depth = branch_cell.depth + 1;
                 child_cell.r = branch_cell.r / 2;
                 child_cell.crange = Range(0,0);
@@ -109,6 +111,7 @@ void rtfmm::Tree::build_nonuniform_octree(Bodies3& bodies, vec3r x, real r, int 
     std::queue<int> big_cells;
     int num_body = bodies.size();
     Cell3 root;
+    root.idx = 0;
     root.depth = 0;
     root.r = r;
     root.x = x;
@@ -172,6 +175,7 @@ void rtfmm::Tree::build_nonuniform_octree(Bodies3& bodies, vec3r x, real r, int 
                 if(quad_num[i] > 0)
                 {
                     Cell3 child_cell;
+                    child_cell.idx = this->cells.size();
                     child_cell.depth = branch_cell.depth + 1;
                     child_cell.r = branch_cell.r / 2;
                     child_cell.crange = Range(0,0);

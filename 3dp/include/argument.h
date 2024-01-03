@@ -31,6 +31,7 @@ public:
     int enable_fmm;
     int enable_direct;
     int enable_ewald;
+    int check_tree;
 };
 
 }

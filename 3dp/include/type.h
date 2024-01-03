@@ -20,6 +20,18 @@ using Indices = std::vector<int>;
 
 using real = double;
 
+/**
+ * @brief alert error message and exit if conditon is false
+*/
+inline void assert_exit(bool condition, std::string err_msg)
+{
+    if(!condition)
+    {
+        std::cout<<"error : "<<err_msg<<std::endl;
+        exit(1);
+    }
+}
+
 template<int N, typename T>
 class vec
 {
@@ -296,6 +308,12 @@ struct OffsetAndNumber
 
     OffsetAndNumber(){}
     OffsetAndNumber(int offset_, int number_) : offset(offset_), number(number_){}
+
+    friend std::ostream &operator<<(std::ostream & os, const OffsetAndNumber & on) 
+    {
+        os << "[" << on.offset << "," << on.number << "]";
+        return os;
+    }
 };
 
 using Range = OffsetAndNumber;

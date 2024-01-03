@@ -114,6 +114,7 @@ void rtfmm::Traverser::horizontal_periodic_near(real cycle)
     if(verbose) printf("horizontal_periodic_near\n");
     /* images == 1 */
     Cell3 c;
+    c.idx = cells.size();
     c.depth = -1;
     c.r = cells[0].r * 3;
     c.x = cells[0].x;
@@ -143,6 +144,7 @@ void rtfmm::Traverser::horizontal_periodic_far(real cycle, int images)
     for(int m = 1; m < images; m++)
     {
         Cell3 c;
+        c.idx = cells.size();
         c.depth = -1 - m;
         c.r = cells[child_idx].r * 3;
         c.x = cells[child_idx].x;
@@ -221,7 +223,7 @@ int rtfmm::Traverser::adjacent(int a, int b, vec3r offset)
     Cell3 ca = cells[a];
     Cell3 cb = cells[b];
     vec3r dx = (ca.x - cb.x - offset).abs();
-    real dist = ca.r + cb.r;
+    real dist = (ca.r + cb.r) * 1.001;  //warning : DO NOT ignore the float error
     return dx[0] <= dist && dx[1] <= dist && dx[2] <= dist;
 }
 

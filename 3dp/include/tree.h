@@ -8,6 +8,7 @@ namespace rtfmm
 
 struct Cell3
 {
+    int idx;
     int depth;
     real r;
     vec3r x;
@@ -23,6 +24,18 @@ struct Cell3
     {
         M = 0;
         L = 0;
+    }
+
+    friend std::ostream &operator<<(std::ostream & os, const Cell3 & cell) 
+    {
+        os << "---[cell]--- "
+        <<"idx=" << cell.idx
+        << ",depth=" << cell.depth
+        << ",r=" << cell.r
+        <<",center=" << cell.x
+        << ",crange=" << cell.crange
+        << ",brange=" << cell.brange;
+        return os;
     }
 };
 

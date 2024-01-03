@@ -46,7 +46,7 @@ rtfmm::Matrix rtfmm::get_bodies_q(rtfmm::Bodies3& bs, Range range)
 
 void rtfmm::set_boides_p(Bodies3& bs, Matrix& ps, Range range)
 {
-    assert(ps.m * ps.n == range.number);
+    assert_exit(ps.m * ps.n == range.number, "set_boides_p number error");
     int num = range.number;
     for(int i = 0; i < num; i++)
     {
@@ -56,7 +56,7 @@ void rtfmm::set_boides_p(Bodies3& bs, Matrix& ps, Range range)
 
 void rtfmm::add_boides_p(Bodies3& bs, Matrix& ps, Range range)
 {
-    assert(ps.m * ps.n == range.number);
+    assert_exit(ps.m * ps.n == range.number, "add_boides_p number error");
     int num = range.number;
     for(int i = 0; i < num; i++)
     {
@@ -66,7 +66,7 @@ void rtfmm::add_boides_p(Bodies3& bs, Matrix& ps, Range range)
 
 void rtfmm::set_boides_f(Bodies3& bs, Matriv& fs, Range range)
 {
-    assert(fs.m * fs.n == range.number);
+    assert_exit(fs.m * fs.n == range.number, "set_boides_f number error");
     int num = range.number;
     for(int i = 0; i < num; i++)
     {
@@ -76,7 +76,7 @@ void rtfmm::set_boides_f(Bodies3& bs, Matriv& fs, Range range)
 
 void rtfmm::add_boides_f(Bodies3& bs, Matriv& fs, Range range)
 {
-    assert(fs.m * fs.n == range.number);
+    assert_exit(fs.m * fs.n == range.number, "add_boides_f number error");
     int num = range.number;
     for(int i = 0; i < num; i++)
     {
@@ -116,7 +116,7 @@ rtfmm::Bodies3 rtfmm::generate_random_bodies(int num, rtfmm::real r, vec3r offse
 
 rtfmm::BodyCompareResult rtfmm::compare(const Bodies3& bs1, const Bodies3& bs2, std::string name1, std::string name2, int num_compare)
 {
-    assert(bs1.size() == bs2.size());
+    assert_exit(bs1.size() == bs2.size(), "inconsistent size in comparison");
 
     BodyCompareResult res;
     res.name1 = name1;
@@ -140,7 +140,8 @@ rtfmm::BodyCompareResult rtfmm::compare(const Bodies3& bs1, const Bodies3& bs2, 
         fdif += diff.norm();
         fnrm += b2.f.norm();
         int flag = diff.r() > 1 ? 1 : 0;
-        /*printf("[%d]  %d  %.4f(%.4f,%.4f,%.4f)      %.12f (%.12f,%.12f,%.12f)   %.12f (%.12f,%.12f,%.12f)   %.12f (%.12f,%.12f,%.12f)\n", 
+        /*if(flag)
+        printf("[%d]  %d  %.4f(%.4f,%.4f,%.4f)      %.8f (%.8f,%.8f,%.8f)   %.8f (%.8f,%.8f,%.8f)   %.8f (%.8f,%.8f,%.8f)\n", 
             i, flag,
             b1.q, b1.x[0], b1.x[1], b1.x[2],
             b1.p, b1.f[0], b1.f[1], b1.f[2],

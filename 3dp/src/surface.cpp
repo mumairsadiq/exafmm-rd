@@ -27,11 +27,7 @@ std::vector<rtfmm::vec3r> rtfmm::get_surface_points(int p, real r, vec3r x)
         vec3r& p = points[i];
         p = p * r + x;
     }
-    if(points.size() != num)
-    {
-        printf("point number error ! %ld, %d\n", points.size(), num);
-        exit(0);
-    }
-    //printf("surface point number = %d\n", num);
+    assert_exit(points.size() == num, "surface point number error");
+
     return points;
 }

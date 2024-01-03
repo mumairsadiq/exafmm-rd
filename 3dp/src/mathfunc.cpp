@@ -10,7 +10,7 @@ rtfmm::Matrix rtfmm::mat_vec_mul(Matrix A, Matrix b)
 
 rtfmm::Matrix rtfmm::mat_mat_add(Matrix A, Matrix B)
 {
-    assert(A.m == B.m && A.n == B.n);
+    assert_exit(A.m == B.m && A.n == B.n, "mat_mat_add inconsitent size");
     int m = A.m, n = A.n;
     Matrix C(m,n);
     for(int j = 0; j < m; j++)
