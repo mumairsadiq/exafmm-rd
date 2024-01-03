@@ -254,3 +254,8 @@ void rtfmm::dipole_correction(Bodies3& bs, real cycle)
         bs[i].f -= coef * dipole;
     }
 }
+
+void rtfmm::LaplaceKernel::precompute()
+{
+    
+}

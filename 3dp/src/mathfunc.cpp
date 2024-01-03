@@ -51,8 +51,17 @@ void rtfmm::svd(Matrix A, Matrix& U, Matrix& S, Matrix& VT)
     dgesvd_(&jobu, &jobvt, &n, &m, A.d.data(), &n, s.d.data(), vt.d.data(), &n, u.d.data(), &k, wbuff.d.data(), &lwork,&info);
 
     U = u;
-    S = s;
     VT = vt;
+    S = Matrix(m,n);
+
+    for(int j = 0; j < m; j++)
+    {
+        for(int i = 0; i < n; i++)
+        {
+            if(i == j && j < k) S[j * n + i] = s[j];
+            else S[j * n + i] = 0;
+        }
+    }
 }
 
 rtfmm::Matrix rtfmm::transpose(Matrix A)
@@ -72,33 +81,32 @@ rtfmm::Matrix rtfmm::transpose(Matrix A)
 
 rtfmm::Matrix rtfmm::linear_equation_system_svd(Matrix A, Matrix b)
 {
-    int m = A.m, n = A.n;
-    int k = std::min(m, n);
-    Matrix U(m,m), S(k,1), VT(n,n);
+    Matrix U, S, VT;
     svd(A, U, S, VT);
     Matrix UT = transpose(U);
     Matrix V = transpose(VT);
-    Matrix Sinv(m,n);
+    Matrix Sinv = pseudo_inverse(S);
+    Matrix UTb = mat_vec_mul(UT, b);
+    Matrix SinvUTb = mat_vec_mul(Sinv, UTb);
+    Matrix x = mat_vec_mul(V, SinvUTb);
+    return x;
+}
+
+rtfmm::Matrix rtfmm::pseudo_inverse(Matrix S)
+{
+    int m = S.m, n = S.n;
+    int k = std::min(m, n);
     real s_max = 0;
     const real EPS = 4 * 1e-16;
     for(int i = 0; i < k; i++)
     {
-        s_max = std::max(s_max, S[i]);
+        s_max = std::max(s_max, S[i * n + i]);
     }
-    for(int j = 0; j < m; j++)
+    for(int i = 0; i < k; i++)
     {
-        for(int i = 0; i < n; i++)
-        {
-            if(i == j && j < k) Sinv[j * n + i] = S[j] > s_max * EPS ? 1.0 / S[j] : 0.0;
-            else Sinv[j * n + i] = 0;
-        }
+        S[i * n + i] = S[i * n + i] > s_max * EPS ? 1.0 / S[i * n + i] : 0.0;
     }
-    Sinv = transpose(Sinv);
-    /* x = V * S^-1 * U^T * b */
-    Matrix UTp = mat_vec_mul(UT, b);
-    Matrix SinvUTp = mat_vec_mul(Sinv, UTp);
-    Matrix x = mat_vec_mul(V, SinvUTp);
-    return x;
+    return transpose(S);
 }
 
 void rtfmm::print_matrix(Matrix& A)

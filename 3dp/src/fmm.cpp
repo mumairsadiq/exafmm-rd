@@ -113,14 +113,19 @@ void rtfmm::LaplaceFMM::M2M()
 void rtfmm::LaplaceFMM::M2L()
 {
     TIME_BEGIN(M2L);
-    PeriodicInteractionPairs m2l_pairs = traverser.get_pairs(OperatorType::M2L);
-    for(auto m2l : m2l_pairs)
+    PeriodicInteractionMap m2l_map = traverser.get_map(OperatorType::M2L);
+    #pragma omp parallel for
+    for(int i = 0; i < m2l_map.size(); i++)
     {
-        #ifndef TEST_TREE
-        kernel.m2l(args.P, cs[m2l.second.first], cs[m2l.first], m2l.second.second);
-        #else
-        cs[m2l.first].L += cs[m2l.second.first].M;
-        #endif
+        auto m2l_list = m2l_map.begin();
+        std::advance(m2l_list, i);
+        Cell3& ctar = cs[m2l_list->first];
+        for(int i = 0; i < m2l_list->second.size(); i++)
+        {
+            Cell3& csrc = cs[m2l_list->second[i].first];
+            vec3r offset_src = m2l_list->second[i].second;
+            kernel.m2l(args.P, csrc, ctar, offset_src);
+        }
     }
     if(args.timing)
     {

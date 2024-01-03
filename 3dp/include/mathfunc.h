@@ -44,7 +44,7 @@ Matrix mat_mat_mul(Matrix A, Matrix B);
  * 
  * @param A input matrix A (m x n)
  * @param U output matrix U (m x m)
- * @param S output vector S (k x 1, k = min(m,n)) 
+ * @param S output vector S (m x n) 
  * @param VT output matrix VT (n x n)
  */
 void svd(Matrix A, Matrix& U, Matrix& S, Matrix& VT);
@@ -63,6 +63,13 @@ Matrix transpose(Matrix A);
  * @return x (n x 1)
  */
 Matrix linear_equation_system_svd(Matrix A, Matrix b);
+
+/**
+ * @brief get pseudo inversed matrix of S
+ * @param S diagonal matrix S(m x n)
+ * @param 
+*/
+Matrix pseudo_inverse(Matrix S);
 
 void print_matrix(Matrix& mat);
 

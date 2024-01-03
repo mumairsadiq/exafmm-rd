@@ -50,12 +50,12 @@ void rtfmm::Traverser::horizontal_origin(int tc, int sc, int tcp, int scp, vec3r
         else if(neighbour(tcp, scp, offset))
         {
             M2L_pairs.push_back(make_pair(tc, sc, offset));
+            M2L_map[tc].push_back(std::make_pair(sc, offset));
         }
         else
         {
             if(is_leaf(tc) && is_leaf(sc))
             {
-                //M2L_pairs.push_back(make_pair(tc, sc));
                 printf("here\n");
             }
             else if(!is_leaf(tc) && is_leaf(sc))
@@ -175,6 +175,7 @@ void rtfmm::Traverser::horizontal_periodic_far(real cycle, int images)
                                 int oy = py * 3 + cy;
                                 int oz = pz * 3 + cz;
                                 M2L_pairs.push_back(make_pair(0,icell_idx,vec3r(ox,oy,oz) * cycle));
+                                M2L_map[0].push_back(std::make_pair(icell_idx, vec3r(ox,oy,oz) * cycle));
                             }
                         }
                     }
@@ -184,37 +185,6 @@ void rtfmm::Traverser::horizontal_periodic_far(real cycle, int images)
         idx++;
 
         cycle *= 3;
-    }
-}
-
-void rtfmm::Traverser::horizontal_periodic_far2(real cycle, int images)
-{
-    if(verbose) printf("horizontal_periodic_far2\n");
-    int pdm = (std::pow(3, images - 1) - 1) / 2;
-    if(verbose) printf("pdm = %d\n", pdm);
-    for(int pz = -pdm; pz <= pdm; pz++)
-    {
-        for(int py = -pdm; py <= pdm; py++)
-        {
-            for(int px = -pdm; px <= pdm; px++)
-            {
-                if(px == 0 && py == 0 && pz == 0) 
-                    continue;
-                for(int cz = -1; cz <= 1; cz++)
-                {
-                    for(int cy = -1; cy <= 1; cy++)
-                    {
-                        for(int cx = -1; cx <= 1; cx++)
-                        {
-                            int ox = px * 3 + cx;
-                            int oy = py * 3 + cy;
-                            int oz = pz * 3 + cz;
-                            M2L_pairs.push_back(make_pair(0,0,vec3r(ox,oy,oz) * cycle));
-                        }
-                    }
-                }
-            }
-        }
     }
 }
 
@@ -245,5 +215,15 @@ rtfmm::PeriodicInteractionPairs rtfmm::Traverser::get_pairs(OperatorType type)
         case OperatorType::M2L : return M2L_pairs; break;
         case OperatorType::M2P : return M2P_pairs; break;
         case OperatorType::P2L : return P2L_pairs; break;
+        default: return PeriodicInteractionPairs();
+    }
+}
+
+rtfmm::PeriodicInteractionMap rtfmm::Traverser::get_map(OperatorType type)
+{
+    switch(type)
+    {
+        case OperatorType::M2L : return M2L_map; break;
+        default: return PeriodicInteractionMap();
     }
 }

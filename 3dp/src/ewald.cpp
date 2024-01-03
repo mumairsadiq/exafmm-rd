@@ -99,7 +99,7 @@ void rtfmm::EwaldSolver::fourier_part()
     #else
     rtfmm::real coef = 8 * M_PI / std::pow(args.cycle,3);
     #endif
-    #pragma omp parllel for
+    #pragma omp parallel for
     for (int w = 0; w < waves.size(); w++) 
     {
         rtfmm::real k2 = waves[w].K.norm() * scale * scale;
@@ -176,7 +176,7 @@ void rtfmm::EwaldSolver::real_p2p(int this_cell_idx, int that_cell_idx, rtfmm::v
 
 void rtfmm::EwaldSolver::DFT(std::vector<Wave>& ws, std::vector<rtfmm::Body3>& bs)
 {
-    #pragma omp paralle for
+    #pragma omp parallel for
     for (int w = 0; w < ws.size(); w++) 
     {                     
         for (int i = 0; i < bs.size(); i++)  
@@ -190,7 +190,7 @@ void rtfmm::EwaldSolver::DFT(std::vector<Wave>& ws, std::vector<rtfmm::Body3>& b
 
 void rtfmm::EwaldSolver::IDFT(std::vector<Wave>& ws, std::vector<rtfmm::Body3>& bs)
 {
-    #pragma omp paralle for
+    #pragma omp parallel for
     for (int i = 0; i < bs.size(); i++)
     {
         for (int w = 0; w < ws.size(); w++)

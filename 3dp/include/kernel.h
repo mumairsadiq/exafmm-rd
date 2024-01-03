@@ -31,6 +31,8 @@ public:
 
     void p2l(int P, Bodies3& bs_src, Cell3& cell_src, Cell3& cell_tar, vec3r offset = vec3r(0,0,0));
 
+    void precompute();
+
 private:
     Matrix get_p2p_matrix(
         std::vector<vec3r>& x_src, 

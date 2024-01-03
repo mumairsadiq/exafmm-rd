@@ -1,5 +1,6 @@
 #pragma once
 #include "tree.h"
+#include <map>
 
 namespace rtfmm
 {
@@ -8,6 +9,8 @@ using InteractionPair = std::pair<int, int>;
 using PeriodicInteractionPair = std::pair<int, std::pair<int, vec3r>>;
 using InteractionPairs = std::vector<InteractionPair>;
 using PeriodicInteractionPairs = std::vector<PeriodicInteractionPair>;
+
+using PeriodicInteractionMap = std::map<int, std::vector<std::pair<int, vec3r>>>;
 
 InteractionPair make_pair(int tar, int src);
 PeriodicInteractionPair make_pair(int tar, int src, vec3r offset);
@@ -30,6 +33,8 @@ public:
 
     PeriodicInteractionPairs get_pairs(OperatorType type);
 
+    PeriodicInteractionMap get_map(OperatorType type);
+
     Cells3 get_cells() {return cells;}
 
 private:
@@ -47,8 +52,6 @@ private:
 
     void horizontal_periodic_far(real cycle, int image);
 
-    void horizontal_periodic_far2(real cycle, int image);
-
     int adjacent(int a, int b, vec3r offset = vec3r(0,0,0));
 
     int neighbour(int a, int b, vec3r offset = vec3r(0,0,0));
@@ -62,6 +65,8 @@ public:
     PeriodicInteractionPairs M2L_pairs;
     PeriodicInteractionPairs M2P_pairs;
     PeriodicInteractionPairs P2L_pairs;
+
+    PeriodicInteractionMap M2L_map;
 };
 
 }
