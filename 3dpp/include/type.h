@@ -277,6 +277,7 @@ public:
 
 using vec2r = vec<2, real>;
 using vec3r = vec<3, real>;
+using vec3i = vec<3, int>;
 
 template<typename T>
 struct MatrixBase
