@@ -132,13 +132,13 @@ void rtfmm::LaplaceKernel::m2l_fft(int P, Cell3& cell_src, Cell3& cell_tar, vec3
 {
     assert_exit(cell_src.depth == cell_tar.depth, "depth not equal");
     real r = cell_src.r * 1.05;
-    vec3r pos = cell_src.x + offset - cell_tar.x;
-    std::vector<rtfmm::vec3r> x_equiv = get_surface_points(P, r, pos);
+    vec3r relative_pos = cell_src.x + offset - cell_tar.x;
+    std::vector<rtfmm::vec3r> x_equiv = get_surface_points(P, r, relative_pos);
 
     rtfmm::real delta = 2 * r / (P - 1);
     int N = 2 * P - 1;
     rtfmm::real gsize = r * 2;
-    std::vector<rtfmm::vec3r> grid = get_conv_grid(N, gsize, delta, pos);
+    std::vector<rtfmm::vec3r> grid = get_conv_grid(N, gsize, delta, relative_pos);
     std::vector<rtfmm::real> G = get_G_matrix(grid, N);
     std::map<int,rtfmm::vec3i> surf_conv_map = get_surface_conv_map(P);
     std::vector<rtfmm::real> Q = get_Q_matrix(cell_src.q_equiv, N, surf_conv_map);

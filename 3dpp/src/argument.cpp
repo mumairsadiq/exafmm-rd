@@ -51,5 +51,5 @@ rtfmm::Argument::Argument(int argc, char* argv[])
 void rtfmm::Argument::show()
 {
     printf("[P=%d, n=%d, r=%.4f, x=(%.3f,%.3f,%.3f), ncrit=%d, timing=%d, images=%d, cycle=%.4f, verbose=%d, use_fft = %d]\n", P, n, r, x[0], x[1], x[2], ncrit, timing, images, cycle, verbose, use_fft);
-    printf("[num_compare = %d, ewald_ksize = %d, th_num = %d, seed = %d, (f,d,e) = (%d,%d,%d), check_tree = %d]\n", num_compare, ewald_ksize, th_num, seed, enable_fmm, enable_direct, enable_ewald, check_tree);
+    printf("[num_compare = %d, ewald_ksize = %d, th_num = %d, seed = %d, (f,d,e) = (%d,%d,%d), check_tree = %d]\n\n", num_compare, ewald_ksize, th_num, seed, enable_fmm, enable_direct, enable_ewald, check_tree);
 }

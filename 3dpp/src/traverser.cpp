@@ -174,8 +174,10 @@ void rtfmm::Traverser::horizontal_periodic_far(real cycle, int images)
                                 int ox = px * 3 + cx;
                                 int oy = py * 3 + cy;
                                 int oz = pz * 3 + cz;
-                                M2L_pairs.push_back(make_pair(0,icell_idx,vec3r(ox,oy,oz) * cycle));
-                                M2L_map[0].push_back(std::make_pair(icell_idx, vec3r(ox,oy,oz) * cycle));
+                                //M2L_pairs.push_back(make_pair(0,icell_idx,vec3r(ox,oy,oz) * cycle));
+                                //M2L_map[0].push_back(std::make_pair(icell_idx, vec3r(ox,oy,oz) * cycle));
+                                M2L_pairs.push_back(make_pair(icell_idx,icell_idx,vec3r(ox,oy,oz) * cycle));
+                                M2L_map[icell_idx].push_back(std::make_pair(icell_idx, vec3r(ox,oy,oz) * cycle));
                             }
                         }
                     }
