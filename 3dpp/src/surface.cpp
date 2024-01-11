@@ -31,3 +31,23 @@ std::vector<rtfmm::vec3r> rtfmm::get_surface_points(int p, real r, vec3r x)
 
     return points;
 }
+
+std::vector<rtfmm::vec3r> rtfmm::get_conv_grid(int grid_len, rtfmm::real gmin, rtfmm::real delta, rtfmm::vec3r offset)
+{
+    std::vector<rtfmm::vec3r> grid;
+    for(int k = 0; k < grid_len; k++)
+    {
+        for(int j = 0; j < grid_len; j++)
+        {
+            for(int i = 0; i < grid_len; i++)
+            {
+                rtfmm::real x = -gmin + i * delta;
+                rtfmm::real y = -gmin + j * delta;
+                rtfmm::real z = -gmin + k * delta;
+                rtfmm::vec3r point(x,y,z);
+                grid.push_back(point - offset);
+            }
+        }
+    }
+    return grid;
+}

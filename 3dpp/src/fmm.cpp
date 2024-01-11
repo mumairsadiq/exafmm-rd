@@ -114,17 +114,18 @@ void rtfmm::LaplaceFMM::M2L()
 {
     TIME_BEGIN(M2L);
     PeriodicInteractionMap m2l_map = traverser.get_map(OperatorType::M2L);
-    #pragma omp parallel for
+    //#pragma omp parallel for
     for(int i = 0; i < m2l_map.size(); i++)
     {
         auto m2l_list = m2l_map.begin();
         std::advance(m2l_list, i);
         Cell3& ctar = cs[m2l_list->first];
-        for(int i = 0; i < m2l_list->second.size(); i++)
+        for(int j = 0; j < m2l_list->second.size(); j++)
         {
-            Cell3& csrc = cs[m2l_list->second[i].first];
-            vec3r offset_src = m2l_list->second[i].second;
-            kernel.m2l(args.P, csrc, ctar, offset_src);
+            Cell3& csrc = cs[m2l_list->second[j].first];
+            vec3r offset_src = m2l_list->second[j].second;
+            if(args.use_fft) kernel.m2l_fft(args.P, csrc, ctar, offset_src);
+            else kernel.m2l(args.P, csrc, ctar, offset_src);
         }
     }
     if(args.timing)

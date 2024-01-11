@@ -28,25 +28,6 @@ static std::map<int,rtfmm::vec3i> get_surface_conv_map(int p)
     return map;
 }
 
-static std::vector<rtfmm::vec3r> get_conv_grid(int grid_len, rtfmm::real gmin, rtfmm::real delta, rtfmm::vec3r offset)
-{
-    std::vector<rtfmm::vec3r> grid;
-    for(int k = 0; k < grid_len; k++)
-    {
-        for(int j = 0; j < grid_len; j++)
-        {
-            for(int i = 0; i < grid_len; i++)
-            {
-                rtfmm::real x = -gmin + i * delta;
-                rtfmm::real y = -gmin + j * delta;
-                rtfmm::real z = -gmin + k * delta;
-                rtfmm::vec3r point(x,y,z);
-                grid.push_back(point - offset);
-            }
-        }
-    }
-    return grid;
-}
 
 static std::vector<rtfmm::real> get_G_matrix(std::vector<rtfmm::vec3r>& grid, int N)
 {
@@ -117,10 +98,10 @@ static void print_real_grid(std::vector<rtfmm::real> grid, int N)
 int main(int argc, char* argv[])
 {
     int P = argc > 1 ? atoi(argv[1]) : 6;
-    rtfmm::real r = 1 * 1.05;
+    rtfmm::real r = 3.14 * 1.05;
     rtfmm::vec3r offset(1,2,3);
     int surface_number = rtfmm::get_surface_point_num(P);
-    std::cout<<"P = "<<P<<", surface_number = "<<surface_number<<std::endl;
+    printf("P = %d, surf = %d, r = %.4f, offset = (%.2f,%.2f,%.2f)\n", P, surface_number, r, offset[0], offset[1], offset[2]);
     std::vector<rtfmm::vec3r> xs = rtfmm::get_surface_points(P, r, offset);
     std::vector<rtfmm::real> qs(surface_number);
     for(int i = 0; i < surface_number; i++)

@@ -2,6 +2,7 @@
 #include "type.h"
 #include "body.h"
 #include "tree.h"
+#include <map>
 
 namespace rtfmm
 {
@@ -22,6 +23,8 @@ public:
     void m2m_img(int P, Cell3& cell_parent, Cells3& cs, real cycle);
 
     void m2l(int P, Cell3& cell_src, Cell3& cell_tar, vec3r offset = vec3r(0,0,0));
+
+    void m2l_fft(int P, Cell3& cell_src, Cell3& cell_tar, vec3r offset = vec3r(0,0,0));
 
     void l2l(int P, Cell3& cell_parent, Cells3& cs);
 
@@ -44,5 +47,9 @@ private:
         std::vector<vec3r> x_tar, 
         Matrix q_src
     );
+
+    std::vector<rtfmm::real> get_G_matrix(std::vector<rtfmm::vec3r>& grid, int N);
+    std::vector<rtfmm::real> get_Q_matrix(Matrix& surface_q, int N, std::map<int,rtfmm::vec3i> surf_conv_map);
+    std::map<int,rtfmm::vec3i> get_surface_conv_map(int p);
 };
 };

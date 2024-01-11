@@ -3,6 +3,7 @@
 #include "surface.h"
 #include "argument.h"
 #include <omp.h>
+#include <fftw3.h>
 
 rtfmm::LaplaceKernel::LaplaceKernel()
 {
@@ -124,6 +125,61 @@ void rtfmm::LaplaceKernel::m2l(int P, Cell3& cell_src, Cell3& cell_tar, vec3r of
     // source cell equivalent charge to target cell check potential
     Matrix p_check = mat_vec_mul(e2c, cell_src.q_equiv);
     cell_tar.p_check = mat_mat_add(cell_tar.p_check, p_check);
+}
+
+
+void rtfmm::LaplaceKernel::m2l_fft(int P, Cell3& cell_src, Cell3& cell_tar, vec3r offset)
+{
+    assert_exit(cell_src.depth == cell_tar.depth, "depth not equal");
+    real r = cell_src.r * 1.05;
+    vec3r pos = cell_src.x + offset - cell_tar.x;
+    std::vector<rtfmm::vec3r> x_equiv = get_surface_points(P, r, pos);
+
+    rtfmm::real delta = 2 * r / (P - 1);
+    int N = 2 * P - 1;
+    rtfmm::real gsize = r * 2;
+    std::vector<rtfmm::vec3r> grid = get_conv_grid(N, gsize, delta, pos);
+    std::vector<rtfmm::real> G = get_G_matrix(grid, N);
+    std::map<int,rtfmm::vec3i> surf_conv_map = get_surface_conv_map(P);
+    std::vector<rtfmm::real> Q = get_Q_matrix(cell_src.q_equiv, N, surf_conv_map);
+
+    std::vector<fftw_complex> Gk(N * N * N);
+    std::vector<fftw_complex> Qk(N * N * N);
+    std::vector<fftw_complex> pk(N * N * N);
+    std::vector<rtfmm::real> p_fft_grid(N * N * N);
+    fftw_plan plan_G = fftw_plan_dft_r2c_3d(N, N, N, G.data(), Gk.data(), FFTW_ESTIMATE);
+    fftw_plan plan_Q = fftw_plan_dft_r2c_3d(N, N, N, Q.data(), Qk.data(), FFTW_ESTIMATE);
+    fftw_execute(plan_G);
+    fftw_execute(plan_Q);
+    for(int i = 0; i < N * N * N; i++)
+    {
+        rtfmm::real a = Gk[i][0];
+        rtfmm::real b = Gk[i][1];
+        rtfmm::real c = Qk[i][0];
+        rtfmm::real d = Qk[i][1];
+        pk[i][0] = a * c - b * d;
+        pk[i][1] = a * d + b * c;
+    }
+    fftw_plan plan_P = fftw_plan_dft_c2r_3d(N, N, N, pk.data(), p_fft_grid.data(), FFTW_ESTIMATE);
+    fftw_execute(plan_P);
+    for(int i = 0; i < N * N * N; i++)
+    {
+        p_fft_grid[i] /= N * N * N;
+    }
+
+    int surface_number = rtfmm::get_surface_point_num(P);
+    Matrix ps_fft(surface_number, 1);
+    for(int i = 0; i < surface_number; i++)
+    {
+        rtfmm::vec3i idx3 = surf_conv_map[i] + rtfmm::vec3i(P-1,P-1,P-1);
+        ps_fft.d[i] = p_fft_grid[idx3[2] * N * N + idx3[1] * N + idx3[0]];
+    }
+
+    fftw_destroy_plan(plan_P);
+    fftw_destroy_plan(plan_G);
+    fftw_destroy_plan(plan_Q);
+
+    cell_tar.p_check = mat_mat_add(cell_tar.p_check, ps_fft);
 }
 
 
@@ -258,4 +314,56 @@ void rtfmm::dipole_correction(Bodies3& bs, real cycle)
 void rtfmm::LaplaceKernel::precompute()
 {
     
+}
+
+std::vector<rtfmm::real> rtfmm::LaplaceKernel::get_G_matrix(std::vector<rtfmm::vec3r>& grid, int N)
+{
+    std::vector<rtfmm::real> G;
+    for(int k = 0; k < N; k++)
+    {
+        for(int j = 0; j < N; j++)
+        {
+            for(int i = 0; i < N; i++)
+            {
+                rtfmm::real r = grid[k * N * N + j * N + i].r();
+                rtfmm::real invr = r == 0 ? 0 : 1 / r;
+                G.push_back(invr);
+            }
+        }
+    }
+    return G;
+}
+
+std::vector<rtfmm::real> rtfmm::LaplaceKernel::get_Q_matrix(Matrix& surface_q, int N, std::map<int,rtfmm::vec3i> surf_conv_map)
+{
+    std::vector<rtfmm::real> Q(N * N * N);
+    int surface_number = surface_q.m * surface_q.n;
+    for(int i = 0; i < surface_number; i++)
+    {
+        rtfmm::vec3i idx = surf_conv_map[i];
+        Q[idx[2] * N * N + idx[1] * N + idx[0]] = surface_q[i];
+    }
+    return Q;
+}
+
+std::map<int,rtfmm::vec3i> rtfmm::LaplaceKernel::get_surface_conv_map(int p)
+{
+    int num = rtfmm::get_surface_point_num(p);
+    std::map<int,rtfmm::vec3i> map;
+    int cnt = 0;
+    for(int i = 0; i < p; i++)
+    {
+        for(int j = 0; j < p; j++)
+        {
+            for(int k = 0; k < p; k++)
+            {
+                if(i == 0 || i == p - 1 || j == 0 || j == p - 1 || k == 0 || k == p - 1)
+                {
+                    map[cnt] = rtfmm::vec3i(i,j,k);
+                    cnt++;
+                }
+            }
+        }
+    }
+    return map;
 }
