@@ -20,7 +20,7 @@ rtfmm::Argument::Argument(int argc, char* argv[])
     cmd.add<int>("th_num", 0, "number of omp threads", false, 4);
     cmd.add<int>("seed", 0, "random seed", false, 5);
     cmd.add<std::string>("algorithm", 'a', "algorithms", false, "fde");
-    cmd.add<int>("check_tree", 0, "if check tree", false, 1);
+    cmd.add<int>("check_tree", 0, "if check tree", false, 0);
     cmd.add<int>("use_fft", 0, "if use fft in M2L", false, 1);
     cmd.add<int>("use_precompute", 0, "if use precomputed kernel", false, 1);
     cmd.parse_check(argc, argv);

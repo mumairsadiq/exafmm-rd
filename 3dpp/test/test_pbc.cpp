@@ -24,7 +24,9 @@ int main(int argc, char* argv[])
     if(args.enable_fmm)
     {
         rtfmm::LaplaceFMM fmm(bs, args);
+        TIME_BEGIN(FMM);
         res_fmm = fmm.solve();
+        if(args.timing) {TIME_END(FMM);}
     }
 
     /* solve by ewald */
@@ -32,7 +34,9 @@ int main(int argc, char* argv[])
     if(args.enable_ewald)
     {
         rtfmm::EwaldSolver ewald(bs, args);
+        TIME_BEGIN(EWALD);
         res_ewald = ewald.solve();
+        if(args.timing) {TIME_END(EWALD);}
     }
 
     /* solve directly */
@@ -44,7 +48,7 @@ int main(int argc, char* argv[])
         cell_src.brange = {0, args.n};
         rtfmm::Cell3 cell_tar;
         cell_tar.brange = {0, args.num_compare};
-        TIME_BEGIN(direct);
+        TIME_BEGIN(DIRECT);
         int dm = (std::pow(3, args.images) - 1) / 2;
         if(rtfmm::verbose) printf("dm = %d\n", dm);
         for(int pz = -dm; pz <= dm; pz++)
@@ -59,7 +63,7 @@ int main(int argc, char* argv[])
             }
         }
         rtfmm::dipole_correction(res_direct, args.cycle);
-        if(args.timing) {TIME_END(direct);}
+        if(args.timing) {TIME_END(DIRECT);}
     }
 
     /* compare */

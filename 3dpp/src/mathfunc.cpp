@@ -1,5 +1,13 @@
 #include "mathfunc.h"
 
+void rtfmm::mat_scale(Matrix& A, real scale)
+{
+    for(int i = 0; i < A.m * A.n; i++)
+    {
+        A.d[i] *= scale;
+    }
+}
+
 rtfmm::Matrix rtfmm::mat_vec_mul(Matrix A, Matrix b)
 {
     int m = A.m, n = A.n;
@@ -25,6 +33,7 @@ rtfmm::Matrix rtfmm::mat_mat_add(Matrix A, Matrix B)
 
 rtfmm::Matrix rtfmm::mat_mat_mul(Matrix A, Matrix B)
 {
+    assert_exit(A.n == B.m, "mat_mat_mul size error");
     int m = A.m, n = A.n, k = B.n;
     Matrix C(m,k);
     cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, m, k, n, 1.0, A.d.data(), n, B.d.data(), k, 0.0, C.d.data(), k);
@@ -100,7 +109,7 @@ rtfmm::Matrix rtfmm::pseudo_inverse(Matrix S)
     const real EPS = 4 * 1e-16;
     for(int i = 0; i < k; i++)
     {
-        s_max = std::max(s_max, S[i * n + i]);
+        s_max = std::max(s_max, std::abs(S[i * n + i]));
     }
     for(int i = 0; i < k; i++)
     {

@@ -63,6 +63,25 @@ void rtfmm::LaplaceKernel::p2m(int P, Bodies3& bs_src, Cell3& cell_src)
     cell_src.q_equiv = linear_equation_system_svd(e2c, p_check);
 }
 
+void rtfmm::LaplaceKernel::p2m_precompute(int P, Bodies3& bs_src, Cell3& cell_src)
+{
+    /* get source to check matrix */
+    std::vector<vec3r> x_check = get_surface_points(P, cell_src.r * 2.95, cell_src.x);
+    std::vector<vec3r> x_src = get_bodies_x(bs_src, cell_src.brange);
+    Matrix s2c = get_p2p_matrix(x_src, x_check);
+
+    /* get check potential */
+    Matrix q_src = get_bodies_q(bs_src, cell_src.brange);
+    Matrix p_check = mat_vec_mul(s2c, q_src);
+
+    /* get equivalent charge */
+    real scale = std::pow(0.5, cell_src.depth);
+    Matrix UTb = mat_vec_mul(UT_p2m_precompute, p_check);
+    Matrix SinvUTb = mat_vec_mul(Sinv_p2m_precompute, UTb);
+    cell_src.q_equiv = mat_vec_mul(V_p2m_precompute, SinvUTb);
+    mat_scale(cell_src.q_equiv, scale);
+}
+
 
 void rtfmm::LaplaceKernel::m2m(int P, Cell3& cell_parent, Cells3& cs)
 {
@@ -82,6 +101,16 @@ void rtfmm::LaplaceKernel::m2m(int P, Cell3& cell_parent, Cells3& cs)
 
         /* parent check potential to parent equivalent charge */
         Matrix q_equiv_parent = linear_equation_system_svd(pe2pc, p_check_parent);
+        cell_parent.q_equiv = mat_mat_add(cell_parent.q_equiv, q_equiv_parent);
+    }
+}
+
+void rtfmm::LaplaceKernel::m2m_precompute(int P, Cell3& cell_parent, Cells3& cs)
+{
+    for(int i = 0; i < cell_parent.crange.number; i++)
+    {
+        Cell3& cell_child = cs[cell_parent.crange.offset + i];
+        Matrix q_equiv_parent = mat_vec_mul(matrix_m2m[cell_child.octant], cell_child.q_equiv);
         cell_parent.q_equiv = mat_mat_add(cell_parent.q_equiv, q_equiv_parent);
     }
 }
@@ -111,6 +140,17 @@ void rtfmm::LaplaceKernel::m2m_img(int P, Cell3& cell_parent, Cells3& cs, real c
                 cell_parent.q_equiv = mat_mat_add(cell_parent.q_equiv, q_equiv_parent);
             }
         }
+    }
+}
+
+
+void rtfmm::LaplaceKernel::m2m_img_precompute(int P, Cell3& cell_parent, Cells3& cs, real cycle)
+{
+    Cell3& cell_child = cs[cell_parent.crange.offset];
+    for(int octant = 0; octant < 27; octant++)
+    {
+        Matrix q_equiv_parent = mat_vec_mul(matrix_m2m_img[octant], cell_child.q_equiv);
+        cell_parent.q_equiv = mat_mat_add(cell_parent.q_equiv, q_equiv_parent);
     }
 }
 
@@ -203,6 +243,23 @@ void rtfmm::LaplaceKernel::l2l(int P, Cell3& cell_parent, Cells3& cs)
     }
 }
 
+void rtfmm::LaplaceKernel::l2l_precompute(int P, Cell3& cell_parent, Cells3& cs)
+{
+    for(int i = 0; i < cell_parent.crange.number; i++)
+    {
+        Cell3& cell_child = cs[cell_parent.crange.offset + i];
+        Matrix p_check_child = mat_vec_mul(matrix_l2l[cell_child.octant], cell_parent.p_check);
+        cell_child.p_check = mat_mat_add(cell_child.p_check, p_check_child);
+    }
+}
+
+void rtfmm::LaplaceKernel::l2l_img_precompute(int P, Cell3& cell_parent, Cells3& cs)
+{
+    Cell3& cell_child = cs[cell_parent.crange.offset];
+    Matrix p_check_child = mat_vec_mul(matrix_l2l_img, cell_parent.p_check);
+    cell_child.p_check = mat_mat_add(cell_child.p_check, p_check_child);
+}
+
 
 void rtfmm::LaplaceKernel::l2p(int P, Bodies3& bs_tar, Cell3& cell_tar)
 {
@@ -213,6 +270,28 @@ void rtfmm::LaplaceKernel::l2p(int P, Bodies3& bs_tar, Cell3& cell_tar)
 
     /* get equivalent charge */
     Matrix q_equiv = linear_equation_system_svd(e2c, cell_tar.p_check);
+
+    /* get equiv to tar matrix */
+    std::vector<vec3r> x_tar = get_bodies_x(bs_tar, cell_tar.brange);
+    Matrix e2t = get_p2p_matrix(x_equiv, x_tar);
+
+    /* get target potential and force */
+    Matrix p_tar = mat_vec_mul(e2t, q_equiv);
+    Matriv f_tar = get_force_naive(x_equiv, x_tar, q_equiv);
+    add_boides_p(bs_tar, p_tar, cell_tar.brange);
+    add_boides_f(bs_tar, f_tar, cell_tar.brange);
+}
+
+void rtfmm::LaplaceKernel::l2p_precompute(int P, Bodies3& bs_tar, Cell3& cell_tar)
+{
+    std::vector<rtfmm::vec3r> x_equiv = get_surface_points(P, cell_tar.r * 2.95, cell_tar.x);
+
+    /* get equivalent charge */
+    real scale = std::pow(0.5, cell_tar.depth);
+    Matrix UTb = mat_vec_mul(UT_l2p_precompute, cell_tar.p_check);
+    Matrix SinvUTb = mat_vec_mul(Sinv_l2p_precompute, UTb);
+    Matrix q_equiv = mat_vec_mul(V_l2p_precompute, SinvUTb);
+    mat_scale(q_equiv, scale);
 
     /* get equiv to tar matrix */
     std::vector<vec3r> x_tar = get_bodies_x(bs_tar, cell_tar.brange);
@@ -311,9 +390,106 @@ void rtfmm::dipole_correction(Bodies3& bs, real cycle)
     }
 }
 
-void rtfmm::LaplaceKernel::precompute()
+void rtfmm::LaplaceKernel::precompute(int P, real r0)
 {
     if(verbose) printf("precompute\n");
+
+    /* p2m */
+    std::vector<vec3r> x_check_up = get_surface_points(P, r0 * 2.95);
+    std::vector<vec3r> x_equiv_up = get_surface_points(P, r0 * 1.05);
+    Matrix e2c_up_precompute = get_p2p_matrix(x_equiv_up, x_check_up);
+
+    Matrix U, S, VT;
+    svd(e2c_up_precompute, U, S, VT);
+    UT_p2m_precompute = transpose(U);
+    V_p2m_precompute = transpose(VT);
+    Sinv_p2m_precompute = pseudo_inverse(S);
+
+    /* m2m */
+    std::vector<vec3r>& x_equiv_up_parent = x_equiv_up;
+    std::vector<vec3r>& x_check_up_parent = x_check_up;
+    Matrix pe2pc_up_precompute = get_p2p_matrix(x_equiv_up_parent, x_check_up_parent);
+    svd(pe2pc_up_precompute, U, S, VT);
+    Matrix UT_m2m_precompute = transpose(U);
+    Matrix V_m2m_precompute = transpose(VT);
+    Matrix Sinv_m2m_precompute = pseudo_inverse(S);
+    for(int octant = 0; octant < 8; octant++)
+    {
+        vec3r offset_child = Tree::get_child_cell_x(vec3r(0,0,0), r0, octant, 0);
+        std::vector<vec3r> x_equiv_child_up = get_surface_points(P, r0 / 2 * 1.05, offset_child);
+        Matrix ce2pc_up_precompute = get_p2p_matrix(x_equiv_child_up, x_check_up_parent);
+
+        /* (VSinv)(UTG) */
+        Matrix m1 = mat_mat_mul(UT_m2m_precompute, ce2pc_up_precompute);
+        Matrix m2 = mat_mat_mul(V_m2m_precompute, Sinv_m2m_precompute);
+        Matrix m3 = mat_mat_mul(m2, m1);
+        matrix_m2m[octant] = m3;
+    }
+
+    /* m2m image */
+    for(int octant = 0; octant < 27; octant++)
+    {
+        vec3r offset_child = Tree::get_child_cell_x(vec3r(0,0,0), r0, octant, 1);
+        std::vector<vec3r> x_equiv_child_up = get_surface_points(P, r0 / 3 * 1.05, offset_child);
+        Matrix ce2pc_up_precompute = get_p2p_matrix(x_equiv_child_up, x_check_up_parent);
+
+        /* (VSinv)(UTG) */
+        Matrix m1 = mat_mat_mul(UT_m2m_precompute, ce2pc_up_precompute);
+        Matrix m2 = mat_mat_mul(V_m2m_precompute, Sinv_m2m_precompute);
+        Matrix m3 = mat_mat_mul(m2, m1);
+        matrix_m2m_img[octant] = m3;
+    }
+
+    /* l2l */
+    std::vector<vec3r>& x_equiv_down = x_check_up;
+    std::vector<vec3r>& x_check_down = x_equiv_up;
+    Matrix pe2pc_down_precompute = get_p2p_matrix(x_equiv_down, x_check_down);
+    svd(pe2pc_down_precompute, U, S, VT);
+    Matrix UT_l2l_precompute = transpose(U);
+    Matrix V_l2l_precompute = transpose(VT);
+    Matrix Sinv_l2l_precompute = pseudo_inverse(S);
+
+    std::vector<vec3r>& x_equiv_parent_down = x_equiv_down;
+    for(int octant = 0; octant < 8; octant++)
+    {
+        vec3r offset_child = Tree::get_child_cell_x(vec3r(0,0,0), r0, octant, 0);
+        std::vector<vec3r> x_equiv_child_down = get_surface_points(P, r0 / 2 * 1.05, offset_child);
+        Matrix pe2cc_down_precompute = get_p2p_matrix(x_equiv_parent_down, x_equiv_child_down);
+
+        /* (G(VSinv))UT */
+        Matrix m1 = mat_mat_mul(V_l2l_precompute, Sinv_l2l_precompute);
+        Matrix m2 = mat_mat_mul(pe2cc_down_precompute, m1);
+        Matrix m3 = mat_mat_mul(m2, UT_l2l_precompute);
+
+        /* G((VSinv)UT)*/
+        /*Matrix m1 = mat_mat_mul(V_l2l_precompute, Sinv_l2l_precompute);
+        Matrix m2 = mat_mat_mul(m1, UT_l2l_precompute);
+        Matrix m3 = mat_mat_mul(pe2cc_down_precompute, m2);*/
+
+        matrix_l2l[octant] = m3;
+    }
+
+    /* l2l image */
+    {
+        vec3r offset_child = vec3r(0,0,0);
+        std::vector<vec3r> x_equiv_child_down = get_surface_points(P, r0 / 3 * 1.05, offset_child);
+        Matrix pe2cc_down_precompute = get_p2p_matrix(x_equiv_parent_down, x_equiv_child_down);
+
+        /* (G(VSinv))UT */
+        Matrix m1 = mat_mat_mul(V_l2l_precompute, Sinv_l2l_precompute);
+        Matrix m2 = mat_mat_mul(pe2cc_down_precompute, m1);
+        Matrix m3 = mat_mat_mul(m2, UT_l2l_precompute);
+
+        matrix_l2l_img = m3;
+    }
+
+    /* l2p */
+    Matrix e2c_down_precompute = get_p2p_matrix(x_equiv_down, x_check_down);
+
+    svd(e2c_down_precompute, U, S, VT);
+    UT_l2p_precompute = transpose(U);
+    V_l2p_precompute = transpose(VT);
+    Sinv_l2p_precompute = pseudo_inverse(S);
 }
 
 std::vector<rtfmm::real> rtfmm::LaplaceKernel::get_G_matrix(std::vector<rtfmm::vec3r>& grid, int N)

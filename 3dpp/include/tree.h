@@ -9,6 +9,11 @@ namespace rtfmm
 struct Cell3
 {
     int idx;
+    /**
+     * @brief octant relative to parent cell
+     * @warning for cell whose depth <=0, octant is uninitialized because unnecessary
+    */
+    int octant;
     int depth;
     real r;
     vec3r x;
@@ -64,6 +69,8 @@ public:
     void build(Bodies3& bodies, vec3r x, real r, int m, TreeType type);
     
     Cells3 get_cells();
+
+    static vec3r get_child_cell_x(vec3r x_par, real r_par, int octant, int is_periodic);
 
 private:
 

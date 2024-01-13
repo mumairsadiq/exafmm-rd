@@ -27,7 +27,11 @@ rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
     init_cell_matrix(cs);
 
     if(args.use_precompute)
-        kernel.precompute();
+    {
+        TIME_BEGIN(precompute);
+        kernel.precompute(args.P, args.r);
+        if(args.timing) {TIME_END(precompute);}
+    }
 
     P2M();
     M2M();
@@ -66,7 +70,10 @@ void rtfmm::LaplaceFMM::P2M()
     {
         Cell3& c = cs[lcidx[i]];
         #ifndef TEST_TREE
-        kernel.p2m(args.P, bs, c);
+        if(args.use_precompute)
+            kernel.p2m_precompute(args.P, bs, c);
+        else
+            kernel.p2m(args.P, bs, c);
         #else
         for(int i = 0; i < c.brange.number; i++)
         {
@@ -95,9 +102,19 @@ void rtfmm::LaplaceFMM::M2M()
             Cell3& ci = cs[nlcidx[i]];
             #ifndef TEST_TREE
             if(depth >= 0)
-                kernel.m2m(args.P, ci, cs);
+            {
+                if(args.use_precompute)
+                    kernel.m2m_precompute(args.P, ci, cs);
+                else
+                    kernel.m2m(args.P, ci, cs);
+            }
             else
-                kernel.m2m_img(args.P, ci, cs, args.cycle * std::pow(3, -depth - 1));
+            {
+                if(args.use_precompute)
+                    kernel.m2m_img_precompute(args.P, ci, cs, args.cycle * std::pow(3, -depth - 1));
+                else
+                    kernel.m2m_img(args.P, ci, cs, args.cycle * std::pow(3, -depth - 1));
+            }
             #else
             for(int j = 0; j < ci.crange.number; j++)
             {
@@ -151,7 +168,15 @@ void rtfmm::LaplaceFMM::L2L()
         {
             Cell3& ci = cs[nlcidx[i]];
             #ifndef TEST_TREE
-            kernel.l2l(args.P, ci, cs);
+            if(args.use_precompute)
+            {
+                if(depth >= 0)
+                    kernel.l2l_precompute(args.P, ci, cs);
+                else
+                    kernel.l2l_img_precompute(args.P, ci, cs);
+            }
+            else
+                kernel.l2l(args.P, ci, cs);
             #else
             for(int j = 0; j < ci.crange.number; j++)
             {
@@ -176,7 +201,10 @@ void rtfmm::LaplaceFMM::L2P()
     {
         Cell3& c = cs[lcidx[i]];
         #ifndef TEST_TREE
-        kernel.l2p(args.P, bs, c);
+        if(args.use_precompute)
+            kernel.l2p_precompute(args.P, bs, c);
+        else
+            kernel.l2p(args.P, bs, c);
         #else
         for(int j = 0; j < c.brange.number; j++)
         {

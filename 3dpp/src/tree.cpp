@@ -26,6 +26,7 @@ void rtfmm::Tree::build_uniform_octree(Bodies3& bodies, vec3r x, real r, int max
     int num_body = bodies.size();
     Cell3 root;
     root.idx = 0;
+    root.octant = -1;
     root.depth = 0;
     root.r = r;
     root.x = x;
@@ -85,18 +86,12 @@ void rtfmm::Tree::build_uniform_octree(Bodies3& bodies, vec3r x, real r, int max
             {
                 Cell3 child_cell;
                 child_cell.idx = this->cells.size();
+                child_cell.octant = i;
                 child_cell.depth = branch_cell.depth + 1;
                 child_cell.r = branch_cell.r / 2;
                 child_cell.crange = Range(0,0);
                 child_cell.brange = Range(begin + offset[i] - quad_num[i], quad_num[i]);
-                if(i == 0)      child_cell.x = branch_cell.x + vec3r(-branch_cell.r/2, -branch_cell.r/2, -branch_cell.r/2);
-                else if(i == 1) child_cell.x = branch_cell.x + vec3r(-branch_cell.r/2, -branch_cell.r/2,  branch_cell.r/2);
-                else if(i == 2) child_cell.x = branch_cell.x + vec3r(-branch_cell.r/2,  branch_cell.r/2, -branch_cell.r/2);
-                else if(i == 3) child_cell.x = branch_cell.x + vec3r(-branch_cell.r/2,  branch_cell.r/2,  branch_cell.r/2);
-                else if(i == 4) child_cell.x = branch_cell.x + vec3r( branch_cell.r/2, -branch_cell.r/2, -branch_cell.r/2);
-                else if(i == 5) child_cell.x = branch_cell.x + vec3r( branch_cell.r/2, -branch_cell.r/2,  branch_cell.r/2);
-                else if(i == 6) child_cell.x = branch_cell.x + vec3r( branch_cell.r/2,  branch_cell.r/2, -branch_cell.r/2);
-                else if(i == 7) child_cell.x = branch_cell.x + vec3r( branch_cell.r/2,  branch_cell.r/2,  branch_cell.r/2);
+                child_cell.x = get_child_cell_x(branch_cell.x, branch_cell.r, i, 0);
                 this->cells.push_back(child_cell);
                 big_cells.push(insert_offset + i);
             }
@@ -112,6 +107,7 @@ void rtfmm::Tree::build_nonuniform_octree(Bodies3& bodies, vec3r x, real r, int 
     int num_body = bodies.size();
     Cell3 root;
     root.idx = 0;
+    root.octant = -1;
     root.depth = 0;
     root.r = r;
     root.x = x;
@@ -176,18 +172,12 @@ void rtfmm::Tree::build_nonuniform_octree(Bodies3& bodies, vec3r x, real r, int 
                 {
                     Cell3 child_cell;
                     child_cell.idx = this->cells.size();
+                    child_cell.octant = i;
                     child_cell.depth = branch_cell.depth + 1;
                     child_cell.r = branch_cell.r / 2;
                     child_cell.crange = Range(0,0);
                     child_cell.brange = Range(begin + offset[i] - quad_num[i], quad_num[i]);
-                    if(i == 0)      child_cell.x = branch_cell.x + vec3r(-branch_cell.r/2, -branch_cell.r/2, -branch_cell.r/2);
-                    else if(i == 1) child_cell.x = branch_cell.x + vec3r(-branch_cell.r/2, -branch_cell.r/2,  branch_cell.r/2);
-                    else if(i == 2) child_cell.x = branch_cell.x + vec3r(-branch_cell.r/2,  branch_cell.r/2, -branch_cell.r/2);
-                    else if(i == 3) child_cell.x = branch_cell.x + vec3r(-branch_cell.r/2,  branch_cell.r/2,  branch_cell.r/2);
-                    else if(i == 4) child_cell.x = branch_cell.x + vec3r( branch_cell.r/2, -branch_cell.r/2, -branch_cell.r/2);
-                    else if(i == 5) child_cell.x = branch_cell.x + vec3r( branch_cell.r/2, -branch_cell.r/2,  branch_cell.r/2);
-                    else if(i == 6) child_cell.x = branch_cell.x + vec3r( branch_cell.r/2,  branch_cell.r/2, -branch_cell.r/2);
-                    else if(i == 7) child_cell.x = branch_cell.x + vec3r( branch_cell.r/2,  branch_cell.r/2,  branch_cell.r/2);
+                    child_cell.x = get_child_cell_x(branch_cell.x, branch_cell.r, i, 0);
                     this->cells.push_back(child_cell);
                     big_cells.push(insert_offset + cnt);
                     cnt++;
@@ -200,4 +190,30 @@ void rtfmm::Tree::build_nonuniform_octree(Bodies3& bodies, vec3r x, real r, int 
 rtfmm::Cells3 rtfmm::Tree::get_cells()
 {
     return cells;
+}
+
+rtfmm::vec3r rtfmm::Tree::get_child_cell_x(vec3r x_par, real r_par, int octant, int is_periodic)
+{
+    vec3r x;
+    if(!is_periodic)
+    {
+        assert_exit(octant >= 0 && octant <= 7, "octant out of range");
+        if(octant == 0)      x = x_par + vec3r(-r_par/2, -r_par/2, -r_par/2);
+        else if(octant == 1) x = x_par + vec3r(-r_par/2, -r_par/2,  r_par/2);
+        else if(octant == 2) x = x_par + vec3r(-r_par/2,  r_par/2, -r_par/2);
+        else if(octant == 3) x = x_par + vec3r(-r_par/2,  r_par/2,  r_par/2);
+        else if(octant == 4) x = x_par + vec3r( r_par/2, -r_par/2, -r_par/2);
+        else if(octant == 5) x = x_par + vec3r( r_par/2, -r_par/2,  r_par/2);
+        else if(octant == 6) x = x_par + vec3r( r_par/2,  r_par/2, -r_par/2);
+        else if(octant == 7) x = x_par + vec3r( r_par/2,  r_par/2,  r_par/2);
+    }
+    else
+    {
+        assert_exit(octant >= 0 && octant <= 26, "periodic octant out of range");
+        int k = octant / 9 - 1;
+        int j = (octant % 9) / 3 - 1;
+        int i = (octant % 3) - 1;
+        x = x_par + vec3r(i,j,k) * (r_par * 2 / 3.0);
+    }
+    return x;
 }

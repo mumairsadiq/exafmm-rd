@@ -12,6 +12,8 @@ extern "C" {
 namespace rtfmm
 {
 
+void mat_scale(Matrix& A, real scale);
+
 /**
  * @brief c = A x b
  * 
