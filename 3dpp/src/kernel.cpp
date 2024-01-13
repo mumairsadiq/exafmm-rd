@@ -313,7 +313,7 @@ void rtfmm::dipole_correction(Bodies3& bs, real cycle)
 
 void rtfmm::LaplaceKernel::precompute()
 {
-    
+    if(verbose) printf("precompute\n");
 }
 
 std::vector<rtfmm::real> rtfmm::LaplaceKernel::get_G_matrix(std::vector<rtfmm::vec3r>& grid, int N)

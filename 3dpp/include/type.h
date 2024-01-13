@@ -16,6 +16,11 @@
 namespace rtfmm
 {
 
+inline void title(std::string s)
+{
+    std::cout<<"<"<<s<<">\n\n";
+}
+
 using Indices = std::vector<int>;
 
 using real = double;

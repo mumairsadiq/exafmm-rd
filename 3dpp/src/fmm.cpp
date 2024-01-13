@@ -26,6 +26,9 @@ rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
 
     init_cell_matrix(cs);
 
+    if(args.use_precompute)
+        kernel.precompute();
+
     P2M();
     M2M();
     M2L();

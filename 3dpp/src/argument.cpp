@@ -22,6 +22,7 @@ rtfmm::Argument::Argument(int argc, char* argv[])
     cmd.add<std::string>("algorithm", 'a', "algorithms", false, "fde");
     cmd.add<int>("check_tree", 0, "if check tree", false, 1);
     cmd.add<int>("use_fft", 0, "if use fft in M2L", false, 1);
+    cmd.add<int>("use_precompute", 0, "if use precomputed kernel", false, 1);
     cmd.parse_check(argc, argv);
     P = cmd.get<int>("P");
     n = cmd.get<int>("nbody");
@@ -31,6 +32,7 @@ rtfmm::Argument::Argument(int argc, char* argv[])
     verbose = cmd.get<int>("verbose");
     cycle = cmd.get<real>("cycle");
     use_fft = cmd.get<int>("use_fft");
+    use_precompute = cmd.get<int>("use_precompute");
 
     num_compare = cmd.get<int>("num_compare");
     if(num_compare == -1) num_compare = n;
@@ -50,6 +52,25 @@ rtfmm::Argument::Argument(int argc, char* argv[])
 
 void rtfmm::Argument::show()
 {
-    printf("[P=%d, n=%d, r=%.4f, x=(%.3f,%.3f,%.3f), ncrit=%d, timing=%d, images=%d, cycle=%.4f, verbose=%d, use_fft = %d]\n", P, n, r, x[0], x[1], x[2], ncrit, timing, images, cycle, verbose, use_fft);
-    printf("[num_compare = %d, ewald_ksize = %d, th_num = %d, seed = %d, (f,d,e) = (%d,%d,%d), check_tree = %d]\n\n", num_compare, ewald_ksize, th_num, seed, enable_fmm, enable_direct, enable_ewald, check_tree);
+    //printf("[P=%d, n=%d, ncrit=%d, images=%d, cycle=%.4f, ewald_ksize=%d]\n", P, n, ncrit, images, cycle, ewald_ksize);
+    //printf("[(f,d,e)=(%d,%d,%d), num_compare=%d , th_num=%d, seed=%d, check_tree=%d]\n\n", enable_fmm, enable_direct, enable_ewald, num_compare, th_num, seed, check_tree);
+    //printf("[timing=%d, verbose=%d, use_fft=%d, use_precompute=%d]\n", timing, verbose, use_fft, use_precompute);
+    printf("input parameters=[\n");
+    printf("  %-15s = %d\n","P",P);
+    printf("  %-15s = %d\n","n",n);
+    printf("  %-15s = %d\n","ncrit",ncrit);
+    printf("  %-15s = %d\n","images",images);
+    printf("  %-15s = %.4f\n","cycle",cycle);
+    printf("  %-15s = %d\n","ewald_ksize",ewald_ksize);
+    printf("  %-15s = (%d,%d,%d)\n","(f,d,e)",enable_fmm,enable_direct,enable_ewald);
+    printf("  %-15s = %d\n","num_compare",num_compare);
+    printf("  %-15s = %d\n","th_num",th_num);
+    printf("  %-15s = %d\n","seed",seed);
+    printf("  %-15s = %d\n","check_tree",check_tree);
+    printf("  %-15s = %d\n","timing",timing);
+    printf("  %-15s = %d\n","verbose",verbose);
+    printf("  %-15s = %d\n","use_fft",use_fft);
+    printf("  %-15s = %d\n","use_precompute",use_precompute);
+    printf("]\n\n");
+
 }

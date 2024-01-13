@@ -33,6 +33,7 @@ public:
     int enable_ewald;
     int check_tree;
     int use_fft;
+    int use_precompute;
 };
 
 }

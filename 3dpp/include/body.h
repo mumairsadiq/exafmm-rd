@@ -26,16 +26,7 @@ struct BodyCompareResult
     real l2e;
     std::string name1;
     std::string name2;
-
-    void show()
-    {
-        std::cout<<"\n---------------- "<< name1 << " vs " << name2 << " ----------------[" << num_compared << "]" << std::endl;
-        printf("%-8s : %8.5e   %-8s : %8.5e   %-8s : %8.5e\n", "L2  (p)", l2p , "L2  (f)", l2f, "L2  (e)", l2e); 
-        printf("%-8s : %8.5e   %-8s : %8.5e\n", "Rms (p)", rmsp, "Rms (f)", rmsf);
-        printf("p-energy1 : %8.12e\n", epot1);
-        printf("p-energy2 : %8.12e\n", epot2);
-        printf("\n");
-    }
+    void show();
 };
 
 using Bodies3 = std::vector<Body3>;

@@ -8,13 +8,13 @@
 
 int main(int argc, char* argv[])
 {
-    std::cout<<"rtfmm_3dpp_test_pbc"<<std::endl;
+    rtfmm::title("rtfmm_3dpp_test_pbc");
 
     rtfmm::Argument args(argc, argv);
     args.show();
 
     omp_set_num_threads(args.th_num);
-    printf("# of threads = %d\n", omp_get_max_threads());
+    if(rtfmm::verbose) printf("# of threads = %d\n", omp_get_max_threads());
 
     /* prepare bodies */
     rtfmm::Bodies3 bs = rtfmm::generate_random_bodies(args.n, args.r, args.x, args.seed);

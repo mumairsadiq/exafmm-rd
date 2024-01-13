@@ -15,13 +15,14 @@ void rtfmm::print_body(const Body3& b)
 
 void rtfmm::print_bodies(const rtfmm::Bodies3& bs, int num, int offset, std::string name)
 {
-    std::cout<<"\n"<<name<<":"<<std::endl;
+    std::cout<<name<<":"<<std::endl;
     if(num == -1) num = bs.size();
     int s = std::min(num, (int)bs.size());
     for(int i = offset; i < offset + s; i++)
     {
         print_body(bs[i]);
     }
+    printf("\n");
 }
 
 std::vector<rtfmm::vec3r> rtfmm::get_bodies_x(rtfmm::Bodies3& bs, Range range, vec3r offset)
@@ -173,4 +174,19 @@ rtfmm::Bodies3 rtfmm::sort_bodies_by_idx(const Bodies3& bs)
     );
 
     return bodies;
+}
+
+void rtfmm::BodyCompareResult::show()
+{
+    int bar_num = 72 - name1.size() - name2.size() - 4;
+    int bar_num_left = bar_num / 2;
+    for(int i = 0; i < bar_num_left; i++) printf("-");
+    std::cout<<name1<<" vs "<<name2;
+    for(int i = 0; i < bar_num - bar_num_left; i++) printf("-");
+    printf("[%d]\n", num_compared);
+    printf("%-8s : %8.5e   %-8s : %8.5e   %-8s : %8.5e\n", "L2  (p)", l2p , "L2  (f)", l2f, "L2  (e)", l2e); 
+    printf("%-8s : %8.5e   %-8s : %8.5e\n", "Rms (p)", rmsp, "Rms (f)", rmsf);
+    printf("p-energy1 : %8.12e\n", epot1);
+    printf("p-energy2 : %8.12e\n", epot2);
+    printf("\n");
 }
