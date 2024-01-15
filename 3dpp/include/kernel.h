@@ -3,6 +3,8 @@
 #include "body.h"
 #include "tree.h"
 #include <map>
+#include "traverser.h"
+#include <fftw3.h>
 
 namespace rtfmm
 {
@@ -32,6 +34,12 @@ public:
 
     void m2l_fft(int P, Cell3& cell_src, Cell3& cell_tar, vec3r offset = vec3r(0,0,0));
 
+    void m2l_fft_precompute_naive(int P, Cells3& cs, PeriodicInteractionMap& m2l_map, PeriodicInteractionPairs& m2l_pairs);
+
+    void m2l_fft_precompute_advanced(int P, Cells3& cs, PeriodicInteractionMap& m2l_map, PeriodicInteractionPairs& m2l_pairs);
+
+    void m2l_fft_precompute_advanced2(int P, Cells3& cs, PeriodicInteractionMap& m2l_map, PeriodicInteractionPairs& m2l_pairs);
+
     void l2l(int P, Cell3& cell_parent, Cells3& cs);
 
     void l2l_precompute(int P, Cell3& cell_parent, Cells3& cs);
@@ -48,6 +56,8 @@ public:
 
     void precompute(int P, real r0);
 
+    void precompute_m2l(int P, real r0, Cells3 cs, PeriodicInteractionMap m2l_map, int images);
+
 private:
     Matrix get_p2p_matrix(
         std::vector<vec3r>& x_src, 
@@ -55,9 +65,9 @@ private:
     );
 
     Matriv get_force_naive(
-        std::vector<vec3r> x_src, 
-        std::vector<vec3r> x_tar, 
-        Matrix q_src
+        std::vector<vec3r>& x_src, 
+        std::vector<vec3r>& x_tar, 
+        Matrix& q_src
     );
 
     std::vector<rtfmm::real> get_G_matrix(std::vector<rtfmm::vec3r>& grid, int N);
@@ -68,6 +78,7 @@ private:
     Matrix UT_p2m_precompute;
     Matrix V_p2m_precompute;
     Matrix Sinv_p2m_precompute;
+    Matrix VSinv_p2m_precompute;
 
     Matrix UT_l2p_precompute;
     Matrix V_l2p_precompute;
@@ -77,5 +88,9 @@ private:
     Matrix matrix_m2m_img[27];
     Matrix matrix_l2l[8];
     Matrix matrix_l2l_img;
+
+    std::vector<int> m2l_tars;
+    std::vector<int> m2l_srcs;
+    std::map<int, std::vector<complexr>> m2l_Gks;
 };
 };

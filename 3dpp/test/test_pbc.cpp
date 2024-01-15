@@ -6,6 +6,7 @@
 #include "ewald.h"
 #include <omp.h>
 
+
 int main(int argc, char* argv[])
 {
     rtfmm::title("rtfmm_3dpp_test_pbc");
@@ -13,6 +14,7 @@ int main(int argc, char* argv[])
     rtfmm::Argument args(argc, argv);
     args.show();
 
+    omp_set_dynamic(0);
     omp_set_num_threads(args.th_num);
     if(rtfmm::verbose) printf("# of threads = %d\n", omp_get_max_threads());
 

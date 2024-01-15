@@ -30,6 +30,7 @@ rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
     {
         TIME_BEGIN(precompute);
         kernel.precompute(args.P, args.r);
+        kernel.precompute_m2l(args.P, args.r, cs, traverser.get_map(OperatorType::M2L), args.images);
         if(args.timing) {TIME_END(precompute);}
     }
 
@@ -134,18 +135,33 @@ void rtfmm::LaplaceFMM::M2L()
 {
     TIME_BEGIN(M2L);
     PeriodicInteractionMap m2l_map = traverser.get_map(OperatorType::M2L);
-    //#pragma omp parallel for
-    for(int i = 0; i < m2l_map.size(); i++)
+    PeriodicInteractionPairs m2l_pairs = traverser.get_pairs(OperatorType::M2L);
+    if(args.use_precompute)
     {
-        auto m2l_list = m2l_map.begin();
-        std::advance(m2l_list, i);
-        Cell3& ctar = cs[m2l_list->first];
-        for(int j = 0; j < m2l_list->second.size(); j++)
+        TIME_BEGIN(M2L_kernel);
+        kernel.m2l_fft_precompute_advanced2(args.P, cs, m2l_map, m2l_pairs);
+        TIME_END(M2L_kernel);
+    }
+    else
+    {
+        for(int i = 0; i < m2l_map.size(); i++)
         {
-            Cell3& csrc = cs[m2l_list->second[j].first];
-            vec3r offset_src = m2l_list->second[j].second;
-            if(args.use_fft) kernel.m2l_fft(args.P, csrc, ctar, offset_src);
-            else kernel.m2l(args.P, csrc, ctar, offset_src);
+            auto m2l_list = m2l_map.begin();
+            std::advance(m2l_list, i);
+            Cell3& ctar = cs[m2l_list->first];
+            for(int j = 0; j < m2l_list->second.size(); j++)
+            {
+                Cell3& csrc = cs[m2l_list->second[j].first];
+                vec3r offset_src = m2l_list->second[j].second;
+                if(args.use_fft) 
+                {
+                    kernel.m2l_fft(args.P, csrc, ctar, offset_src);
+                }
+                else
+                {
+                    kernel.m2l(args.P, csrc, ctar, offset_src);
+                }
+            }
         }
     }
     if(args.timing)

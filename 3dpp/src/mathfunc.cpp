@@ -8,11 +8,11 @@ void rtfmm::mat_scale(Matrix& A, real scale)
     }
 }
 
-rtfmm::Matrix rtfmm::mat_vec_mul(Matrix A, Matrix b)
+rtfmm::Matrix rtfmm::mat_vec_mul(const Matrix& A, const Matrix& b, real k)
 {
     int m = A.m, n = A.n;
     Matrix C(m, 1);
-    cblas_dgemv(CblasRowMajor, CblasNoTrans, m, n, 1.0, A.d.data(), n, b.d.data(), 1, 0.0, C.d.data(), 1);
+    cblas_dgemv(CblasRowMajor, CblasNoTrans, m, n, k, A.d.data(), n, b.d.data(), 1, 0.0, C.d.data(), 1);
     return C;
 }
 
@@ -31,7 +31,7 @@ rtfmm::Matrix rtfmm::mat_mat_add(Matrix A, Matrix B)
     return C;
 }
 
-rtfmm::Matrix rtfmm::mat_mat_mul(Matrix A, Matrix B)
+rtfmm::Matrix rtfmm::mat_mat_mul(const Matrix& A, const Matrix& B)
 {
     assert_exit(A.n == B.m, "mat_mat_mul size error");
     int m = A.m, n = A.n, k = B.n;

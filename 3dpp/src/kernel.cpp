@@ -3,7 +3,19 @@
 #include "surface.h"
 #include "argument.h"
 #include <omp.h>
-#include <fftw3.h>
+#include <set>
+
+/**
+ * @brief convert vec3i to hashed value
+ * @return hash value, for example, (-1,-2,3) -> 1236, where 6=110 means negative for 1 and 2
+*/
+static int hash(rtfmm::vec3i v)
+{
+    int signs = ((v[0] < 0 ? 1 : 0) << 2) + ((v[1] < 0 ? 1 : 0) << 1) + (v[2] < 0 ? 1 : 0);
+    int coord = std::abs(v[0]) * 1000 + std::abs(v[1]) * 100 + std::abs(v[2]) * 10;
+    return coord + signs;
+}
+
 
 rtfmm::LaplaceKernel::LaplaceKernel()
 {
@@ -12,7 +24,7 @@ rtfmm::LaplaceKernel::LaplaceKernel()
 
 void rtfmm::LaplaceKernel::p2p(Bodies3& bs_src, Bodies3& bs_tar, Cell3& cell_src, Cell3& cell_tar, vec3r offset)
 {
-    #pragma omp parallel for
+    //#pragma omp parallel for
     for(int j = 0; j < cell_tar.brange.number; j++)
     {
         Body3& btar = bs_tar[cell_tar.brange.offset + j];
@@ -77,9 +89,7 @@ void rtfmm::LaplaceKernel::p2m_precompute(int P, Bodies3& bs_src, Cell3& cell_sr
     /* get equivalent charge */
     real scale = std::pow(0.5, cell_src.depth);
     Matrix UTb = mat_vec_mul(UT_p2m_precompute, p_check);
-    Matrix SinvUTb = mat_vec_mul(Sinv_p2m_precompute, UTb);
-    cell_src.q_equiv = mat_vec_mul(V_p2m_precompute, SinvUTb);
-    mat_scale(cell_src.q_equiv, scale);
+    cell_src.q_equiv = mat_vec_mul(VSinv_p2m_precompute, UTb, scale);
 }
 
 
@@ -222,6 +232,345 @@ void rtfmm::LaplaceKernel::m2l_fft(int P, Cell3& cell_src, Cell3& cell_tar, vec3
     cell_tar.p_check = mat_mat_add(cell_tar.p_check, ps_fft);
 }
 
+void rtfmm::LaplaceKernel::m2l_fft_precompute_naive(int P, Cells3& cs, PeriodicInteractionMap& m2l_map, PeriodicInteractionPairs& m2l_pairs)
+{
+    printf("m2l_fft_precompute_naive\n");
+    int num_fft = m2l_pairs.size();
+    int N = 2 * P - 1;
+    int N3 = N * N * N;
+    int surface_number = rtfmm::get_surface_point_num(P);
+    std::map<int,rtfmm::vec3i> surf_conv_map = get_surface_conv_map(P);
+
+    TIME_BEGIN(init_mem);
+    std::vector<std::vector<real>> G_all(num_fft, std::vector<real>(N3));
+    std::vector<std::vector<real>> Q_all(num_fft, std::vector<real>(N3));
+    std::vector<std::vector<real>> p_all(num_fft, std::vector<real>(N3));
+    std::vector<std::vector<complexr>> Gk_all(num_fft, std::vector<complexr>(N3));
+    std::vector<std::vector<complexr>> Qk_all(num_fft, std::vector<complexr>(N3));
+    std::vector<std::vector<complexr>> pk_all(num_fft, std::vector<complexr>(N3));
+    std::vector<fftw_plan> plans_G(num_fft);
+    std::vector<fftw_plan> plans_Q(num_fft);
+    std::vector<fftw_plan> plans_P(num_fft);
+    std::vector<int> indices_tar(num_fft);
+    TIME_END(init_mem);
+
+    TIME_BEGIN(setup);
+    for(int i = 0; i < num_fft; i++)
+    {
+        PeriodicInteractionPair m2l = m2l_pairs[i];
+        Cell3& cell_tar = cs[m2l.first];
+        Cell3& cell_src = cs[m2l.second.first];
+        vec3r offset_src = m2l.second.second;
+        real r = cell_src.r * 1.05;
+        vec3r relative_pos = cell_src.x + offset_src - cell_tar.x;
+        std::vector<rtfmm::vec3r> x_equiv = get_surface_points(P, r, relative_pos);
+        rtfmm::real delta = 2 * r / (P - 1);
+        rtfmm::real gsize = r * 2;
+        std::vector<rtfmm::vec3r> grid = get_conv_grid(N, gsize, delta, relative_pos);
+        std::vector<rtfmm::real>& G = G_all[i];
+        std::vector<rtfmm::real>& Q = Q_all[i];
+        std::vector<rtfmm::real>& p_fft_grid = p_all[i];
+        std::vector<complexr>& Gk = Gk_all[i];
+        std::vector<complexr>& Qk = Qk_all[i];
+        std::vector<complexr>& pk = pk_all[i];
+        G = get_G_matrix(grid, N);
+        Q = get_Q_matrix(cell_src.q_equiv, N, surf_conv_map);
+        plans_G[i] = fftw_plan_dft_r2c_3d(N, N, N, G.data(), reinterpret_cast<fftw_complex*>(Gk.data()), FFTW_ESTIMATE);
+        plans_Q[i] = fftw_plan_dft_r2c_3d(N, N, N, Q.data(), reinterpret_cast<fftw_complex*>(Qk.data()), FFTW_ESTIMATE);
+        plans_P[i] = fftw_plan_dft_c2r_3d(N, N, N, reinterpret_cast<fftw_complex*>(pk.data()), p_fft_grid.data(), FFTW_ESTIMATE);
+        indices_tar[i] = m2l.first;
+    }
+    TIME_END(setup);
+    
+    int num_plan = plans_G.size();
+    printf("num_plan = %d\n", num_plan);
+
+    TIME_BEGIN(GQ);
+    #pragma omp parallel for
+    for(int i = 0; i < num_plan; i++)
+    {
+        fftw_plan& plan_G = plans_G[i];
+        fftw_plan& plan_Q = plans_Q[i];
+        fftw_execute(plan_G);
+        fftw_execute(plan_Q);
+        fftw_destroy_plan(plan_G);
+        fftw_destroy_plan(plan_Q);
+    }
+    TIME_END(GQ);
+
+    TIME_BEGIN(P);
+    #pragma omp parallel for
+    for(int i = 0; i < num_plan; i++)
+    {
+        std::vector<complexr>& Gk = Gk_all[i];
+        std::vector<complexr>& Qk = Qk_all[i];
+        std::vector<complexr>& pk = pk_all[i];
+        fftw_plan& plan_P = plans_P[i];
+
+        for(int i = 0; i < N * N * N; i++)
+        {
+            rtfmm::real a = Gk[i].r;
+            rtfmm::real b = Gk[i].i;
+            rtfmm::real c = Qk[i].r;
+            rtfmm::real d = Qk[i].i;
+            pk[i].r = a * c - b * d;
+            pk[i].i = a * d + b * c;
+        }
+        fftw_execute(plan_P);
+        fftw_destroy_plan(plan_P);
+    }
+    TIME_END(P);
+
+    for(int i = 0; i < num_plan; i++)
+    {
+        Cell3& cell_tar = cs[indices_tar[i]];
+        std::vector<rtfmm::real>& p_fft_grid = p_all[i];
+        for(int i = 0; i < surface_number; i++)
+        {
+            rtfmm::vec3i idx3 = surf_conv_map[i] + rtfmm::vec3i(P-1,P-1,P-1);
+            cell_tar.p_check.d[i] += p_fft_grid[idx3[2] * N * N + idx3[1] * N + idx3[0]] / (N * N * N);
+        }
+    }
+}
+
+void rtfmm::LaplaceKernel::m2l_fft_precompute_advanced(int P, Cells3& cs, PeriodicInteractionMap& m2l_map, PeriodicInteractionPairs& m2l_pairs)
+{
+    printf("m2l_fft_precompute_advanced\n");
+    TIME_BEGIN(init_map);
+    int num_fft = m2l_pairs.size();
+    int N = 2 * P - 1;
+    int N3 = N * N * N;
+    int surface_number = rtfmm::get_surface_point_num(P);
+    std::map<int,rtfmm::vec3i> surf_conv_map = get_surface_conv_map(P);
+    
+    printf("num_fft = %d\n", num_fft);
+
+    int num_src = m2l_srcs.size();
+    std::map<int,int> m2l_src_map;
+    for(int i = 0; i < num_src; i++)
+    {
+        m2l_src_map[m2l_srcs[i]] = i;
+    }
+    TIME_END(init_map);
+
+    TIME_BEGIN(init_mem);
+    std::vector<std::vector<real>> G_all(num_fft, std::vector<real>(N3));
+    std::vector<std::vector<real>> Q_all(num_src, std::vector<real>(N3));
+    std::vector<std::vector<real>> p_all(num_fft, std::vector<real>(N3));
+    std::vector<std::vector<complexr>> Gk_all(num_fft, std::vector<complexr>(N3));
+    std::vector<std::vector<complexr>> Qk_all(num_src, std::vector<complexr>(N3));
+    std::vector<std::vector<complexr>> pk_all(num_fft, std::vector<complexr>(N3));
+    TIME_END(init_mem);
+
+    TIME_BEGIN(setup);
+    #pragma omp parallel for
+    for(int i = 0; i < num_src; i++)
+    {
+        Cell3& cell_src = cs[m2l_srcs[i]];
+        std::vector<rtfmm::real>& Q = Q_all[i];
+        Q = get_Q_matrix(cell_src.q_equiv, N, surf_conv_map);
+    }
+    #pragma omp parallel for
+    for(int i = 0; i < num_fft; i++)
+    {
+        PeriodicInteractionPair m2l = m2l_pairs[i];
+        Cell3& cell_tar = cs[m2l.first];
+        Cell3& cell_src = cs[m2l.second.first];
+        vec3r offset_src = m2l.second.second;
+        real r = cell_src.r * 1.05;
+        vec3r relative_pos = (cell_src.x + offset_src - cell_tar.x);
+        rtfmm::real delta = 2 * r / (P - 1);
+        rtfmm::real gsize = r * 2;
+        std::vector<rtfmm::vec3r> grid = get_conv_grid(N, gsize, delta, relative_pos);
+        std::vector<rtfmm::real>& G = G_all[i];
+        G = get_G_matrix(grid, N);
+    }
+    TIME_END(setup);
+
+    TIME_BEGIN(create_plan);
+    std::vector<rtfmm::real>& Q = Q_all[0];
+    std::vector<rtfmm::real>& G = G_all[0];
+    std::vector<rtfmm::real>& p_fft_grid = p_all[0];
+    std::vector<complexr>& Qk = Qk_all[0];
+    std::vector<complexr>& Gk = Gk_all[0];
+    std::vector<complexr>& pk = pk_all[0];
+    fftw_plan plan_G = fftw_plan_dft_r2c_3d(N, N, N, G.data(), reinterpret_cast<fftw_complex*>(Gk.data()), FFTW_ESTIMATE);
+    fftw_plan plan_Q = fftw_plan_dft_r2c_3d(N, N, N, Q.data(), reinterpret_cast<fftw_complex*>(Qk.data()), FFTW_ESTIMATE);
+    fftw_plan plan_P = fftw_plan_dft_c2r_3d(N, N, N, reinterpret_cast<fftw_complex*>(pk.data()), p_fft_grid.data(), FFTW_ESTIMATE);
+    TIME_END(create_plan);
+
+    TIME_BEGIN(G);
+    #pragma omp parallel for
+    for(int i = 0; i < num_fft; i++)
+    {
+        std::vector<rtfmm::real>& G = G_all[i];
+        std::vector<complexr>& Gk = Gk_all[i];
+        fftw_execute_dft_r2c(plan_G, G.data(), reinterpret_cast<fftw_complex*>(Gk.data()));
+    }
+    TIME_END(G);
+    TIME_BEGIN(Q);
+    #pragma omp parallel for
+    for(int i = 0; i < num_src; i++)
+    {
+        std::vector<rtfmm::real>& Q = Q_all[i];
+        std::vector<complexr>& Qk = Qk_all[i];
+        fftw_execute_dft_r2c(plan_Q, Q.data(), reinterpret_cast<fftw_complex*>(Qk.data()));
+    }
+    TIME_END(Q);
+
+    TIME_BEGIN(P);
+    #pragma omp parallel for
+    for(int i = 0; i < num_fft; i++)
+    {
+        std::vector<complexr>& Gk = Gk_all[i];
+        std::vector<complexr>& Qk = Qk_all[m2l_src_map[m2l_pairs[i].second.first]];
+        std::vector<complexr>& pk = pk_all[i];
+        std::vector<rtfmm::real>& p_fft_grid = p_all[i];
+
+        for(int i = 0; i < N * N * N; i++)
+        {
+            rtfmm::real a = Gk[i].r;
+            rtfmm::real b = Gk[i].i;
+            rtfmm::real c = Qk[i].r;
+            rtfmm::real d = Qk[i].i;
+            pk[i].r = a * c - b * d;
+            pk[i].i = a * d + b * c;
+        }
+        fftw_execute_dft_c2r(plan_P, reinterpret_cast<fftw_complex*>(pk.data()), p_fft_grid.data());
+    }
+    TIME_END(P);
+
+    TIME_BEGIN(add);
+    for(int i = 0; i < num_fft; i++)
+    {
+        Cell3& cell_tar = cs[m2l_pairs[i].first];
+        std::vector<rtfmm::real>& p_fft_grid = p_all[i];
+        for(int i = 0; i < surface_number; i++)
+        {
+            rtfmm::vec3i idx3 = surf_conv_map[i] + rtfmm::vec3i(P-1,P-1,P-1);
+            cell_tar.p_check.d[i] += p_fft_grid[idx3[2] * N * N + idx3[1] * N + idx3[0]] / (N * N * N);
+        }
+    }
+    TIME_END(add);
+
+    TIME_BEGIN(destroy_plan);
+    fftw_destroy_plan(plan_G);
+    fftw_destroy_plan(plan_Q);
+    fftw_destroy_plan(plan_P);
+    TIME_END(destroy_plan);
+}
+
+void rtfmm::LaplaceKernel::m2l_fft_precompute_advanced2(int P, Cells3& cs, PeriodicInteractionMap& m2l_map, PeriodicInteractionPairs& m2l_pairs)
+{
+    printf("m2l_fft_precompute_advanced2\n");
+    TIME_BEGIN(init_map);
+    int num_fft = m2l_pairs.size();
+    int N = 2 * P - 1;
+    int N3 = N * N * N;
+    int surface_number = rtfmm::get_surface_point_num(P);
+    std::map<int,rtfmm::vec3i> surf_conv_map = get_surface_conv_map(P);
+    
+    printf("num_fft = %d\n", num_fft);
+
+    int num_src = m2l_srcs.size();
+    std::map<int,int> m2l_src_map;
+    for(int i = 0; i < num_src; i++)
+    {
+        m2l_src_map[m2l_srcs[i]] = i;
+    }
+    TIME_END(init_map);
+
+    TIME_BEGIN(init_mem);
+    std::vector<std::vector<real>> Q_all(num_src, std::vector<real>(N3));
+    std::vector<std::vector<real>> p_all(num_fft, std::vector<real>(N3));
+    std::vector<std::vector<complexr>> Qk_all(num_src, std::vector<complexr>(N3));
+    std::vector<std::vector<complexr>> pk_all(num_fft, std::vector<complexr>(N3));
+    TIME_END(init_mem);
+
+    TIME_BEGIN(setup);
+    #pragma omp parallel for
+    for(int i = 0; i < num_src; i++)
+    {
+        Cell3& cell_src = cs[m2l_srcs[i]];
+        std::vector<rtfmm::real>& Q = Q_all[i];
+        Q = get_Q_matrix(cell_src.q_equiv, N, surf_conv_map);
+    }
+    TIME_END(setup);
+
+    TIME_BEGIN(create_plan);
+    std::vector<rtfmm::real>& Q = Q_all[0];
+    std::vector<rtfmm::real>& p_fft_grid = p_all[0];
+    std::vector<complexr>& Qk = Qk_all[0];
+    std::vector<complexr>& pk = pk_all[0];
+    fftw_plan plan_Q = fftw_plan_dft_r2c_3d(N, N, N, Q.data(), reinterpret_cast<fftw_complex*>(Qk.data()), FFTW_ESTIMATE);
+    fftw_plan plan_P = fftw_plan_dft_c2r_3d(N, N, N, reinterpret_cast<fftw_complex*>(pk.data()), p_fft_grid.data(), FFTW_ESTIMATE);
+    TIME_END(create_plan);
+
+    TIME_BEGIN(Q);
+    #pragma omp parallel for
+    for(int i = 0; i < num_src; i++)
+    {
+        std::vector<rtfmm::real>& Q = Q_all[i];
+        std::vector<complexr>& Qk = Qk_all[i];
+        fftw_execute_dft_r2c(plan_Q, Q.data(), reinterpret_cast<fftw_complex*>(Qk.data()));
+    }
+    TIME_END(Q);
+
+    TIME_BEGIN(P);
+    #pragma omp parallel for
+    for(int i = 0; i < num_fft; i++)
+    {
+        PeriodicInteractionPair m2l = m2l_pairs[i];
+        Cell3& cell_tar = cs[m2l.first];
+        Cell3& cell_src = cs[m2l.second.first];
+        vec3r offset_src = m2l.second.second;
+        vec3r relative_pos = cell_src.x + offset_src - cell_tar.x;
+        vec3r rv = relative_pos / (cell_src.r * 2);
+        vec3i rvi(std::round(rv[0]), std::round(rv[1]), std::round(rv[2]));
+        assert_exit(
+            (cell_tar.depth > 0 && std::abs(rvi[0]) <= 3 && std::abs(rvi[1]) <= 3 && std::abs(rvi[2]) <= 3) ||
+            (cell_tar.depth <= 0 && std::abs(rvi[0]) <= 4 && std::abs(rvi[1]) <= 4 && std::abs(rvi[2]) <= 4), 
+            "rvi out of range"
+        );
+        std::vector<complexr>& Gk = m2l_Gks[hash(rvi)];
+
+        std::vector<complexr>& Qk = Qk_all[m2l_src_map[m2l_pairs[i].second.first]];
+        std::vector<complexr>& pk = pk_all[i];
+        std::vector<rtfmm::real>& p_fft_grid = p_all[i];
+
+        for(int i = 0; i < N * N * N; i++)
+        {
+            rtfmm::real a = Gk[i].r;
+            rtfmm::real b = Gk[i].i;
+            rtfmm::real c = Qk[i].r;
+            rtfmm::real d = Qk[i].i;
+            pk[i].r = a * c - b * d;
+            pk[i].i = a * d + b * c;
+        }
+        fftw_execute_dft_c2r(plan_P, reinterpret_cast<fftw_complex*>(pk.data()), p_fft_grid.data());
+    }
+    TIME_END(P);
+
+    TIME_BEGIN(add);
+    for(int i = 0; i < num_fft; i++)
+    {
+        Cell3& cell_tar = cs[m2l_pairs[i].first];
+        real scale = std::pow(cell_tar.depth > 0 ? 2 : 3, cell_tar.depth);
+        std::vector<rtfmm::real>& p_fft_grid = p_all[i];
+        for(int i = 0; i < surface_number; i++)
+        {
+            rtfmm::vec3i idx3 = surf_conv_map[i] + rtfmm::vec3i(P-1,P-1,P-1);
+            cell_tar.p_check.d[i] += p_fft_grid[idx3[2] * N * N + idx3[1] * N + idx3[0]] / (N * N * N) * scale;
+        }
+    }
+    TIME_END(add);
+
+    TIME_BEGIN(destroy_plan);
+    fftw_destroy_plan(plan_Q);
+    fftw_destroy_plan(plan_P);
+    TIME_END(destroy_plan);
+}
+
 
 void rtfmm::LaplaceKernel::l2l(int P, Cell3& cell_parent, Cells3& cs)
 {
@@ -259,7 +608,6 @@ void rtfmm::LaplaceKernel::l2l_img_precompute(int P, Cell3& cell_parent, Cells3&
     Matrix p_check_child = mat_vec_mul(matrix_l2l_img, cell_parent.p_check);
     cell_child.p_check = mat_mat_add(cell_child.p_check, p_check_child);
 }
-
 
 void rtfmm::LaplaceKernel::l2p(int P, Bodies3& bs_tar, Cell3& cell_tar)
 {
@@ -315,7 +663,6 @@ void rtfmm::LaplaceKernel::m2p(int P, Bodies3& bs_tar, Cell3& cell_src, Cell3& c
     add_boides_f(bs_tar, f_tar, cell_tar.brange);
 }
 
-
 void rtfmm::LaplaceKernel::p2l(int P, Bodies3& bs_src, Cell3& cell_src, Cell3& cell_tar, vec3r offset)
 {
     std::vector<vec3r> x_src = get_bodies_x(bs_src, cell_src.brange, offset);
@@ -351,9 +698,9 @@ rtfmm::Matrix rtfmm::LaplaceKernel::get_p2p_matrix(
 }
 
 rtfmm::Matriv rtfmm::LaplaceKernel::get_force_naive(
-    std::vector<vec3r> x_src, 
-    std::vector<vec3r> x_tar, 
-    Matrix q_src
+    std::vector<vec3r>& x_src, 
+    std::vector<vec3r>& x_tar, 
+    Matrix& q_src
 )
 {
     Matriv res(x_tar.size(), 1);
@@ -388,108 +735,6 @@ void rtfmm::dipole_correction(Bodies3& bs, real cycle)
         bs[i].p -= coef * dnorm / num_body / bs[i].q; 
         bs[i].f -= coef * dipole;
     }
-}
-
-void rtfmm::LaplaceKernel::precompute(int P, real r0)
-{
-    if(verbose) printf("precompute\n");
-
-    /* p2m */
-    std::vector<vec3r> x_check_up = get_surface_points(P, r0 * 2.95);
-    std::vector<vec3r> x_equiv_up = get_surface_points(P, r0 * 1.05);
-    Matrix e2c_up_precompute = get_p2p_matrix(x_equiv_up, x_check_up);
-
-    Matrix U, S, VT;
-    svd(e2c_up_precompute, U, S, VT);
-    UT_p2m_precompute = transpose(U);
-    V_p2m_precompute = transpose(VT);
-    Sinv_p2m_precompute = pseudo_inverse(S);
-
-    /* m2m */
-    std::vector<vec3r>& x_equiv_up_parent = x_equiv_up;
-    std::vector<vec3r>& x_check_up_parent = x_check_up;
-    Matrix pe2pc_up_precompute = get_p2p_matrix(x_equiv_up_parent, x_check_up_parent);
-    svd(pe2pc_up_precompute, U, S, VT);
-    Matrix UT_m2m_precompute = transpose(U);
-    Matrix V_m2m_precompute = transpose(VT);
-    Matrix Sinv_m2m_precompute = pseudo_inverse(S);
-    for(int octant = 0; octant < 8; octant++)
-    {
-        vec3r offset_child = Tree::get_child_cell_x(vec3r(0,0,0), r0, octant, 0);
-        std::vector<vec3r> x_equiv_child_up = get_surface_points(P, r0 / 2 * 1.05, offset_child);
-        Matrix ce2pc_up_precompute = get_p2p_matrix(x_equiv_child_up, x_check_up_parent);
-
-        /* (VSinv)(UTG) */
-        Matrix m1 = mat_mat_mul(UT_m2m_precompute, ce2pc_up_precompute);
-        Matrix m2 = mat_mat_mul(V_m2m_precompute, Sinv_m2m_precompute);
-        Matrix m3 = mat_mat_mul(m2, m1);
-        matrix_m2m[octant] = m3;
-    }
-
-    /* m2m image */
-    for(int octant = 0; octant < 27; octant++)
-    {
-        vec3r offset_child = Tree::get_child_cell_x(vec3r(0,0,0), r0, octant, 1);
-        std::vector<vec3r> x_equiv_child_up = get_surface_points(P, r0 / 3 * 1.05, offset_child);
-        Matrix ce2pc_up_precompute = get_p2p_matrix(x_equiv_child_up, x_check_up_parent);
-
-        /* (VSinv)(UTG) */
-        Matrix m1 = mat_mat_mul(UT_m2m_precompute, ce2pc_up_precompute);
-        Matrix m2 = mat_mat_mul(V_m2m_precompute, Sinv_m2m_precompute);
-        Matrix m3 = mat_mat_mul(m2, m1);
-        matrix_m2m_img[octant] = m3;
-    }
-
-    /* l2l */
-    std::vector<vec3r>& x_equiv_down = x_check_up;
-    std::vector<vec3r>& x_check_down = x_equiv_up;
-    Matrix pe2pc_down_precompute = get_p2p_matrix(x_equiv_down, x_check_down);
-    svd(pe2pc_down_precompute, U, S, VT);
-    Matrix UT_l2l_precompute = transpose(U);
-    Matrix V_l2l_precompute = transpose(VT);
-    Matrix Sinv_l2l_precompute = pseudo_inverse(S);
-
-    std::vector<vec3r>& x_equiv_parent_down = x_equiv_down;
-    for(int octant = 0; octant < 8; octant++)
-    {
-        vec3r offset_child = Tree::get_child_cell_x(vec3r(0,0,0), r0, octant, 0);
-        std::vector<vec3r> x_equiv_child_down = get_surface_points(P, r0 / 2 * 1.05, offset_child);
-        Matrix pe2cc_down_precompute = get_p2p_matrix(x_equiv_parent_down, x_equiv_child_down);
-
-        /* (G(VSinv))UT */
-        Matrix m1 = mat_mat_mul(V_l2l_precompute, Sinv_l2l_precompute);
-        Matrix m2 = mat_mat_mul(pe2cc_down_precompute, m1);
-        Matrix m3 = mat_mat_mul(m2, UT_l2l_precompute);
-
-        /* G((VSinv)UT)*/
-        /*Matrix m1 = mat_mat_mul(V_l2l_precompute, Sinv_l2l_precompute);
-        Matrix m2 = mat_mat_mul(m1, UT_l2l_precompute);
-        Matrix m3 = mat_mat_mul(pe2cc_down_precompute, m2);*/
-
-        matrix_l2l[octant] = m3;
-    }
-
-    /* l2l image */
-    {
-        vec3r offset_child = vec3r(0,0,0);
-        std::vector<vec3r> x_equiv_child_down = get_surface_points(P, r0 / 3 * 1.05, offset_child);
-        Matrix pe2cc_down_precompute = get_p2p_matrix(x_equiv_parent_down, x_equiv_child_down);
-
-        /* (G(VSinv))UT */
-        Matrix m1 = mat_mat_mul(V_l2l_precompute, Sinv_l2l_precompute);
-        Matrix m2 = mat_mat_mul(pe2cc_down_precompute, m1);
-        Matrix m3 = mat_mat_mul(m2, UT_l2l_precompute);
-
-        matrix_l2l_img = m3;
-    }
-
-    /* l2p */
-    Matrix e2c_down_precompute = get_p2p_matrix(x_equiv_down, x_check_down);
-
-    svd(e2c_down_precompute, U, S, VT);
-    UT_l2p_precompute = transpose(U);
-    V_l2p_precompute = transpose(VT);
-    Sinv_l2p_precompute = pseudo_inverse(S);
 }
 
 std::vector<rtfmm::real> rtfmm::LaplaceKernel::get_G_matrix(std::vector<rtfmm::vec3r>& grid, int N)
@@ -542,4 +787,151 @@ std::map<int,rtfmm::vec3i> rtfmm::LaplaceKernel::get_surface_conv_map(int p)
         }
     }
     return map;
+}
+
+void rtfmm::LaplaceKernel::precompute(int P, real r0)
+{
+    if(verbose) printf("precompute\n");
+
+    /* p2m */
+    std::vector<vec3r> x_check_up = get_surface_points(P, r0 * 2.95);
+    std::vector<vec3r> x_equiv_up = get_surface_points(P, r0 * 1.05);
+    Matrix e2c_up_precompute = get_p2p_matrix(x_equiv_up, x_check_up);
+
+    Matrix U, S, VT;
+    svd(e2c_up_precompute, U, S, VT);
+    UT_p2m_precompute = transpose(U);
+    V_p2m_precompute = transpose(VT);
+    Sinv_p2m_precompute = pseudo_inverse(S);
+    VSinv_p2m_precompute = mat_mat_mul(V_p2m_precompute, Sinv_p2m_precompute);
+
+    /* m2m */
+    std::vector<vec3r>& x_equiv_up_parent = x_equiv_up;
+    std::vector<vec3r>& x_check_up_parent = x_check_up;
+    Matrix pe2pc_up_precompute = get_p2p_matrix(x_equiv_up_parent, x_check_up_parent);
+    svd(pe2pc_up_precompute, U, S, VT);
+    Matrix UT_m2m_precompute = transpose(U);
+    Matrix V_m2m_precompute = transpose(VT);
+    Matrix Sinv_m2m_precompute = pseudo_inverse(S);
+    Matrix VSinv_m2m_precompute = mat_mat_mul(V_m2m_precompute, Sinv_m2m_precompute);
+    for(int octant = 0; octant < 8; octant++)
+    {
+        vec3r offset_child = Tree::get_child_cell_x(vec3r(0,0,0), r0, octant, 0);
+        std::vector<vec3r> x_equiv_child_up = get_surface_points(P, r0 / 2 * 1.05, offset_child);
+        Matrix ce2pc_up_precompute = get_p2p_matrix(x_equiv_child_up, x_check_up_parent);
+
+        /* (VSinv)(UTG) */
+        Matrix m1 = mat_mat_mul(UT_m2m_precompute, ce2pc_up_precompute);
+        matrix_m2m[octant] = mat_mat_mul(VSinv_m2m_precompute, m1);
+    }
+
+    /* m2m image */
+    for(int octant = 0; octant < 27; octant++)
+    {
+        vec3r offset_child = Tree::get_child_cell_x(vec3r(0,0,0), r0, octant, 1);
+        std::vector<vec3r> x_equiv_child_up = get_surface_points(P, r0 / 3 * 1.05, offset_child);
+        Matrix ce2pc_up_precompute = get_p2p_matrix(x_equiv_child_up, x_check_up_parent);
+
+        /* (VSinv)(UTG) */
+        Matrix m1 = mat_mat_mul(UT_m2m_precompute, ce2pc_up_precompute);
+        matrix_m2m_img[octant] = mat_mat_mul(VSinv_m2m_precompute, m1);
+    }
+
+    /* l2l */
+    std::vector<vec3r>& x_equiv_down = x_check_up;
+    std::vector<vec3r>& x_check_down = x_equiv_up;
+    Matrix pe2pc_down_precompute = get_p2p_matrix(x_equiv_down, x_check_down);
+    svd(pe2pc_down_precompute, U, S, VT);
+    Matrix UT_l2l_precompute = transpose(U);
+    Matrix V_l2l_precompute = transpose(VT);
+    Matrix Sinv_l2l_precompute = pseudo_inverse(S);
+    Matrix VSinv_l2l_precompute = mat_mat_mul(V_l2l_precompute, Sinv_l2l_precompute);
+
+    std::vector<vec3r>& x_equiv_parent_down = x_equiv_down;
+    for(int octant = 0; octant < 8; octant++)
+    {
+        vec3r offset_child = Tree::get_child_cell_x(vec3r(0,0,0), r0, octant, 0);
+        std::vector<vec3r> x_equiv_child_down = get_surface_points(P, r0 / 2 * 1.05, offset_child);
+        Matrix pe2cc_down_precompute = get_p2p_matrix(x_equiv_parent_down, x_equiv_child_down);
+
+        /* (G(VSinv))UT */
+        Matrix m2 = mat_mat_mul(pe2cc_down_precompute, VSinv_l2l_precompute);
+        matrix_l2l[octant] = mat_mat_mul(m2, UT_l2l_precompute);
+
+        /* G((VSinv)UT)*/
+        /*Matrix m1 = mat_mat_mul(V_l2l_precompute, Sinv_l2l_precompute);
+        Matrix m2 = mat_mat_mul(m1, UT_l2l_precompute);
+        matrix_l2l[octant] = mat_mat_mul(pe2cc_down_precompute, m2);*/
+    }
+
+    /* l2l image */
+    {
+        vec3r offset_child = vec3r(0,0,0);
+        std::vector<vec3r> x_equiv_child_down = get_surface_points(P, r0 / 3 * 1.05, offset_child);
+        Matrix pe2cc_down_precompute = get_p2p_matrix(x_equiv_parent_down, x_equiv_child_down);
+
+        /* (G(VSinv))UT */
+        Matrix m2 = mat_mat_mul(pe2cc_down_precompute, VSinv_l2l_precompute);
+        matrix_l2l_img = mat_mat_mul(m2, UT_l2l_precompute);
+    }
+
+    /* l2p */
+    Matrix e2c_down_precompute = get_p2p_matrix(x_equiv_down, x_check_down);
+
+    svd(e2c_down_precompute, U, S, VT);
+    UT_l2p_precompute = transpose(U);
+    V_l2p_precompute = transpose(VT);
+    Sinv_l2p_precompute = pseudo_inverse(S);
+}
+
+void rtfmm::LaplaceKernel::precompute_m2l(int P, real r0, Cells3 cs, PeriodicInteractionMap m2l_map, int images)
+{
+    std::set<int> m2l_tar_set, m2l_src_set;
+    for(auto m2l_list : m2l_map)
+    {
+        m2l_tar_set.insert(m2l_list.first);
+        for(int i = 0; i < m2l_list.second.size(); i++)
+        {
+            m2l_src_set.insert(m2l_list.second[i].first);
+        }
+    }
+    m2l_tars = std::vector<int>(m2l_tar_set.begin(), m2l_tar_set.end());
+    m2l_srcs = std::vector<int>(m2l_src_set.begin(), m2l_src_set.end());
+    printf("# of cells = %ld\n", cs.size());
+    printf("# of m2l_tar = %ld\n", m2l_tars.size());
+    printf("# of m2l_src = %ld\n", m2l_srcs.size());
+
+    for(int i = 0; i < m2l_tars.size(); i++)
+    {
+        assert_exit(m2l_tars[i] == m2l_srcs[i], "m2l inconsisent");
+    }
+
+    int N = 2 * P - 1;
+    rtfmm::real delta = 2 * r0 / (P - 1) * 1.05;
+    rtfmm::real gsize = r0 * 2 * 1.05;
+    std::vector<real> G0(N * N * N);
+    std::vector<complexr> Gk0(N * N * N);
+    fftw_plan plan_G = fftw_plan_dft_r2c_3d(N, N, N, G0.data(), reinterpret_cast<fftw_complex*>(Gk0.data()), FFTW_ESTIMATE);
+    int range = images >= 2 ? 4 : 3;
+    #pragma omp parallel for collapse(3)
+    for(int k = -range; k <= range; k++)
+    {
+        for(int j = -range; j <= range; j++)
+        {
+            for(int i = -range; i <= range; i++)
+            {
+                if(std::abs(i) > 1 || std::abs(j) > 1 || std::abs(k) > 1)
+                {
+                    vec3i relative_idx(i,j,k);
+                    vec3r relative_pos = vec3r(i,j,k) * r0 * 2;
+                    std::vector<rtfmm::vec3r> grid = get_conv_grid(N, gsize, delta, relative_pos);
+                    std::vector<real> G = get_G_matrix(grid, N); 
+                    std::vector<complexr> Gk(N * N * N);                   
+                    fftw_execute_dft_r2c(plan_G, G.data(), reinterpret_cast<fftw_complex*>(Gk.data()));
+                    m2l_Gks[hash(relative_idx)] = Gk;
+                }
+            }
+        }
+    }
+    fftw_destroy_plan(plan_G);
 }

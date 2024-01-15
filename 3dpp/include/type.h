@@ -25,6 +25,12 @@ using Indices = std::vector<int>;
 
 using real = double;
 
+struct complexr
+{
+    real r;
+    real i;
+};
+
 /**
  * @brief alert error message and exit if conditon is false
 */

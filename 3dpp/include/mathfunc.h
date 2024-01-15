@@ -15,13 +15,14 @@ namespace rtfmm
 void mat_scale(Matrix& A, real scale);
 
 /**
- * @brief c = A x b
+ * @brief c = k x A x b
  * 
  * @param A m by n matrix
  * @param b n by 1 vector
+ * @param k real number
  * @return m by 1 vector
  */
-Matrix mat_vec_mul(Matrix A, Matrix b); 
+Matrix mat_vec_mul(const Matrix& A, const Matrix& b, real k = 1.0); 
 
 /**
  * @brief C = A + B
@@ -39,7 +40,7 @@ Matrix mat_mat_add(Matrix A, Matrix B);
  * @param B n by k matrix
  * @return m by k matrix
  */
-Matrix mat_mat_mul(Matrix A, Matrix B); 
+Matrix mat_mat_mul(const Matrix& A, const Matrix& B); 
 
 /**
  * @brief solve A = U x S x VT
