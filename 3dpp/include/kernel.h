@@ -54,7 +54,7 @@ public:
 
     void p2l(int P, Bodies3& bs_src, Cell3& cell_src, Cell3& cell_tar, vec3r offset = vec3r(0,0,0));
 
-    void precompute(int P, real r0);
+    void precompute(int P, real r0, int images);
 
     void precompute_m2l(int P, real r0, Cells3 cs, PeriodicInteractionMap m2l_map, int images);
 

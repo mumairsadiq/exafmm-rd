@@ -29,7 +29,7 @@ rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
     if(args.use_precompute)
     {
         TIME_BEGIN(precompute);
-        kernel.precompute(args.P, args.r);
+        kernel.precompute(args.P, args.r, args.images);
         kernel.precompute_m2l(args.P, args.r, cs, traverser.get_map(OperatorType::M2L), args.images);
         if(args.timing) {TIME_END(precompute);}
     }

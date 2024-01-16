@@ -54,10 +54,14 @@ void rtfmm::svd(Matrix A, Matrix& U, Matrix& S, Matrix& VT)
     double wkopt;
     int info;
     int lwork = -1;
+    TIME_BEGIN(svd_1);
     dgesvd_(&jobu, &jobvt, &n, &m, A.d.data(), &n, s.d.data(), vt.d.data(), &n, u.d.data(), &k, &wkopt, &lwork,&info);
+    TIME_END(svd_1);
+    TIME_BEGIN(svd_2);
     lwork = (int)wkopt;
     Matrix wbuff(lwork, 1);
     dgesvd_(&jobu, &jobvt, &n, &m, A.d.data(), &n, s.d.data(), vt.d.data(), &n, u.d.data(), &k, wbuff.d.data(), &lwork,&info);
+    TIME_END(svd_2);
 
     U = u;
     VT = vt;
