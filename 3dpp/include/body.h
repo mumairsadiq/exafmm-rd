@@ -40,7 +40,7 @@ using Bodies3 = std::vector<Body3>;
  * 
  * @return bodies with zero net charge 
  */
-Bodies3 generate_random_bodies(int num, real r, vec3r offset = vec3r(0,0,0), int seed = 0);
+Bodies3 generate_random_bodies(int num, real r, vec3r offset = vec3r(0,0,0), int seed = 0, int zero_netcharge = 1);
 
 /**
  * @brief extract x from bodies
@@ -69,6 +69,7 @@ void add_boides_p(Bodies3& bs, Matrix& ps, Range range);
 
 void add_boides_f(Bodies3& bs, Matriv& fs, Range range);
 
+void scale_bodies(Bodies3& bs, real scale = 1.0f / (4 * M_PI));
 
 /**
  * @brief Print one body.

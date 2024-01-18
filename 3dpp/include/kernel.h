@@ -72,6 +72,7 @@ private:
 
     std::vector<rtfmm::real> get_G_matrix(std::vector<rtfmm::vec3r>& grid, int N);
     std::vector<rtfmm::real> get_Q_matrix(Matrix& surface_q, int N, std::map<int,rtfmm::vec3i> surf_conv_map);
+    void get_Q_matrix(real* Q, Matrix& surface_q, int N, std::map<int,rtfmm::vec3i> surf_conv_map);
     std::map<int,rtfmm::vec3i> get_surface_conv_map(int p);
 
 private:

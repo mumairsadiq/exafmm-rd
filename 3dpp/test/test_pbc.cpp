@@ -19,7 +19,7 @@ int main(int argc, char* argv[])
     if(rtfmm::verbose) printf("# of threads = %d\n", omp_get_max_threads());
 
     /* prepare bodies */
-    rtfmm::Bodies3 bs = rtfmm::generate_random_bodies(args.n, args.r, args.x, args.seed);
+    rtfmm::Bodies3 bs = rtfmm::generate_random_bodies(args.n, args.r, args.x, args.seed, args.zero_netcharge);
 
     /* solve by FMM */
     rtfmm::Bodies3 res_fmm;
@@ -38,6 +38,8 @@ int main(int argc, char* argv[])
         rtfmm::EwaldSolver ewald(bs, args);
         TIME_BEGIN(EWALD);
         res_ewald = ewald.solve();
+        if(args.divide_4pi)
+            rtfmm::scale_bodies(res_ewald);
         if(args.timing) {TIME_END(EWALD);}
     }
 
@@ -64,16 +66,19 @@ int main(int argc, char* argv[])
                 }   
             }
         }
-        rtfmm::dipole_correction(res_direct, args.cycle);
+        if(args.dipole_correction)
+            rtfmm::dipole_correction(res_direct, args.cycle);
+        if(args.divide_4pi)
+            rtfmm::scale_bodies(res_direct);
         if(args.timing) {TIME_END(DIRECT);}
     }
 
     /* compare */
     if(rtfmm::verbose)
     {
-        if(args.enable_fmm) rtfmm::print_bodies(res_fmm, 3, 0, "fmm");
-        if(args.enable_direct) rtfmm::print_bodies(res_direct, 3, 0, "direct");
-        if(args.enable_ewald) rtfmm::print_bodies(res_ewald, 3, 0, "ewald");
+        if(args.enable_fmm) rtfmm::print_bodies(res_fmm, args.print_body_number, 0, "fmm");
+        if(args.enable_direct) rtfmm::print_bodies(res_direct, args.print_body_number, 0, "direct");
+        if(args.enable_ewald) rtfmm::print_bodies(res_ewald, args.print_body_number, 0, "ewald");
     }
     if(args.enable_fmm && args.enable_direct)
         rtfmm::compare(res_fmm, res_direct, "FMM", "Direct", args.num_compare).show();

@@ -58,6 +58,8 @@ void svd(Matrix A, Matrix& U, Matrix& S, Matrix& VT);
  */
 Matrix transpose(Matrix A);
 
+void transpose_inplace(Matrix& A);
+
 /**
  * @brief solve Ax = b using svd
  * 

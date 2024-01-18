@@ -85,7 +85,17 @@ void rtfmm::add_boides_f(Bodies3& bs, Matriv& fs, Range range)
     }
 }
 
-rtfmm::Bodies3 rtfmm::generate_random_bodies(int num, rtfmm::real r, vec3r offset, int seed)
+void rtfmm::scale_bodies(Bodies3& bs, real scale)
+{
+    int num = bs.size();
+    for(int i = 0; i < num; i++)
+    {
+        bs[i].p *= scale;
+        bs[i].f *= scale;
+    }
+}
+
+rtfmm::Bodies3 rtfmm::generate_random_bodies(int num, rtfmm::real r, vec3r offset, int seed, int zero_netcharge)
 {
     Bodies3 bodies;
     double q_avg = 0;
@@ -107,9 +117,12 @@ rtfmm::Bodies3 rtfmm::generate_random_bodies(int num, rtfmm::real r, vec3r offse
         bodies.push_back(body);
 	}
     q_avg /= num;
-    for(int i = 0; i < num; i++)
-	{
-        bodies[i].q -= q_avg;
+    if(zero_netcharge)
+    {
+        for(int i = 0; i < num; i++)
+        {
+            bodies[i].q -= q_avg;
+        }
     }
 
     return bodies;
@@ -149,7 +162,7 @@ rtfmm::BodyCompareResult rtfmm::compare(const Bodies3& bs1, const Bodies3& bs2, 
             b2.p, b2.f[0], b2.f[1], b2.f[2],
             std::abs(b1.p - b2.p), diff[0], diff[1], diff[2]);*/
     }
-
+    printf("pnrm = %.8f\n", pnrm);
     res.rmsp = std::sqrt(pdif / num);
     res.rmsf = std::sqrt(fdif / num);
     res.l2p = std::sqrt(pdif / pnrm);

@@ -57,8 +57,11 @@ rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
     exit(0);
     #endif
 
-    dipole_correction(bs, args.cycle);
+    if(args.dipole_correction)
+        dipole_correction(bs, args.cycle);
         
+    if(args.divide_4pi)
+        scale_bodies(bs);
     return sort_bodies_by_idx(bs);
 }
 

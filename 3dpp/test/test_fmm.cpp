@@ -16,7 +16,7 @@ int main(int argc, char* argv[])
     if(rtfmm::verbose) printf("# of threads = %d\n", omp_get_max_threads());
 
     /* prepare bodies */
-    rtfmm::Bodies3 bs = rtfmm::generate_random_bodies(args.n, args.r, args.x, 5);
+    rtfmm::Bodies3 bs = rtfmm::generate_random_bodies(args.n, args.r, args.x, 5, args.zero_netcharge);
 
     /* solve by FMM */
     rtfmm::LaplaceFMM fmm(bs, args);
@@ -31,14 +31,17 @@ int main(int argc, char* argv[])
     cell.brange = {0, args.n};
     TIME_BEGIN(direct);
     kernel.p2p(bs, res_direct, cell, cell);
-    rtfmm::dipole_correction(res_direct, args.cycle);
+    if(args.divide_4pi)
+        rtfmm::scale_bodies(res_direct);
+    if(args.dipole_correction)
+        rtfmm::dipole_correction(res_direct, args.cycle);
     if(args.timing) {TIME_END(direct);}
 
     /* compare */
     if(rtfmm::verbose)
     {
-        rtfmm::print_bodies(res_fmm, 3, 0, "res_fmm");
-        rtfmm::print_bodies(res_direct, 3, 0, "res_direct");
+        rtfmm::print_bodies(res_fmm, args.print_body_number, 0, "res_fmm");
+        rtfmm::print_bodies(res_direct, args.print_body_number, 0, "res_direct");
     }
     rtfmm::compare(res_fmm, res_direct, "FMM", "Direct").show();
 

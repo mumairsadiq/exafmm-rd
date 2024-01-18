@@ -28,6 +28,11 @@ public:
     int ewald_ksize;
     int th_num;
 
+    int dipole_correction;
+    int zero_netcharge;
+    int print_body_number;
+    int divide_4pi;
+
     int enable_fmm;
     int enable_direct;
     int enable_ewald;

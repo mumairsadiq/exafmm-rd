@@ -44,9 +44,9 @@ void rtfmm::svd(Matrix A, Matrix& U, Matrix& S, Matrix& VT)
 {
     int m = A.m, n = A.n;
     int k = std::min(m,n);
-    
-    Matrix u(m,m);
-    Matrix vt(n,n);
+
+    U = Matrix(m,m);
+    VT = Matrix(n,n);
     Matrix s(k,1);
 
     char jobu = 'S';
@@ -54,17 +54,11 @@ void rtfmm::svd(Matrix A, Matrix& U, Matrix& S, Matrix& VT)
     double wkopt;
     int info;
     int lwork = -1;
-    TIME_BEGIN(svd_1);
-    dgesvd_(&jobu, &jobvt, &n, &m, A.d.data(), &n, s.d.data(), vt.d.data(), &n, u.d.data(), &k, &wkopt, &lwork,&info);
-    TIME_END(svd_1);
-    TIME_BEGIN(svd_2);
+    dgesvd_(&jobu, &jobvt, &n, &m, A.d.data(), &n, s.d.data(), VT.d.data(), &n, U.d.data(), &k, &wkopt, &lwork,&info);
     lwork = (int)wkopt;
     Matrix wbuff(lwork, 1);
-    dgesvd_(&jobu, &jobvt, &n, &m, A.d.data(), &n, s.d.data(), vt.d.data(), &n, u.d.data(), &k, wbuff.d.data(), &lwork,&info);
-    TIME_END(svd_2);
+    dgesvd_(&jobu, &jobvt, &n, &m, A.d.data(), &n, s.d.data(), VT.d.data(), &n, U.d.data(), &k, wbuff.d.data(), &lwork,&info);
 
-    U = u;
-    VT = vt;
     S = Matrix(m,n);
 
     for(int j = 0; j < m; j++)
@@ -90,6 +84,20 @@ rtfmm::Matrix rtfmm::transpose(Matrix A)
         }
     }
     return res;
+}
+
+void rtfmm::transpose_inplace(Matrix& A)
+{
+    assert_exit(A.m == A.n, "inplace transpose matrix not a square");
+    int m = A.m;
+    int n = A.n;
+    for(int j = 0; j < m; j++)
+    {
+        for(int i = j + 1; i < n; i++)
+        {
+            std::swap(A[j * n + i],A[i * n + j]);
+        }
+    }
 }
 
 rtfmm::Matrix rtfmm::linear_equation_system_svd(Matrix A, Matrix b)
