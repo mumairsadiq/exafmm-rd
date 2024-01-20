@@ -40,6 +40,25 @@ rtfmm::Matrix rtfmm::mat_mat_mul(const Matrix& A, const Matrix& B)
     return C;
 }
 
+rtfmm::Matrix rtfmm::mat_mat_mul_naive(const Matrix& A, const Matrix& B)
+{
+    int m = A.m, n = A.n, k = B.n;
+    Matrix C(m,k);
+    for(int j = 0; j < m; j++)
+    {
+        for(int i = 0; i < k; i++)
+        {
+            real res = 0.0;
+            for(int z = 0; z < n; z++)
+            {
+                res += A.d[j * n + z] * B.d[z * k + i];
+            }
+            C[j * k + i] = res;
+        }
+    }
+    return C;
+}
+
 void rtfmm::svd(Matrix A, Matrix& U, Matrix& S, Matrix& VT)
 {
     int m = A.m, n = A.n;
@@ -158,4 +177,56 @@ void rtfmm::print_matriv(Matriv& A)
         printf("}\n");
     }
     printf("}\n");
+}
+
+rtfmm::real rtfmm::matrix_L2(Matrix& A, Matrix& B)
+{
+    assert_exit(A.m == B.m && A.n == B.n, "matrix_L2 size inconsisent");
+    real res = 0;
+    for(int j = 0; j < A.m; j++)
+    {
+        for(int i = 0; i < A.n; i++)
+        {
+            res += std::pow(A.d[j * A.n + i] - B.d[j * A.n + i],2);
+        }
+    }
+    return std::sqrt(res / A.n / A.m);
+}
+
+rtfmm::Matrix rtfmm::identity(int m, int n)
+{
+    Matrix res(m,n);
+    for(int j = 0; j < m; j++)
+    {
+        for(int i = 0; i < n; i++)
+        {
+            if(i == j)
+            {
+                res[j * n + i] = 1;
+            }
+            else
+            {
+                res[j * n + i] = 0;
+            }
+        }
+    }
+    return res;
+}
+
+rtfmm::vec2r rtfmm::min_max(Matrix& A)
+{
+    int m = A.m;
+    int n = A.n;
+    real minv = A.d[0];
+    real maxv = A.d[0];
+    for(int j = 0; j < m; j++)
+    {
+        for(int i = 0; i < n; i++)
+        {
+            real v = A[j * n + i];
+            minv = std::min(minv, v);
+            maxv = std::max(maxv, v);
+        }
+    }
+    return {minv, maxv};
 }

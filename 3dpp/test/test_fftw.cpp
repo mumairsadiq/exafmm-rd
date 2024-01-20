@@ -31,7 +31,7 @@ int main()
     for(int i = 0; i < N; i++) 
     {
         in[i][0] = (double)rand()/RAND_MAX;
-        in[i][1] = (double)rand()/RAND_MAX;
+        in[i][1] = 0;
     }
     printf("\n Initial Array\n");
     for(int i = 0; i < N; i++) 

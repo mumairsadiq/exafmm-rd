@@ -41,11 +41,13 @@ void rtfmm::Traverser::horizontal_origin(int tc, int sc, int tcp, int scp, vec3r
     {
         if(adjacent(tc, scp, offset) && is_leaf(tc) && cells[scp].depth >= cells[tc].depth)
         {
-            M2P_pairs.push_back(make_pair(tc, sc, offset));
+            //M2P_pairs.push_back(make_pair(tc, sc, offset));
+            P2P_pairs.push_back(make_pair(tc, sc, offset));
         }
         else if(adjacent(tcp, sc, offset) && is_leaf(sc) && cells[tcp].depth >= cells[sc].depth)
         {
-            P2L_pairs.push_back(make_pair(tc, sc, offset));
+            //P2L_pairs.push_back(make_pair(tc, sc, offset));
+            P2P_pairs.push_back(make_pair(tc, sc, offset));
         }
         else if(neighbour(tcp, scp, offset))
         {

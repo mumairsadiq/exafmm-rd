@@ -58,7 +58,6 @@ public:
 
     void precompute_m2l(int P, real r0, Cells3 cs, PeriodicInteractionMap m2l_map, int images);
 
-private:
     Matrix get_p2p_matrix(
         std::vector<vec3r>& x_src, 
         std::vector<vec3r>& x_tar
@@ -84,6 +83,8 @@ private:
     Matrix UT_l2p_precompute;
     Matrix V_l2p_precompute;
     Matrix Sinv_l2p_precompute;
+    Matrix VSinv_l2p_precompute;
+    Matrix VSinvUT_l2p_precompute;
 
     Matrix matrix_m2m[8];
     Matrix matrix_m2m_img[27];

@@ -42,6 +42,8 @@ Matrix mat_mat_add(Matrix A, Matrix B);
  */
 Matrix mat_mat_mul(const Matrix& A, const Matrix& B); 
 
+Matrix mat_mat_mul_naive(const Matrix& A, const Matrix& B);
+
 /**
  * @brief solve A = U x S x VT
  * 
@@ -79,5 +81,11 @@ Matrix pseudo_inverse(Matrix S);
 void print_matrix(Matrix& mat);
 
 void print_matriv(Matriv& mav);
+
+real matrix_L2(Matrix& A, Matrix& B);
+
+Matrix identity(int m, int n);
+
+vec2r min_max(Matrix& A);
 
 }

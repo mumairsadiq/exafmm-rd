@@ -13,6 +13,9 @@
 					  auto elapse_##a = std::chrono::duration_cast<std::chrono::nanoseconds>(time_end_##a - time_begin_##a);\
                       printf("[%s time measured : %.5f seconds.]\n", #a, elapse_##a.count() * 1e-9)
 
+#define tbegin(a) TIME_BEGIN(a)
+#define tend(a) TIME_END(a)
+
 namespace rtfmm
 {
 

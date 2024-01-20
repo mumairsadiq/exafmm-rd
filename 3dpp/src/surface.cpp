@@ -5,19 +5,38 @@ int rtfmm::get_surface_point_num(int p)
     return 6 * (p - 1) * (p - 1) + 2;
 }
 
-std::vector<rtfmm::vec3r> rtfmm::get_surface_points(int p, real r, vec3r x)
+std::vector<rtfmm::vec3r> rtfmm::get_surface_points(int p, real r, vec3r x, int dir)
 {
     int num = get_surface_point_num(p);
     std::vector<rtfmm::vec3r> points;
-    for(int i = 0; i < p; i++)
+    if(dir == 0)
     {
-        for(int j = 0; j < p; j++)
+        for(int i = 0; i < p; i++)
         {
-            for(int k = 0; k < p; k++)
+            for(int j = 0; j < p; j++)
             {
-                if(i == 0 || i == p - 1 || j == 0 || j == p - 1 || k == 0 || k == p - 1)
+                for(int k = 0; k < p; k++)
                 {
-                    points.push_back(rtfmm::vec3r(-1.0 + i * 2.0 / (p - 1),-1.0 + j * 2.0 / (p - 1),-1.0 + k * 2.0 / (p - 1)));
+                    if(i == 0 || i == p - 1 || j == 0 || j == p - 1 || k == 0 || k == p - 1)
+                    {
+                        points.push_back(rtfmm::vec3r(-1.0 + i * 2.0 / (p - 1),-1.0 + j * 2.0 / (p - 1),-1.0 + k * 2.0 / (p - 1)));
+                    }
+                }
+            }
+        }
+    }
+    else
+    {
+        for(int k = 0; k < p; k++)
+        {
+            for(int j = 0; j < p; j++)
+            {
+                for(int i = 0; i < p; i++)
+                {
+                    if(i == 0 || i == p - 1 || j == 0 || j == p - 1 || k == 0 || k == p - 1)
+                    {
+                        points.push_back(rtfmm::vec3r(-1.0 + i * 2.0 / (p - 1),-1.0 + j * 2.0 / (p - 1),-1.0 + k * 2.0 / (p - 1)));
+                    }
                 }
             }
         }
