@@ -548,7 +548,7 @@ void rtfmm::LaplaceKernel::m2l_fft_precompute_advanced2(int P, Cells3& cs, Perio
     TIME_END(Q);
 
     TIME_BEGIN(hadamard);
-    #pragma omp parallel for 
+    #pragma omp parallel for schedule(dynamic)
     for(int i = 0; i < num_tar; i++)
     {
         auto m2l = m2l_map.begin();
