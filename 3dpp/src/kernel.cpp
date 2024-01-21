@@ -24,7 +24,6 @@ rtfmm::LaplaceKernel::LaplaceKernel()
 
 void rtfmm::LaplaceKernel::p2p(Bodies3& bs_src, Bodies3& bs_tar, Cell3& cell_src, Cell3& cell_tar, vec3r offset)
 {
-    //#pragma omp parallel for
     for(int j = 0; j < cell_tar.brange.number; j++)
     {
         Body3& btar = bs_tar[cell_tar.brange.offset + j];
@@ -77,21 +76,28 @@ void rtfmm::LaplaceKernel::p2m(int P, Bodies3& bs_src, Cell3& cell_src)
 
 void rtfmm::LaplaceKernel::p2m_precompute(int P, Bodies3& bs_src, Cell3& cell_src)
 {
-    /* get source to check matrix */
+    int num_surf = get_surface_point_num(P);
     std::vector<vec3r> x_check = get_surface_points(P, cell_src.r * 2.95, cell_src.x);
-    std::vector<vec3r> x_src = get_bodies_x(bs_src, cell_src.brange);
-    Matrix s2c = get_p2p_matrix(x_src, x_check);
-
-    /* get check potential */
-    Matrix q_src = get_bodies_q(bs_src, cell_src.brange);
-    Matrix p_check = mat_vec_mul(s2c, q_src);
+    Matrix p_check(num_surf, 1);
+    for(int j = 0; j < num_surf; j++)
+    {
+        vec3r& xj = x_check[j];
+        real potential = 0;
+        for(int i = 0; i < cell_src.brange.number; i++)
+        {
+            Body3& bi = bs_src[cell_src.brange.offset + i];
+            real r = (xj - bi.x).r();
+            real invr = r == 0 ? 0 : 1 / r;
+            potential += bi.q * invr;
+        }
+        p_check[j] = potential;
+    }
 
     /* get equivalent charge */
     real scale = std::pow(0.5, cell_src.depth);
-    Matrix UTb = mat_vec_mul(UT_p2m_precompute, p_check);
-    cell_src.q_equiv = mat_vec_mul(VSinv_p2m_precompute, UTb, scale);
-    /*Matrix VSinvUTb = mat_mat_mul(VSinv_p2m_precompute, UT_p2m_precompute);
-    cell_src.q_equiv = mat_vec_mul(VSinvUTb, p_check, scale);*/
+    Matrix buffer(num_surf, 1);
+    mat_vec_mul(UT_p2m_precompute, p_check, buffer);
+    mat_vec_mul(VSinv_p2m_precompute, buffer, cell_src.q_equiv, scale);
 }
 
 
@@ -122,8 +128,9 @@ void rtfmm::LaplaceKernel::m2m_precompute(int P, Cell3& cell_parent, Cells3& cs)
     for(int i = 0; i < cell_parent.crange.number; i++)
     {
         Cell3& cell_child = cs[cell_parent.crange.offset + i];
-        Matrix q_equiv_parent = mat_vec_mul(matrix_m2m[cell_child.octant], cell_child.q_equiv);
-        cell_parent.q_equiv = mat_mat_add(cell_parent.q_equiv, q_equiv_parent);
+        Matrix q_equiv_parent(get_surface_point_num(P), 1);
+        mat_vec_mul(matrix_m2m[cell_child.octant], cell_child.q_equiv, q_equiv_parent);
+        mat_mat_increment(cell_parent.q_equiv, q_equiv_parent);
     }
 }
 
@@ -463,13 +470,12 @@ void rtfmm::LaplaceKernel::m2l_fft_precompute_advanced(int P, Cells3& cs, Period
 
 void rtfmm::LaplaceKernel::m2l_fft_precompute_advanced2(int P, Cells3& cs, PeriodicInteractionMap& m2l_map, PeriodicInteractionPairs& m2l_pairs)
 {
-    //#define USE_MANY
+    #define USE_MANY
     if(verbose) printf("m2l_fft_precompute_advanced2\n");
     TIME_BEGIN(init);
     int N = 2 * P - 1;
     int N3 = N * N * N;
     int N_freq = N * N * (N / 2 + 1);
-    //int N_freq = N3;
     printf("N = %d, N3 = %d, N_freq = %d\n", N, N3, N_freq);
     int surface_number = rtfmm::get_surface_point_num(P);
     std::map<int,rtfmm::vec3i> surf_conv_map = get_surface_conv_map(P);
@@ -512,19 +518,12 @@ void rtfmm::LaplaceKernel::m2l_fft_precompute_advanced2(int P, Cells3& cs, Perio
     TIME_END(setup);
 
     TIME_BEGIN(create_plan);
-    real* Q0 = &Q_all[0];
-    real* p_fft_grid0 = &p_all[0];
-    complexr* Qk0 = &Qk_all[0];
-    complexr* pk0 = &pk_all[0];
     #ifdef USE_MANY
-    std::vector<real> Q_batch(batch_size * N3);
-    std::vector<complexr> Qk_batch(batch_size * N_freq);
-    fftw_plan plan_Q = fftw_plan_many_dft_r2c(3, fft_size, batch_size, Q0, nullptr, 1, N3, reinterpret_cast<fftw_complex*>(Qk0), nullptr, 1, N_freq, FFTW_ESTIMATE);
-    printf("use fftw_plan_many_dft_r2c\n");
+    fftw_plan plan_Q = fftw_plan_many_dft_r2c(3, fft_size, batch_size, &Q_all[0], nullptr, 1, N3, reinterpret_cast<fftw_complex*>(&Qk_all[0]), nullptr, 1, N_freq, FFTW_ESTIMATE);
     #else
-    fftw_plan plan_Q = fftw_plan_dft_r2c_3d(N, N, N, Q0, reinterpret_cast<fftw_complex*>(Qk0), FFTW_ESTIMATE);
+    fftw_plan plan_Q = fftw_plan_dft_r2c_3d(N, N, N, &Q_all[0], reinterpret_cast<fftw_complex*>(Qk0), FFTW_ESTIMATE);
     #endif
-    fftw_plan plan_P = fftw_plan_dft_c2r_3d(N, N, N, reinterpret_cast<fftw_complex*>(pk0), p_fft_grid0, FFTW_ESTIMATE);
+    fftw_plan plan_P = fftw_plan_dft_c2r_3d(N, N, N, reinterpret_cast<fftw_complex*>(&pk_all[0]), &p_all[0], FFTW_ESTIMATE);
     TIME_END(create_plan);
 
     TIME_BEGIN(Q);
@@ -535,7 +534,7 @@ void rtfmm::LaplaceKernel::m2l_fft_precompute_advanced2(int P, Cells3& cs, Perio
         int i = batch_idx * batch_size;
         real* Q = &Q_all[i * N3];
         complexr* Qk = &Qk_all[i * N_freq];
-        fftw_execute_dft_r2c(plan_Q, Q, reinterpret_cast<fftw_complex*>(Qk));
+        fftw_execute_dft_r2c(plan_Q, Q, reinterpret_cast<fftw_complex*>(&Qk[0]));
     }
     #else
     #pragma omp parallel for
@@ -630,8 +629,9 @@ void rtfmm::LaplaceKernel::l2l_precompute(int P, Cell3& cell_parent, Cells3& cs)
     for(int i = 0; i < cell_parent.crange.number; i++)
     {
         Cell3& cell_child = cs[cell_parent.crange.offset + i];
-        Matrix p_check_child = mat_vec_mul(matrix_l2l[cell_child.octant], cell_parent.p_check);
-        cell_child.p_check = mat_mat_add(cell_child.p_check, p_check_child);
+        Matrix p_check_child(get_surface_point_num(P), 1);
+        mat_vec_mul(matrix_l2l[cell_child.octant], cell_parent.p_check, p_check_child);
+        mat_mat_increment(cell_child.p_check, p_check_child);
     }
 }
 
@@ -665,23 +665,31 @@ void rtfmm::LaplaceKernel::l2p(int P, Bodies3& bs_tar, Cell3& cell_tar)
 
 void rtfmm::LaplaceKernel::l2p_precompute(int P, Bodies3& bs_tar, Cell3& cell_tar)
 {
+    int num_surf = get_surface_point_num(P);
     std::vector<rtfmm::vec3r> x_equiv = get_surface_points(P, cell_tar.r * 2.95, cell_tar.x);
 
-    /* get equivalent charge */
     real scale = std::pow(0.5, cell_tar.depth);
     Matrix UTb = mat_vec_mul(UT_l2p_precompute, cell_tar.p_check);
     Matrix q_equiv = mat_vec_mul(VSinv_l2p_precompute, UTb, scale);
-    //Matrix q_equiv = mat_vec_mul(VSinvUT_l2p_precompute, cell_tar.p_check, scale);
 
-    /* get equiv to tar matrix */
-    std::vector<vec3r> x_tar = get_bodies_x(bs_tar, cell_tar.brange);
-    Matrix e2t = get_p2p_matrix(x_equiv, x_tar);
-
-    /* get target potential and force */
-    Matrix p_tar = mat_vec_mul(e2t, q_equiv);
-    Matriv f_tar = get_force_naive(x_equiv, x_tar, q_equiv);
-    add_boides_p(bs_tar, p_tar, cell_tar.brange);
-    add_boides_f(bs_tar, f_tar, cell_tar.brange);
+    for(int j = 0; j < cell_tar.brange.number; j++)
+    {
+        Body3& bj = bs_tar[cell_tar.brange.offset + j];
+        real potential = 0;
+        vec3r force(0,0,0);
+        for(int i = 0; i < num_surf; i++)
+        {
+            vec3r& xi = x_equiv[i];
+            real qi = q_equiv[i];
+            vec3r dx = bj.x - xi;
+            real r = dx.r();
+            real invr = r == 0 ? 0 : 1 / r;
+            potential += qi * invr;
+            force += qi * invr * invr * invr * (-dx);
+        }
+        bj.p += potential;
+        bj.f += force;
+    }
 }
 
 void rtfmm::LaplaceKernel::m2p(int P, Bodies3& bs_tar, Cell3& cell_src, Cell3& cell_tar, vec3r offset)
@@ -787,7 +795,7 @@ std::vector<rtfmm::real> rtfmm::LaplaceKernel::get_G_matrix(std::vector<rtfmm::v
     return G;
 }
 
-std::vector<rtfmm::real> rtfmm::LaplaceKernel::get_Q_matrix(Matrix& surface_q, int N, std::map<int,rtfmm::vec3i> surf_conv_map)
+std::vector<rtfmm::real> rtfmm::LaplaceKernel::get_Q_matrix(Matrix& surface_q, int N, std::map<int,rtfmm::vec3i>& surf_conv_map)
 {
     std::vector<rtfmm::real> Q(N * N * N);
     int surface_number = surface_q.m * surface_q.n;
@@ -799,7 +807,7 @@ std::vector<rtfmm::real> rtfmm::LaplaceKernel::get_Q_matrix(Matrix& surface_q, i
     return Q;
 }
 
-void rtfmm::LaplaceKernel::get_Q_matrix(real* Q, Matrix& surface_q, int N, std::map<int,rtfmm::vec3i> surf_conv_map)
+void rtfmm::LaplaceKernel::get_Q_matrix(real* Q, Matrix& surface_q, int N, std::map<int,rtfmm::vec3i>& surf_conv_map)
 {
     int surface_number = surface_q.m * surface_q.n;
     for(int i = 0; i < surface_number; i++)
@@ -853,6 +861,7 @@ void rtfmm::LaplaceKernel::precompute(int P, real r0, int images)
     Matrix& V_m2m_precompute = V_p2m_precompute;
     Matrix& Sinv_m2m_precompute = Sinv_p2m_precompute;
     Matrix& VSinv_m2m_precompute = VSinv_p2m_precompute;
+    #pragma omp parallel for
     for(int octant = 0; octant < 8; octant++)
     {
         vec3r offset_child = Tree::get_child_cell_x(vec3r(0,0,0), r0, octant, 0);
@@ -865,6 +874,7 @@ void rtfmm::LaplaceKernel::precompute(int P, real r0, int images)
     /* m2m image */
     if(images > 0)
     {
+        #pragma omp parallel for
         for(int octant = 0; octant < 27; octant++)
         {
             vec3r offset_child = Tree::get_child_cell_x(vec3r(0,0,0), r0, octant, 1);
@@ -877,6 +887,7 @@ void rtfmm::LaplaceKernel::precompute(int P, real r0, int images)
     }
 
     /* l2l */
+    #pragma omp parallel for
     for(int octant = 0; octant < 8; octant++)
     {
         matrix_l2l[octant] = transpose(matrix_m2m[octant]); // (G(VSinv))UT

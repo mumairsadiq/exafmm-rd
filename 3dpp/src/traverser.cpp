@@ -43,11 +43,13 @@ void rtfmm::Traverser::horizontal_origin(int tc, int sc, int tcp, int scp, vec3r
         {
             //M2P_pairs.push_back(make_pair(tc, sc, offset));
             P2P_pairs.push_back(make_pair(tc, sc, offset));
+            P2P_map[tc].push_back(std::make_pair(sc, offset));
         }
         else if(adjacent(tcp, sc, offset) && is_leaf(sc) && cells[tcp].depth >= cells[sc].depth)
         {
             //P2L_pairs.push_back(make_pair(tc, sc, offset));
             P2P_pairs.push_back(make_pair(tc, sc, offset));
+            P2P_map[tc].push_back(std::make_pair(sc, offset));
         }
         else if(neighbour(tcp, scp, offset))
         {
@@ -79,6 +81,7 @@ void rtfmm::Traverser::horizontal_origin(int tc, int sc, int tcp, int scp, vec3r
         if(is_leaf(tc) && is_leaf(sc))
         {
             P2P_pairs.push_back(make_pair(tc, sc, offset));
+            P2P_map[tc].push_back(std::make_pair(sc, offset));
         }
         else if(!is_leaf(tc) && is_leaf(sc))
         {
@@ -228,6 +231,7 @@ rtfmm::PeriodicInteractionMap rtfmm::Traverser::get_map(OperatorType type)
     switch(type)
     {
         case OperatorType::M2L : return M2L_map; break;
+        case OperatorType::P2P : return P2P_map; break;
         default: return PeriodicInteractionMap();
     }
 }

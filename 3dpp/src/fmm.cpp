@@ -29,11 +29,16 @@ rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
     if(args.use_precompute)
     {
         TIME_BEGIN(precompute);
+        TIME_BEGIN(precompute_others);
         kernel.precompute(args.P, args.r, args.images);
+        TIME_END(precompute_others);
+        TIME_BEGIN(precompute_m2l);
         kernel.precompute_m2l(args.P, args.r, cs, traverser.get_map(OperatorType::M2L), args.images);
+        TIME_END(precompute_m2l);
         if(args.timing) {TIME_END(precompute);}
     }
 
+    tbegin(FMM_kernels);
     P2M();
     M2M();
     M2L();
@@ -42,7 +47,7 @@ rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
     L2P();
     M2P();
     P2P();
-
+    tend(FMM_kernels);
 
     #ifdef TEST_TREE
     for(auto b : bs)
@@ -70,6 +75,8 @@ void rtfmm::LaplaceFMM::P2M()
     TIME_BEGIN(P2M);
     Indices lcidx = get_leaf_cell_indices(cs);
     int leaf_number = lcidx.size();
+    std::cout<<"P2M leaf_number = "<<leaf_number<<std::endl;
+    #pragma omp parallel for
     for(int i = 0; i < leaf_number; i++)
     {
         Cell3& c = cs[lcidx[i]];
@@ -101,6 +108,7 @@ void rtfmm::LaplaceFMM::M2M()
     {
         Indices nlcidx = get_nonleaf_cell_indices(cs, depth);
         int num = nlcidx.size();
+        #pragma omp parallel for
         for(int i = 0; i < num; i++)
         {
             Cell3& ci = cs[nlcidx[i]];
@@ -183,6 +191,7 @@ void rtfmm::LaplaceFMM::L2L()
     {
         Indices nlcidx = get_nonleaf_cell_indices(cs, depth);
         int num = nlcidx.size();
+        #pragma omp parallel for
         for(int i = 0; i < num; i++)
         {
             Cell3& ci = cs[nlcidx[i]];
@@ -216,6 +225,8 @@ void rtfmm::LaplaceFMM::L2P()
     TIME_BEGIN(L2P);
     Indices lcidx = get_leaf_cell_indices(cs);
     int leaf_number = lcidx.size();
+    std::cout<<"L2P leaf_number = "<<leaf_number<<std::endl;
+    #pragma omp parallel for
     for(int i = 0; i < leaf_number; i++)
     {
         Cell3& c = cs[lcidx[i]];
@@ -240,19 +251,25 @@ void rtfmm::LaplaceFMM::L2P()
 void rtfmm::LaplaceFMM::P2P()
 {
     TIME_BEGIN(P2P);
-    PeriodicInteractionPairs p2p_pairs = traverser.get_pairs(OperatorType::P2P);
-    for(auto p2p : p2p_pairs)
+    PeriodicInteractionMap p2p_map = traverser.get_map(OperatorType::P2P);
+    #pragma omp parallel for
+    for(int i = 0; i < p2p_map.size(); i++)
     {
-        Cell3& ctar = cs[p2p.first];
-        Cell3& csrc = cs[p2p.second.first];
-        #ifndef TEST_TREE
-        kernel.p2p(bs,bs,csrc,ctar,p2p.second.second);
-        #else
-        for(int j = 0; j < ctar.brange.number; j++)
+        auto p2p = p2p_map.begin();
+        std::advance(p2p, i);
+        Cell3& ctar = cs[p2p->first];
+        for(int j = 0; j < p2p->second.size(); j++)
         {
-            bs[ctar.brange.offset + j].p += csrc.brange.number;
+            Cell3& csrc = cs[p2p->second[j].first];
+            #ifndef TEST_TREE
+            kernel.p2p(bs,bs,csrc,ctar,p2p->second[j].second);
+            #else
+            for(int k = 0; k < ctar.brange.number; k++)
+            {
+                bs[ctar.brange.offset + k].p += csrc.brange.number;
+            }
+            #endif
         }
-        #endif
     }
     if(args.timing)
     {

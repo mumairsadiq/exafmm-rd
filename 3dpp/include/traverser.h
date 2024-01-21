@@ -67,6 +67,7 @@ public:
     PeriodicInteractionPairs P2L_pairs;
 
     PeriodicInteractionMap M2L_map;
+    PeriodicInteractionMap P2P_map;
 };
 
 }

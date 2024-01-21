@@ -25,13 +25,31 @@ void mat_scale(Matrix& A, real scale);
 Matrix mat_vec_mul(const Matrix& A, const Matrix& b, real k = 1.0); 
 
 /**
+ * @brief c = k x A x b
+ * 
+ * @param A m by n matrix
+ * @param b n by 1 vector
+ * @param c m by 1 vector
+ * @param k real number
+ */
+void mat_vec_mul(const Matrix& A, const Matrix& b, Matrix& c, real k = 1.0); 
+
+/**
  * @brief C = A + B
  * 
  * @param A m by n matrix
  * @param B m by n matrix
  * @return m by n matrix
  */
-Matrix mat_mat_add(Matrix A, Matrix B); 
+Matrix mat_mat_add(Matrix& A, Matrix& B); 
+
+/**
+ * @brief A += B
+ * 
+ * @param A m by n matrix
+ * @param B m by n matrix
+ */
+void mat_mat_increment(Matrix& A, Matrix& B); 
 
 /**
  * @brief C = A x B

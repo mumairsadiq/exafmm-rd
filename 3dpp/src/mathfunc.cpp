@@ -16,7 +16,13 @@ rtfmm::Matrix rtfmm::mat_vec_mul(const Matrix& A, const Matrix& b, real k)
     return C;
 }
 
-rtfmm::Matrix rtfmm::mat_mat_add(Matrix A, Matrix B)
+void rtfmm::mat_vec_mul(const Matrix& A, const Matrix& b, Matrix& c, real k)
+{
+    int m = A.m, n = A.n;
+    cblas_dgemv(CblasRowMajor, CblasNoTrans, m, n, k, A.d.data(), n, b.d.data(), 1, 0.0, c.d.data(), 1);
+}
+
+rtfmm::Matrix rtfmm::mat_mat_add(Matrix& A, Matrix& B)
 {
     assert_exit(A.m == B.m && A.n == B.n, "mat_mat_add inconsitent size");
     int m = A.m, n = A.n;
@@ -29,6 +35,19 @@ rtfmm::Matrix rtfmm::mat_mat_add(Matrix A, Matrix B)
         }
     }
     return C;
+}
+
+void rtfmm::mat_mat_increment(Matrix& A, Matrix& B)
+{
+    assert_exit(A.m == B.m && A.n == B.n, "mat_mat_add inconsitent size");
+    int m = A.m, n = A.n;
+    for(int j = 0; j < m; j++)
+    {
+        for(int i = 0; i < n; i++)
+        {
+            A[j * n + i] += B[j * n + i];
+        }
+    }
 }
 
 rtfmm::Matrix rtfmm::mat_mat_mul(const Matrix& A, const Matrix& B)
