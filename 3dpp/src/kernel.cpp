@@ -548,8 +548,8 @@ void rtfmm::LaplaceKernel::m2l_fft_precompute_advanced2(int P, Cells3& cs, Perio
     TIME_END(Q);
 
     TIME_BEGIN(hadamard);
-    #pragma omp parallel for
-    for(int i = 0; i < m2l_map.size(); i++)
+    #pragma omp parallel for 
+    for(int i = 0; i < num_tar; i++)
     {
         auto m2l = m2l_map.begin();
         std::advance(m2l, i);
@@ -958,6 +958,7 @@ void rtfmm::LaplaceKernel::precompute_m2l(int P, real r0, Cells3 cs, PeriodicInt
                     std::vector<real> G = get_G_matrix(grid, N); 
                     std::vector<complexr> Gk(N_freq);                   
                     fftw_execute_dft_r2c(plan_G, G.data(), reinterpret_cast<fftw_complex*>(Gk.data()));
+                    #pragma omp critical // std::map is not thread-safe
                     m2l_Gks[hash(relative_idx)] = Gk;
                 }
             }
