@@ -203,3 +203,43 @@ void rtfmm::BodyCompareResult::show()
     printf("p-energy2 : %8.12e\n", epot2);
     printf("\n");
 }
+
+rtfmm::ManyBody rtfmm::Bodies2Manybody(const Bodies3& bs)
+{
+    ManyBody res;
+    res.num = bs.size();
+    for(int i = 0; i < res.num; i++)
+    {
+        Body3 b = bs[i];
+        res.idxs.push_back(b.idx);
+        res.qs.push_back(b.q);
+        res.ps.push_back(b.p);
+        res.xs.push_back(b.x[0]);
+        res.ys.push_back(b.x[1]);
+        res.zs.push_back(b.x[2]);
+        res.fxs.push_back(b.f[0]);
+        res.fys.push_back(b.f[1]);
+        res.fzs.push_back(b.f[2]);
+    }
+    return res;
+}
+
+rtfmm::Bodies3 rtfmm::Manybody2Bodies(const ManyBody& bs)
+{
+    Bodies3 res;
+    for(int i = 0; i < bs.num; i++)
+    {
+        Body3 b;
+        b.idx = bs.idxs[i];
+        b.q = bs.qs[i];
+        b.p = bs.ps[i];
+        b.x[0] = bs.xs[i];
+        b.x[1] = bs.ys[i];
+        b.x[2] = bs.zs[i];
+        b.f[0] = bs.fxs[i];
+        b.f[1] = bs.fys[i];
+        b.f[2] = bs.fzs[i];
+        res.push_back(b);
+    }
+    return res;
+}

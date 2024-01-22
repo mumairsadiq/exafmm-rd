@@ -14,6 +14,20 @@ struct Body3
     vec3r f;
 };
 
+struct ManyBody
+{
+    int num;
+    std::vector<int> idxs;
+    std::vector<real> qs;
+    std::vector<real> ps;
+    std::vector<real> xs;
+    std::vector<real> ys;
+    std::vector<real> zs;
+    std::vector<real> fxs;
+    std::vector<real> fys;
+    std::vector<real> fzs;
+};
+
 struct BodyCompareResult
 {
     int num_compared;
@@ -108,5 +122,9 @@ BodyCompareResult compare(const Bodies3& bs1, const Bodies3& bs2, std::string na
  * @brief RT
  */
 Bodies3 sort_bodies_by_idx(const Bodies3& bs);
+
+ManyBody Bodies2Manybody(const Bodies3& bs);
+
+Bodies3 Manybody2Bodies(const ManyBody& bs);
 
 }

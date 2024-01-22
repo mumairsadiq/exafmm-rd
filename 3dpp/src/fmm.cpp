@@ -250,9 +250,9 @@ void rtfmm::LaplaceFMM::L2P()
 
 void rtfmm::LaplaceFMM::P2P()
 {
-    TIME_BEGIN(P2P);
     PeriodicInteractionMap p2p_map = traverser.get_map(OperatorType::P2P);
     if(verbose) std::cout<<"p2p_pair.size() = "<<traverser.get_pairs(OperatorType::P2P).size()<<std::endl;
+    TIME_BEGIN(P2P);
     #pragma omp parallel for
     for(int i = 0; i < p2p_map.size(); i++)
     {

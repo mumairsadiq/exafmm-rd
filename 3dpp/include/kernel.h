@@ -17,6 +17,8 @@ public:
     void p2p(Bodies3& bs_src, Bodies3& bs_tar, Cell3& cell_src, Cell3& cell_tar, vec3r offset = vec3r(0,0,0), int use_simd = 1);
 
     void p2p_1toN(Bodies3& bs_src, Bodies3& bs_tar, Cells3& cs, std::vector<std::pair<int, vec3r>>& p2ps, Cell3& cell_tar);
+
+    void p2p_1toN(ManyBody& bs_src, ManyBody& bs_tar, Cells3& cs, std::vector<std::pair<int, vec3r>>& p2ps, Cell3& cell_tar);
     
     void p2m(int P, Bodies3& bs_src, Cell3& cell_src);
 
