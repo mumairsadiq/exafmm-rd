@@ -39,6 +39,7 @@ public:
     int check_tree;
     int use_fft;
     int use_precompute;
+    int use_simd;
 };
 
 }

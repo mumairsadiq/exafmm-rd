@@ -23,6 +23,7 @@ rtfmm::Argument::Argument(int argc, char* argv[])
     cmd.add<int>("check_tree", 0, "if check tree", false, 0);
     cmd.add<int>("use_fft", 0, "if use fft in M2L", false, 1);
     cmd.add<int>("use_precompute", 0, "if use precomputed kernel", false, 1);
+    cmd.add<int>("use_simd", 0, "if use simd in P2P", false, 1);
     cmd.add<int>("dipole_correction", 0, "if use dipole correction for FMM/direct", false, 1);
     cmd.add<int>("zero_netcharge", 0, "if zero net charge", false, 1);
     cmd.add<int>("print_body_number", 0, "print body number", false, 3);
@@ -41,6 +42,7 @@ rtfmm::Argument::Argument(int argc, char* argv[])
     zero_netcharge = cmd.get<int>("zero_netcharge");
     print_body_number = cmd.get<int>("print_body_number");
     divide_4pi = cmd.get<int>("divide_4pi");
+    use_simd = cmd.get<int>("use_simd");
 
     num_compare = cmd.get<int>("num_compare");
     if(num_compare == -1) num_compare = n;
@@ -79,6 +81,7 @@ void rtfmm::Argument::show()
     printf("  %-20s = %d\n","verbose",verbose);
     printf("  %-20s = %d\n","use_fft",use_fft);
     printf("  %-20s = %d\n","use_precompute",use_precompute);
+    printf("  %-20s = %d\n","use_simd",use_simd);
     printf("  %-20s = %d\n","dipole_correction",dipole_correction);
     printf("  %-20s = %d\n","zero_netcharge",zero_netcharge);
     printf("  %-20s = %d\n","print_body_number",print_body_number);

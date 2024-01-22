@@ -289,6 +289,27 @@ public:
     }
 };
 
+template<>
+class vec<2, double>
+{
+private:
+    double data[2];
+public:
+    vec(){}
+    vec(double v)
+    {
+        for(int i = 0; i < 2; i++)
+        {
+            this->data[i] = v;
+        }
+    }
+    vec(double v0, double v1)
+    {  
+        data[0] = v0;
+        data[1] = v1;
+    }
+};
+
 using vec2r = vec<2, real>;
 using vec3r = vec<3, real>;
 using vec3i = vec<3, int>;

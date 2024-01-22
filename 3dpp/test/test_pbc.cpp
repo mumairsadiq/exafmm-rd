@@ -62,7 +62,7 @@ int main(int argc, char* argv[])
             {
                 for(int px = -dm; px <= dm; px++)
                 {
-                    kernel.p2p(bs, res_direct, cell_src, cell_tar, rtfmm::vec3r(px,py,pz) * args.cycle);
+                    kernel.p2p(bs, res_direct, cell_src, cell_tar, rtfmm::vec3r(px,py,pz) * args.cycle, args.use_simd);
                 }   
             }
         }

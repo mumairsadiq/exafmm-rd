@@ -252,23 +252,31 @@ void rtfmm::LaplaceFMM::P2P()
 {
     TIME_BEGIN(P2P);
     PeriodicInteractionMap p2p_map = traverser.get_map(OperatorType::P2P);
+    if(verbose) std::cout<<"p2p_pair.size() = "<<traverser.get_pairs(OperatorType::P2P).size()<<std::endl;
     #pragma omp parallel for
     for(int i = 0; i < p2p_map.size(); i++)
     {
         auto p2p = p2p_map.begin();
         std::advance(p2p, i);
         Cell3& ctar = cs[p2p->first];
-        for(int j = 0; j < p2p->second.size(); j++)
+        if(args.use_simd)
         {
-            Cell3& csrc = cs[p2p->second[j].first];
-            #ifndef TEST_TREE
-            kernel.p2p(bs,bs,csrc,ctar,p2p->second[j].second);
-            #else
-            for(int k = 0; k < ctar.brange.number; k++)
+            kernel.p2p_1toN(bs,bs,cs,p2p->second,ctar);
+        }
+        else
+        {
+            for(int j = 0; j < p2p->second.size(); j++)
             {
-                bs[ctar.brange.offset + k].p += csrc.brange.number;
+                Cell3& csrc = cs[p2p->second[j].first];
+                #ifndef TEST_TREE
+                kernel.p2p(bs,bs,csrc,ctar,p2p->second[j].second, 0);
+                #else
+                for(int k = 0; k < ctar.brange.number; k++)
+                {
+                    bs[ctar.brange.offset + k].p += csrc.brange.number;
+                }
+                #endif
             }
-            #endif
         }
     }
     if(args.timing)

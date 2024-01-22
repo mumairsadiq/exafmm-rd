@@ -30,7 +30,7 @@ int main(int argc, char* argv[])
     rtfmm::Cell3 cell;
     cell.brange = {0, args.n};
     TIME_BEGIN(direct);
-    kernel.p2p(bs, res_direct, cell, cell);
+    kernel.p2p(bs, res_direct, cell, cell, rtfmm::vec3r(0,0,0), args.use_simd);
     if(args.divide_4pi)
         rtfmm::scale_bodies(res_direct);
     if(args.dipole_correction)

@@ -4,6 +4,8 @@
 #include "argument.h"
 #include <omp.h>
 #include <set>
+#include "align.h"
+#include "emmintrin.h"
 
 /**
  * @brief convert vec3i to hashed value
@@ -22,37 +24,200 @@ rtfmm::LaplaceKernel::LaplaceKernel()
     
 }
 
-void rtfmm::LaplaceKernel::p2p(Bodies3& bs_src, Bodies3& bs_tar, Cell3& cell_src, Cell3& cell_tar, vec3r offset)
+static void print_simd(__m128d v)
 {
-    for(int j = 0; j < cell_tar.brange.number; j++)
+    union {
+            __m128d temp;
+            double data[2];
+        };
+    temp = v;
+    printf("(%.4f, %.4f)\n", data[0], data[1]);
+}
+
+void rtfmm::LaplaceKernel::p2p(Bodies3& bs_src, Bodies3& bs_tar, Cell3& cell_src, Cell3& cell_tar, vec3r offset, int use_simd)
+{
+    if(!use_simd)
     {
-        Body3& btar = bs_tar[cell_tar.brange.offset + j];
-        real potential = 0;
-        vec3r force(0,0,0);
-        for(int i = 0; i < cell_src.brange.number; i++)
+        for(int j = 0; j < cell_tar.brange.number; j++)
         {
-            Body3& bsrc = bs_src[cell_src.brange.offset + i];
-            vec3r dx = btar.x - bsrc.x - offset;
-            real r = dx.r();
-            real invr = r == 0 ? 0 : 1 / r;
-            potential += bsrc.q * invr;
-            force += bsrc.q * invr * invr * invr * (-dx);
+            Body3& btar = bs_tar[cell_tar.brange.offset + j];
+            real potential = 0;
+            vec3r force(0,0,0);
+            for(int i = 0; i < cell_src.brange.number; i++)
+            {
+                Body3& bsrc = bs_src[cell_src.brange.offset + i];
+                vec3r dx = btar.x - bsrc.x - offset;
+                real r = dx.r();
+                real invr = r == 0 ? 0 : 1 / r;
+                potential += bsrc.q * invr;
+                force += bsrc.q * invr * invr * invr * (-dx);
+            }
+            btar.p += potential;
+            btar.f += force;
         }
-        btar.p += potential;
-        btar.f += force;
+    }
+    else
+    {
+        __m128d zero = _mm_setr_pd(0,0);
+        __m128d one = _mm_setr_pd(1,1);
+        for(int j = 0; j < cell_tar.brange.number; j+=2)
+        {
+            Body3* btar = &bs_tar[cell_tar.brange.offset + j];
+            __m128d xj,yj,zj;
+            if(j >= cell_tar.brange.number - 1)
+            {
+                xj = _mm_setr_pd(btar->x[0],0);
+                yj = _mm_setr_pd(btar->x[1],0);
+                zj = _mm_setr_pd(btar->x[2],0);
+            }
+            else
+            {
+                xj = _mm_setr_pd(btar->x[0],(btar+1)->x[0]);
+                yj = _mm_setr_pd(btar->x[1],(btar+1)->x[1]);
+                zj = _mm_setr_pd(btar->x[2],(btar+1)->x[2]);
+            }
+            
+            union{
+                __m128d pj = _mm_setr_pd(0,0);
+                double pdata[2];
+            };
+            union{
+                __m128d fxj = _mm_setr_pd(0,0);
+                double fxjdata[2];
+            };
+            union{
+                __m128d fyj = _mm_setr_pd(0,0);
+                double fyjdata[2];
+            };
+            union{
+                __m128d fzj = _mm_setr_pd(0,0);
+                double fzjdata[2];
+            };
+
+            __m128d xi, yi, zi, qi, invr, f, qinvr;
+
+            for(int i = 0; i < cell_src.brange.number; i++)
+            {
+                Body3& bsrc = bs_src[cell_src.brange.offset + i];
+                vec3r bsrc_xi = bsrc.x + offset;
+                xi = _mm_setr_pd(bsrc_xi[0],bsrc_xi[0]);
+                yi = _mm_setr_pd(bsrc_xi[1],bsrc_xi[1]);
+                zi = _mm_setr_pd(bsrc_xi[2],bsrc_xi[2]);
+                qi = _mm_setr_pd(bsrc.q,bsrc.q);
+                xi = _mm_sub_pd(xj, xi);
+                yi = _mm_sub_pd(yj, yi);
+                zi = _mm_sub_pd(zj, zi);
+                invr = _mm_mul_pd(xi, xi);
+                invr = _mm_add_pd(invr, _mm_mul_pd(yi, yi));
+                invr = _mm_add_pd(invr, _mm_mul_pd(zi, zi));
+                f = _mm_cmpgt_pd(invr, zero);
+                invr = _mm_sqrt_pd(invr);
+                invr = _mm_div_pd(one, invr);
+                invr = _mm_and_pd(invr, f);
+                qinvr = _mm_mul_pd(qi, invr);
+                pj = _mm_add_pd(pj, qinvr);
+                qinvr = _mm_mul_pd(qinvr, invr);
+                qinvr = _mm_mul_pd(qinvr, invr);
+                fxj = _mm_add_pd(fxj, _mm_mul_pd(qinvr, xi));
+                fyj = _mm_add_pd(fyj, _mm_mul_pd(qinvr, yi));
+                fzj = _mm_add_pd(fzj, _mm_mul_pd(qinvr, zi));
+            }
+            btar->p += pdata[0];
+            btar->f[0] -= fxjdata[0];
+            btar->f[1] -= fyjdata[0];
+            btar->f[2] -= fzjdata[0];
+            if(j < cell_tar.brange.number - 1)
+            {
+                (btar + 1)->p += pdata[1];
+                (btar + 1)->f[0] -= fxjdata[1];
+                (btar + 1)->f[1] -= fyjdata[1];
+                (btar + 1)->f[2] -= fzjdata[1];
+            }
+        }
     }
 }
 
-void rtfmm::LaplaceKernel::p2p_matrix(Bodies3& bs_src, Bodies3& bs_tar, Cell3& cell_src, Cell3& cell_tar, vec3r offset)
+void rtfmm::LaplaceKernel::p2p_1toN(Bodies3& bs_src, Bodies3& bs_tar, Cells3& cs, std::vector<std::pair<int, vec3r>>& p2ps, Cell3& cell_tar)
 {
-    std::vector<vec3r> x_src = get_bodies_x(bs_src, cell_src.brange, offset);
-    std::vector<vec3r> x_tar = get_bodies_x(bs_tar, cell_tar.brange);
-    Matrix q_src = get_bodies_q(bs_src, cell_src.brange);
-    Matrix matrix_p2p = get_p2p_matrix(x_src, x_tar);
-    Matrix p_tar = mat_vec_mul(matrix_p2p, q_src);
-    Matriv f_tar = get_force_naive(x_src, x_tar, q_src);
-    add_boides_p(bs_tar, p_tar, cell_tar.brange);
-    add_boides_f(bs_tar, f_tar, cell_tar.brange);
+    __m128d zero = _mm_setr_pd(0,0);
+    __m128d one = _mm_setr_pd(1,1);
+    for(int j = 0; j < cell_tar.brange.number; j+=2)
+    {
+        Body3* btar = &bs_tar[cell_tar.brange.offset + j];
+        __m128d xj,yj,zj;
+        if(j >= cell_tar.brange.number - 1)
+        {
+            xj = _mm_setr_pd(btar->x[0],0);
+            yj = _mm_setr_pd(btar->x[1],0);
+            zj = _mm_setr_pd(btar->x[2],0);
+        }
+        else
+        {
+            xj = _mm_setr_pd(btar->x[0],(btar+1)->x[0]);
+            yj = _mm_setr_pd(btar->x[1],(btar+1)->x[1]);
+            zj = _mm_setr_pd(btar->x[2],(btar+1)->x[2]);
+        }
+        
+        union{
+            __m128d pj = _mm_setr_pd(0,0);
+            double pdata[2];
+        };
+        union{
+            __m128d fxj = _mm_setr_pd(0,0);
+            double fxjdata[2];
+        };
+        union{
+            __m128d fyj = _mm_setr_pd(0,0);
+            double fyjdata[2];
+        };
+        union{
+            __m128d fzj = _mm_setr_pd(0,0);
+            double fzjdata[2];
+        };
+        __m128d xi, yi, zi, qi, invr, f, qinvr;
+        for(int si = 0; si < p2ps.size(); si++)
+        {
+            Cell3& cell_src = cs[p2ps[si].first];
+            vec3r offset = p2ps[si].second;
+            for(int i = 0; i < cell_src.brange.number; i++)
+            {
+                Body3& bsrc = bs_src[cell_src.brange.offset + i];
+                vec3r bsrc_xi = bsrc.x + offset;
+                xi = _mm_setr_pd(bsrc_xi[0],bsrc_xi[0]);
+                yi = _mm_setr_pd(bsrc_xi[1],bsrc_xi[1]);
+                zi = _mm_setr_pd(bsrc_xi[2],bsrc_xi[2]);
+                qi = _mm_setr_pd(bsrc.q,bsrc.q);
+                xi = _mm_sub_pd(xj, xi);
+                yi = _mm_sub_pd(yj, yi);
+                zi = _mm_sub_pd(zj, zi);
+                invr = _mm_mul_pd(xi, xi);
+                invr = _mm_add_pd(invr, _mm_mul_pd(yi, yi));
+                invr = _mm_add_pd(invr, _mm_mul_pd(zi, zi));
+                f = _mm_cmpgt_pd(invr, zero);
+                invr = _mm_sqrt_pd(invr);
+                invr = _mm_div_pd(one, invr);
+                invr = _mm_and_pd(invr, f);
+                qinvr = _mm_mul_pd(qi, invr);
+                pj = _mm_add_pd(pj, qinvr);
+                qinvr = _mm_mul_pd(qinvr, invr);
+                qinvr = _mm_mul_pd(qinvr, invr);
+                fxj = _mm_add_pd(fxj, _mm_mul_pd(qinvr, xi));
+                fyj = _mm_add_pd(fyj, _mm_mul_pd(qinvr, yi));
+                fzj = _mm_add_pd(fzj, _mm_mul_pd(qinvr, zi));
+            }
+        }
+        btar->p += pdata[0];
+        btar->f[0] -= fxjdata[0];
+        btar->f[1] -= fyjdata[0];
+        btar->f[2] -= fzjdata[0];
+        if(j < cell_tar.brange.number - 1)
+        {
+            (btar + 1)->p += pdata[1];
+            (btar + 1)->f[0] -= fxjdata[1];
+            (btar + 1)->f[1] -= fyjdata[1];
+            (btar + 1)->f[2] -= fzjdata[1];
+        }
+    }
 }
 
 void rtfmm::LaplaceKernel::p2m(int P, Bodies3& bs_src, Cell3& cell_src)
@@ -487,10 +652,10 @@ void rtfmm::LaplaceKernel::m2l_fft_precompute_advanced2(int P, Cells3& cs, Perio
     {
         m2l_src_map[m2l_srcs[i]] = i;
     }
-    std::vector<real> Q_all;
-    std::vector<real> p_all;
-    std::vector<complexr> Qk_all;
-    std::vector<complexr> pk_all;
+    std::vector<real, AlignAllocator> Q_all;
+    std::vector<real, AlignAllocator> p_all;
+    std::vector<complexr, AlignAllocator> Qk_all;
+    std::vector<complexr, AlignAllocator> pk_all;
     #ifdef USE_MANY
     int batch_size = 8;
     int batch_num = (num_src + batch_size - 1) / batch_size;
@@ -506,7 +671,7 @@ void rtfmm::LaplaceKernel::m2l_fft_precompute_advanced2(int P, Cells3& cs, Perio
     pk_all.reserve(num_tar * N_freq);
     TIME_END(init);
 
-    TIME_BEGIN(setup);
+    TIME_BEGIN(up);
     #pragma omp parallel for
     for(int i = 0; i < num_src; i++)
     {
@@ -515,19 +680,8 @@ void rtfmm::LaplaceKernel::m2l_fft_precompute_advanced2(int P, Cells3& cs, Perio
         std::memset(Q, 0, N3 * sizeof(real));
         get_Q_matrix(Q, cell_src.q_equiv, N, surf_conv_map);
     }
-    TIME_END(setup);
-
-    TIME_BEGIN(create_plan);
     #ifdef USE_MANY
     fftw_plan plan_Q = fftw_plan_many_dft_r2c(3, fft_size, batch_size, &Q_all[0], nullptr, 1, N3, reinterpret_cast<fftw_complex*>(&Qk_all[0]), nullptr, 1, N_freq, FFTW_ESTIMATE);
-    #else
-    fftw_plan plan_Q = fftw_plan_dft_r2c_3d(N, N, N, &Q_all[0], reinterpret_cast<fftw_complex*>(Qk0), FFTW_ESTIMATE);
-    #endif
-    fftw_plan plan_P = fftw_plan_dft_c2r_3d(N, N, N, reinterpret_cast<fftw_complex*>(&pk_all[0]), &p_all[0], FFTW_ESTIMATE);
-    TIME_END(create_plan);
-
-    TIME_BEGIN(Q);
-    #ifdef USE_MANY
     #pragma omp parallel for
     for(int batch_idx = 0; batch_idx < batch_num; batch_idx++)
     {
@@ -537,6 +691,7 @@ void rtfmm::LaplaceKernel::m2l_fft_precompute_advanced2(int P, Cells3& cs, Perio
         fftw_execute_dft_r2c(plan_Q, Q, reinterpret_cast<fftw_complex*>(&Qk[0]));
     }
     #else
+    fftw_plan plan_Q = fftw_plan_dft_r2c_3d(N, N, N, &Q_all[0], reinterpret_cast<fftw_complex*>(&Qk_all[0]), FFTW_ESTIMATE);
     #pragma omp parallel for
     for(int i = 0; i < num_src; i++)
     {
@@ -545,7 +700,7 @@ void rtfmm::LaplaceKernel::m2l_fft_precompute_advanced2(int P, Cells3& cs, Perio
         fftw_execute_dft_r2c(plan_Q, Q, reinterpret_cast<fftw_complex*>(Qk));
     }
     #endif
-    TIME_END(Q);
+    TIME_END(up);
 
     TIME_BEGIN(hadamard);
     #pragma omp parallel for schedule(dynamic)
@@ -576,9 +731,47 @@ void rtfmm::LaplaceKernel::m2l_fft_precompute_advanced2(int P, Cells3& cs, Perio
             }
         }
     }
+    /*std::map<int, PeriodicInteractionPairs> pair_of_matrix;
+    for(auto m2l : m2l_pairs)
+    {
+        Cell3& cell_tar = cs[m2l.first];
+        Cell3& cell_src = cs[m2l.second.first];
+        vec3r offset_src = m2l.second.second;
+        vec3r relative_pos = cell_src.x + offset_src - cell_tar.x;
+        vec3r rv = relative_pos / (cell_src.r * 2);
+        vec3i rvi(std::round(rv[0]), std::round(rv[1]), std::round(rv[2]));
+        pair_of_matrix[hash(rvi)].push_back(m2l);
+    }
+    std::cout<<"m2l_Gks.size() = "<<m2l_Gks.size()<<std::endl;
+    std::cout<<"pair_of_matrix.size() = "<<pair_of_matrix.size()<<std::endl;
+    #pragma omp parallel for
+    for(int i = 0; i < m2l_Gks.size(); i++)
+    {
+        auto m2l_Gk = m2l_Gks.begin();
+        auto m2l_pairs = pair_of_matrix.begin();
+        std::advance(m2l_Gk, i);
+        std::advance(m2l_pairs, i);
+        std::vector<complexr>& Gk = m2l_Gk->second;
+        for(int j = 0; j < m2l_pairs->second.size(); j++)
+        {
+            auto m2l_pair = m2l_pairs->second.at(j);
+            complexr* pk = &pk_all[i * N_freq];
+            complexr* Qk = &Qk_all[m2l_src_map[m2l_pair.second.first] * N_freq];
+            for(int f = 0; f < N_freq; f++)
+            {
+                rtfmm::real a = Gk[f].r;
+                rtfmm::real b = Gk[f].i;
+                rtfmm::real c = Qk[f].r;
+                rtfmm::real d = Qk[f].i;
+                pk[f].r += a * c - b * d;
+                pk[f].i += a * d + b * c;
+            }
+        }
+    }*/
     TIME_END(hadamard);
 
-    TIME_BEGIN(P);
+    TIME_BEGIN(down);
+    fftw_plan plan_P = fftw_plan_dft_c2r_3d(N, N, N, reinterpret_cast<fftw_complex*>(&pk_all[0]), &p_all[0], FFTW_ESTIMATE);
     #pragma omp parallel for
     for(int i = 0; i < num_tar; i++)
     {
@@ -595,7 +788,7 @@ void rtfmm::LaplaceKernel::m2l_fft_precompute_advanced2(int P, Cells3& cs, Perio
             cell_tar.p_check.d[i] += p_fft_grid[idx3[2] * N * N + idx3[1] * N + idx3[0]] / (N * N * N) * scale;
         }
     }
-    TIME_END(P);
+    TIME_END(down);
 
     TIME_BEGIN(destroy_plan);
     fftw_destroy_plan(plan_Q);

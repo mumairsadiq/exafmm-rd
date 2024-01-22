@@ -17,6 +17,8 @@ add_subdirectory(test)
 include(CheckLanguage)
 check_language(CUDA)
 
+set(CMAKE_CXX_FLAGS_RELEASE "-O2")
+
 message("CMAKE_CUDA_COMPILER = ${CMAKE_CUDA_COMPILER}")
 message("CMAKE_CUDA_COMPILER_ID = ${CMAKE_CUDA_COMPILER_ID}")
 message("CMAKE_CUDA_COMPILER_VERSION = ${CMAKE_CUDA_COMPILER_VERSION}")
