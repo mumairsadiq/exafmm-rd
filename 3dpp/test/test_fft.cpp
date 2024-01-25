@@ -6,29 +6,6 @@
 #include "surface.h"
 #include <map>
 
-static std::map<int,rtfmm::vec3i> get_surface_conv_map(int p)
-{
-    int num = rtfmm::get_surface_point_num(p);
-    std::map<int,rtfmm::vec3i> map;
-    int cnt = 0;
-    for(int i = 0; i < p; i++)
-    {
-        for(int j = 0; j < p; j++)
-        {
-            for(int k = 0; k < p; k++)
-            {
-                if(i == 0 || i == p - 1 || j == 0 || j == p - 1 || k == 0 || k == p - 1)
-                {
-                    map[cnt] = rtfmm::vec3i(i,j,k);
-                    cnt++;
-                }
-            }
-        }
-    }
-    return map;
-}
-
-
 static std::vector<rtfmm::real> get_G_matrix(std::vector<rtfmm::vec3r>& grid, int N)
 {
     std::vector<rtfmm::real> G;
@@ -115,7 +92,7 @@ int main(int argc, char* argv[])
     rtfmm::real gsize = r * 2;
     std::vector<rtfmm::vec3r> grid = get_conv_grid(N, gsize, delta, offset);
     std::vector<rtfmm::real> G = get_G_matrix(grid, N);
-    std::map<int,rtfmm::vec3i> surf_conv_map = get_surface_conv_map(P);
+    std::map<int,rtfmm::vec3i> surf_conv_map = rtfmm::get_surface_conv_map(P);
     std::vector<rtfmm::real> Q = get_Q_matrix(qs, N, surf_conv_map);
 
     std::vector<fftw_complex> Gk(N * N * N);

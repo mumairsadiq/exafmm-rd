@@ -7,17 +7,6 @@
 #include "align.h"
 #include <algorithm>
 
-/**
- * @brief convert vec3i to hashed value
- * @return hash value, for example, (-1,-2,3) -> 1236, where 6=110 means negative for 1 and 2
-*/
-static int hash(rtfmm::vec3i v)
-{
-    int signs = ((v[0] < 0 ? 1 : 0) << 2) + ((v[1] < 0 ? 1 : 0) << 1) + (v[2] < 0 ? 1 : 0);
-    int coord = std::abs(v[0]) * 1000 + std::abs(v[1]) * 100 + std::abs(v[2]) * 10;
-    return coord + signs;
-}
-
 rtfmm::LaplaceKernel::LaplaceKernel(){}
 
 /*void rtfmm::LaplaceKernel::p2p_p(std::vector<vec3r>& xs_src, std::vector<real>& qs_src, std::vector<vec3r>& xs_tar, std::vector<real>& ps_tar, const vec3r& offset)
@@ -483,7 +472,6 @@ void rtfmm::LaplaceKernel::p2m_precompute(int P, Bodies3& bs_src, Cell3& cell_sr
     mat_vec_mul(VSinv_p2m_precompute, buffer, cell_src.q_equiv, scale);
 }
 
-
 void rtfmm::LaplaceKernel::m2m(int P, Cell3& cell_parent, Cells3& cs)
 {
     /* parent equiv to parent check matrix */
@@ -545,7 +533,6 @@ void rtfmm::LaplaceKernel::m2m_img(int P, Cell3& cell_parent, Cells3& cs, real c
     }
 }
 
-
 void rtfmm::LaplaceKernel::m2m_img_precompute(int P, Cell3& cell_parent, Cells3& cs, real cycle)
 {
     Cell3& cell_child = cs[cell_parent.crange.offset];
@@ -555,7 +542,6 @@ void rtfmm::LaplaceKernel::m2m_img_precompute(int P, Cell3& cell_parent, Cells3&
         cell_parent.q_equiv = mat_mat_add(cell_parent.q_equiv, q_equiv_parent);
     }
 }
-
 
 void rtfmm::LaplaceKernel::m2l(int P, Cell3& cell_src, Cell3& cell_tar, vec3r offset)
 {
@@ -1352,41 +1338,23 @@ void rtfmm::LaplaceKernel::m2l_fft_precompute_t(int P, Cells3& cs, PeriodicInter
 {
     std::cout<<"m2l_fft_precompute_t\n";
     std::cout<<"m2l_parent_map.size() = "<<m2l_parent_map.size()<<std::endl;
-    const int NCHILD = 8;
+    const int MAX_CHILD_NUM_NP = 8;
     int num_cell = cs.size();
     int num_surf = get_surface_point_num(P);
-    int N = 2 * P - 1;
+    int N = get_conv_grid_point_num_per_dim(P); 
     int N3 = N * N * N;
-    int N_freq = N * N * (N / 2 + 1);
+    int N_freq = get_nfreq(P);
+    int dim[3] = {N, N, N};
     std::map<int,rtfmm::vec3i> surf_conv_map = get_surface_conv_map(P);
-    size_t fft_size = 2 * NCHILD * N_freq;
-    typedef std::vector<real, AlignAllocator> AlignedVec;
+    size_t fft_size = 2 * MAX_CHILD_NUM_NP * N_freq;
 
     // setup
     tbegin(setup);
-    std::map<int, int> rel2idx_map;
-    int rel2idx_map_idx = 0;
-    for(int z = -1; z <= 1; z++)
-    {
-        for(int y = -1; y <= 1; y++)
-        {
-            for(int x = -1; x <= 1; x++)
-            {
-                if(std::abs(x) >= 1 || std::abs(y) >= 1 || std::abs(z) >= 1)
-                {
-                    rel2idx_map[hash(vec3i(x,y,z))] = rel2idx_map_idx;
-                    rel2idx_map_idx++;
-                }
-            }
-        }
-    }
-
     std::vector<int> tar_cell_idxs;
     std::set<int> src_cell_idxs_;
     for(auto m2l_parent : m2l_parent_map)
     {
         tar_cell_idxs.push_back(m2l_parent.first);
-        //std::cout<<"tar = "<<m2l_parent.first<<std::endl;
         for(int i = 0; i < m2l_parent.second.size(); i++)
         {
             src_cell_idxs_.insert(m2l_parent.second[i].first);
@@ -1397,25 +1365,29 @@ void rtfmm::LaplaceKernel::m2l_fft_precompute_t(int P, Cells3& cs, PeriodicInter
     {
         src_cell_idxs.push_back(*it);
     }
-    std::map<int, int> src_cell_local_map;  // convert src_cell_idx in all cells to local index
-    for(int i = 0; i < src_cell_idxs.size(); i++)
+    int num_src_cell = src_cell_idxs.size();
+    int num_tar_cell = tar_cell_idxs.size();
+    printf("num_src_cell = %d, num_tar_cell = %d\n", num_src_cell, num_tar_cell);
+
+    std::map<int, int> src_cell_local_map;  //  src_cell_idx -> local src index
+    for(int i = 0; i < num_src_cell; i++)
     {
         int src_idx = src_cell_idxs[i];
         src_cell_local_map[src_idx] = i;
     }
-
-    printf("m2l_setup  src_cell_idxs.size() = %ld, tar_cell_idxs.size() = %ld\n", src_cell_idxs.size(),tar_cell_idxs.size());
-    std::vector<size_t> fft_offset(src_cell_idxs.size());
-    std::vector<size_t> ifft_offset(tar_cell_idxs.size());
-    for(int i = 0; i < src_cell_idxs.size(); i++)
+    std::vector<size_t> fft_offset(num_src_cell);
+    std::vector<size_t> ifft_offset(num_tar_cell);
+    for(int i = 0; i < num_src_cell; i++)
     {
         fft_offset[i] = cs[src_cell_idxs[i]].crange.offset * num_surf;
     }
-    for(int i = 0; i < tar_cell_idxs.size(); i++)
+    for(int i = 0; i < num_tar_cell; i++)
     {
         ifft_offset[i] = cs[tar_cell_idxs[i]].crange.offset * num_surf;
     }
-    std::map<int,std::map<int,int>> m2l_parent_octant_map;//tar_idx -> [octant->src_idx]
+
+    std::map<int, int> rel2idx_map = get_relx_idx_map(1,1);
+    std::map<int,std::map<int,int>> m2l_parent_octant_map; 
     for(int i = 0; i < tar_cell_idxs.size(); i++)
     {
         int tar_idx = tar_cell_idxs[i];
@@ -1442,7 +1414,7 @@ void rtfmm::LaplaceKernel::m2l_fft_precompute_t(int P, Cells3& cs, PeriodicInter
                 std::cout<<"error!"<<std::endl;
                 exit(1);
             }
-            m2l_parent_octant_map[tar_idx][octant] = src_idx;
+            m2l_parent_octant_map[tar_idx][octant] = src_idx; // cell located at tar's octant direction is src(or -1)
         }
     }
     std::vector<size_t> interaction_offset_f;
@@ -1462,82 +1434,88 @@ void rtfmm::LaplaceKernel::m2l_fft_precompute_t(int P, Cells3& cs, PeriodicInter
                     exit(1);
                 }
                 int src_cell_local_idx = src_cell_local_map[src_idx];
-                if(src_cell_local_idx < 0 || src_cell_local_idx > src_cell_idxs.size() - 1)
+                if(src_cell_local_idx < 0 || src_cell_local_idx > num_src_cell - 1)
                 {
                     std::cout<<"src_cell_local_idx error\n";
                     exit(1);
                 }
-                //printf("[%d] %d(%d) -> %d(%d)\n", k, src_cell_local_idx, src_idx, i, tar_idx);
                 interaction_offset_f.push_back(src_cell_local_idx * fft_size);
                 interaction_offset_f.push_back(i * fft_size);
                 interaction_count_offset_++;
             }
         }
         interaction_count_offset.push_back(interaction_count_offset_);
-        //std::cout<<interaction_count_offset_<<std::endl;
     }
-    std::cout<<"interaction_count_offset.size = "<<interaction_count_offset.size()<<std::endl;
     tend(setup);
 
-
-    // allocate memory
-    std::vector<real> all_up_equiv, all_dn_equiv;
-    all_up_equiv.reserve(num_cell * num_surf);   // use reserve() to avoid the overhead of calling constructor
-    all_dn_equiv.reserve(num_cell * num_surf);   // use pointer instead of iterator to access elements 
-    AlignedVec fft_in, fft_out;
-    fft_in.reserve(fft_offset.size()*fft_size);
-    fft_out.reserve(ifft_offset.size()*fft_size);
+    tbegin(prepare_memory);
+    std::vector<real> Q_all, P_all;
+    AlignedVec Qk_all, Pk_all;
+    Q_all.reserve(num_cell * num_surf);
+    P_all.reserve(num_cell * num_surf);
+    Qk_all.reserve(num_src_cell * fft_size);
+    Pk_all.reserve(num_tar_cell * fft_size);
     #pragma omp parallel for collapse(2)
     for (int i = 0; i < num_cell; i++) 
     {
-        for (int j = 0; j < num_surf; j++) 
+        for (int k = 0; k < num_surf; k++) 
         {
-            all_up_equiv[i*num_surf+j] = cs[i].q_equiv[j];
-            all_dn_equiv[i*num_surf+j] = cs[i].p_check[j];
+            Q_all[i * num_surf + k] = cs[i].q_equiv[k];
+            P_all[i * num_surf + k] = cs[i].p_check[k];
         }
     }
-
-    // up
-    tbegin(up);
-    AlignedVec fftw_in(N3 * NCHILD);
-    AlignedVec fftw_out(fft_size);
-    int dim[3] = {N, N, N};
-    fftw_plan plan_up = fftw_plan_many_dft_r2c(3, dim, NCHILD,
-                                          (real*)&fftw_in[0], nullptr, 1, N3,
-                                          (fftw_complex*)(&fftw_out[0]), nullptr, 1, N_freq,
-                                          FFTW_ESTIMATE);
-
-    printf("fft_offset.size() = %ld\n", fft_offset.size());
+    /* According to Fourier transformation addition theorem, interaction from different srcs are added up in Fourier space, so we need set Pk to zero in advance. */
     #pragma omp parallel for
-    for (size_t node_idx=0; node_idx<fft_offset.size(); node_idx++) {
-      std::vector<real> buffer(fft_size, 0);
-      real* up_equiv = &all_up_equiv[fft_offset[node_idx]];
-      real* up_equiv_f = &fft_in[fft_size*node_idx];
-      std::memset(up_equiv_f, 0, fft_size*sizeof(real));
-      for (int k=0; k<num_surf; k++) 
-      {
-        rtfmm::vec3i idx3 = surf_conv_map[k];
-        int idx = idx3[2] * N * N + idx3[1] * N + idx3[0];
-        int cpidx = src_cell_idxs[node_idx];
-        Cell3& cp = cs[cpidx];
-        for (int i=0; i<cp.crange.number; i++)
+    for(size_t i = 0; i < num_tar_cell; i++)
+    {
+        std::memset(Pk_all.data() + i * fft_size, 0, fft_size * sizeof(real));
+    }
+    tend(prepare_memory);
+
+    /* up */
+    tbegin(up);
+    AlignedVec fftw_in(N3 * MAX_CHILD_NUM_NP);
+    AlignedVec fftw_out(fft_size);
+    fftw_plan plan_up = fftw_plan_many_dft_r2c(
+        3, dim, MAX_CHILD_NUM_NP,
+        (real*)&fftw_in[0]         , nullptr, 1, N3,
+        (fftw_complex*)&fftw_out[0], nullptr, 1, N_freq,
+        FFTW_ESTIMATE
+    );
+    #pragma omp parallel for
+    for (int isrc = 0; isrc < num_src_cell; isrc++)
+    {
+        std::vector<real> buffer(fft_size, 0);
+        real* Q_children = &Q_all[fft_offset[isrc]];
+        real* Qk_children = &Qk_all[fft_size * isrc]; // Qk of isrc's children
+        std::memset(Qk_children, 0, fft_size * sizeof(real));
+        for (int k = 0; k < num_surf; k++) 
         {
-            int octant = cs[cp.crange.offset + i].octant;
-            up_equiv_f[idx + octant * N3] = up_equiv[i*num_surf+k];
+            rtfmm::vec3i idx3 = surf_conv_map[k];
+            int idx = idx3[2] * N * N + idx3[1] * N + idx3[0];
+            int cpidx = src_cell_idxs[isrc];
+            Cell3& cp = cs[cpidx];
+            for (int i = 0; i < cp.crange.number; i++)
+            {
+                int octant = cs[cp.crange.offset + i].octant;
+                Qk_children[octant * N3 + idx] = Q_children[i * num_surf + k]; // insert Q into conv grid
+            }
         }
-      }
-      fftw_execute_dft_r2c(plan_up, up_equiv_f, (fftw_complex*)&buffer[0]);
-      for (int k=0; k<N_freq; k++) {
-        for (int j=0; j<NCHILD; j++) {
-          up_equiv_f[2*(NCHILD*k+j)+0] = buffer[2*(N_freq*j+k)+0];
-          up_equiv_f[2*(NCHILD*k+j)+1] = buffer[2*(N_freq*j+k)+1];
+        fftw_execute_dft_r2c(plan_up, Qk_children, (fftw_complex*)&buffer[0]);
+        for (int f = 0; f < N_freq; f++) 
+        {
+            for (int j = 0; j < MAX_CHILD_NUM_NP; j++) 
+            {
+                // since FFTW's output is MAX_CHILD_NUM_NP by Nfreq, we should transpose it to Nfreq by MAX_CHILD_NUM_NP for faster hadamard product
+                Qk_children[f * 2 * MAX_CHILD_NUM_NP + 2 * j + 0] = buffer[j * 2 * N_freq + 2 * f + 0];
+                Qk_children[f * 2 * MAX_CHILD_NUM_NP + 2 * j + 1] = buffer[j * 2 * N_freq + 2 * f + 1]; 
+            }
         }
-      }
     }
     fftw_destroy_plan(plan_up);
     tend(up);
 
-    // hadamard
+    /* hadamard product */
     tbegin(hadamard);
     AlignedVec zero_vec0(fft_size, 0.);
     AlignedVec zero_vec1(fft_size, 0.);
@@ -1547,12 +1525,6 @@ void rtfmm::LaplaceKernel::m2l_fft_precompute_t(int P, Cells3& cs, PeriodicInter
     printf("npos = %d, BLOCK_SIZE = %d\n", npos, BLOCK_SIZE);
     std::vector<real*> IN_(nblk_inter * BLOCK_SIZE);
     std::vector<real*> OUT_(nblk_inter * BLOCK_SIZE);
-
-    #pragma omp parallel for
-    for(size_t i = 0; i < fft_out.capacity() / fft_size; i++)
-    {
-        std::memset(fft_out.data() + i * fft_size, 0, fft_size * sizeof(real));
-    }
     #pragma omp parallel for
     for(int i = 0; i < nblk_inter; i++)
     {
@@ -1561,8 +1533,8 @@ void rtfmm::LaplaceKernel::m2l_fft_precompute_t(int P, Cells3& cs, PeriodicInter
         size_t interaction_count = offset1 - offset0;
         for(size_t j = 0; j < interaction_count; j++)
         {
-            IN_[i * BLOCK_SIZE + j]  = &fft_in [interaction_offset_f[2*(offset0 + j) + 0]];
-            OUT_[i * BLOCK_SIZE + j] = &fft_out[interaction_offset_f[2*(offset0 + j) + 1]];
+            IN_[i * BLOCK_SIZE + j]  = &Qk_all[interaction_offset_f[2*(offset0 + j) + 0]];
+            OUT_[i * BLOCK_SIZE + j] = &Pk_all[interaction_offset_f[2*(offset0 + j) + 1]];
         }
         IN_[i * BLOCK_SIZE + interaction_count]  = &zero_vec0[0];
         OUT_[i * BLOCK_SIZE + interaction_count] = &zero_vec1[0];
@@ -1577,81 +1549,84 @@ void rtfmm::LaplaceKernel::m2l_fft_precompute_t(int P, Cells3& cs, PeriodicInter
             size_t count = offset1 - offset0;
             real** IN  = &IN_ [ipos * BLOCK_SIZE];
             real** OUT = &OUT_[ipos * BLOCK_SIZE];
-            real* M = &ccGks[ipos][f * 2 * NCHILD * NCHILD];
-            /*for(size_t j = 0; j < count; j+=2)
+            real* M = &ccGks[ipos][f * 2 * MAX_CHILD_NUM_NP * MAX_CHILD_NUM_NP];
+            for(size_t j = 0; j < count; j += 2)
             {
                 real* M_ = M;
-                real* IN0  = IN [j+0] + f * NCHILD * 2;
-                real* IN1  = IN [j+1] + f * NCHILD * 2;
-                real* OUT0 = OUT[j+0] + f * NCHILD * 2;
-                real* OUT1 = OUT[j+1] + f * NCHILD * 2;
-                matmult_8x8x2(M_, IN0, IN1, OUT0, OUT1);
-                //matmult_8x8x2_avx(M_, IN0, IN1, OUT0, OUT1);
-            }*/
-
-            for(size_t j = 0; j < count; j++)
-            {
-                real* M_ = M;
-                real* IN0  = IN [j+0] + f * NCHILD * 2; //src
-                real* OUT0 = OUT[j+0] + f * NCHILD * 2; //tar
-                //matmult_8x8x1(M_, IN0, OUT0);
-                matmult_8x8x1_naive(M_, IN0, OUT0);
+                real* IN0  = IN [j+0] + f * MAX_CHILD_NUM_NP * 2;
+                real* IN1  = IN [j+1] + f * MAX_CHILD_NUM_NP * 2;
+                real* OUT0 = OUT[j+0] + f * MAX_CHILD_NUM_NP * 2;
+                real* OUT1 = OUT[j+1] + f * MAX_CHILD_NUM_NP * 2;
+                //matmult_8x8x2(M_, IN0, IN1, OUT0, OUT1);
+                matmult_8x8x2_avx(M_, IN0, IN1, OUT0, OUT1);
             }
+
+            /*for(size_t j = 0; j < count; j++)
+            {
+                real* M_ = M;
+                real* IN0  = IN [j+0] + f * MAX_CHILD_NUM_NP * 2; //src
+                real* OUT0 = OUT[j+0] + f * MAX_CHILD_NUM_NP * 2; //tar
+                //matmult_8x8x1(M_, IN0, OUT0);
+                matmult_8x8x1_naive(M_, IN0, OUT0);  // for no-AVX case, this is most efficient
+            }*/
         }
     }
     tend(hadamard);
 
+    /* down */
     tbegin(down);
     AlignedVec fftw_in2(fft_size);
-    AlignedVec fftw_out2(N3 * NCHILD);
+    AlignedVec fftw_out2(N3 * MAX_CHILD_NUM_NP);
     fftw_plan plan_down = fftw_plan_many_dft_c2r(
-        3, dim, NCHILD,
-        (fftw_complex*)&fftw_in[0], nullptr, 1, N_freq,
-        (real*)&fftw_out[0], nullptr, 1, N3,
+        3, dim, MAX_CHILD_NUM_NP,
+        (fftw_complex*)&fftw_in2[0], nullptr, 1, N_freq,
+        (real*)&fftw_out2[0], nullptr, 1, N3,
         FFTW_ESTIMATE
     );
     #pragma omp parallel for
-    for(int i = 0; i < ifft_offset.size(); i++)
+    for(int i = 0; i < num_tar_cell; i++)
     {
         std::vector<real> buffer0(fft_size, 0);
         std::vector<real> buffer1(fft_size, 0);
-        real* dn_check_f = &fft_out[i * fft_size];
-        real* dn_equiv = &all_dn_equiv[ifft_offset[i]];
+        real* Pk_children = &Pk_all[i * fft_size];
+        real* P_children = &P_all[ifft_offset[i]];
         for(int f = 0; f < N_freq; f++)
         {
-            for(int j = 0; j < NCHILD; j++)
+            for(int j = 0; j < MAX_CHILD_NUM_NP; j++)
             {
-                buffer0[2 * j * N_freq + 2 * f + 0] = dn_check_f[2 * f * NCHILD + 2 * j + 0];
-                buffer0[2 * j * N_freq + 2 * f + 1] = dn_check_f[2 * f * NCHILD + 2 * j + 1];
+                // since FFTW need frequent-first order, we should transpose Pk here
+                buffer0[j * 2 * N_freq + 2 * f + 0] = Pk_children[f * 2 * MAX_CHILD_NUM_NP + 2 * j + 0];
+                buffer0[j * 2 * N_freq + 2 * f + 1] = Pk_children[f * 2 * MAX_CHILD_NUM_NP + 2 * j + 1];
             }
         }
         fftw_execute_dft_c2r(plan_down, (fftw_complex*)&buffer0[0], (real*)&buffer1[0]);
         int tar_idx = tar_cell_idxs[i];
-        //std::cout<<"tar_idx = "<<tar_idx<<std::endl;
         Cell3& ctar = cs[tar_idx];
-        real scale = std::pow(2, ctar.depth + 1);
+        real scale = std::pow(2, ctar.depth + 1); // since we store children's P, the depth should + 1
         for(int k = 0; k < num_surf; k++)
         {
-            rtfmm::vec3i idx3 = surf_conv_map[k] + rtfmm::vec3i(P-1,P-1,P-1);
+            rtfmm::vec3i idx3 = surf_conv_map[k] + vec3i(P-1,P-1,P-1); // vec3i(P-1,P-1,P-1) is conv offset, see test_fft.cpp
             int idx = idx3[2] * N * N + idx3[1] * N + idx3[0];
             for(int j = 0; j < ctar.crange.number; j++)
             {
                 int octant = cs[ctar.crange.offset + j].octant;
-                dn_equiv[j * num_surf + k] += buffer1[N3 * octant + idx] / N3 * scale;
+                P_children[j * num_surf + k] += buffer1[N3 * octant + idx] / N3 * scale;
             }
         }
     }
     fftw_destroy_plan(plan_down);
     tend(down);
 
+    tbegin(store);
     #pragma omp parallel for
     for(int i = 0; i < num_cell; i++)
     {
-        for(int j = 0; j < num_surf; j++)
+        for(int k = 0; k < num_surf; k++)
         {
-            cs[i].p_check[j] = all_dn_equiv[i * num_surf + j];
+            cs[i].p_check[k] += P_all[i * num_surf + k];
         }
     }
+    tend(store);
 }
 
 void rtfmm::LaplaceKernel::l2l(int P, Cell3& cell_parent, Cells3& cs)
@@ -1867,28 +1842,6 @@ void rtfmm::LaplaceKernel::get_Q_matrix(real* Q, Matrix& surface_q, int N, std::
     }
 }
 
-std::map<int,rtfmm::vec3i> rtfmm::LaplaceKernel::get_surface_conv_map(int p)
-{
-    int num = rtfmm::get_surface_point_num(p);
-    std::map<int,rtfmm::vec3i> map;
-    int cnt = 0;
-    for(int i = 0; i < p; i++)
-    {
-        for(int j = 0; j < p; j++)
-        {
-            for(int k = 0; k < p; k++)
-            {
-                if(i == 0 || i == p - 1 || j == 0 || j == p - 1 || k == 0 || k == p - 1)
-                {
-                    map[cnt] = rtfmm::vec3i(i,j,k);
-                    cnt++;
-                }
-            }
-        }
-    }
-    return map;
-}
-
 void rtfmm::LaplaceKernel::precompute(int P, real r0, int images)
 {
     if(verbose) printf("precompute\n");
@@ -1959,6 +1912,7 @@ void rtfmm::LaplaceKernel::precompute(int P, real r0, int images)
 
 void rtfmm::LaplaceKernel::precompute_m2l(int P, real r0, Cells3 cs, PeriodicInteractionMap m2l_map, int images)
 {
+    // for advanced2 and 3
     std::set<int> m2l_tar_set, m2l_src_set;
     for(auto m2l_list : m2l_map)
     {
@@ -1971,18 +1925,6 @@ void rtfmm::LaplaceKernel::precompute_m2l(int P, real r0, Cells3 cs, PeriodicInt
     m2l_tars = std::vector<int>(m2l_tar_set.begin(), m2l_tar_set.end());
     m2l_srcs = std::vector<int>(m2l_src_set.begin(), m2l_src_set.end());
 
-    if(verbose)
-    {
-        printf("# of cells = %ld\n", cs.size());
-        printf("# of m2l_tar = %ld\n", m2l_tars.size());
-        printf("# of m2l_src = %ld\n", m2l_srcs.size());
-    }
-
-    for(int i = 0; i < m2l_tars.size(); i++)
-    {
-        assert_exit(m2l_tars[i] == m2l_srcs[i], "m2l inconsisent");
-    }
-
     int N = 2 * P - 1;
     rtfmm::real delta = 2 * r0 / (P - 1) * 1.05;
     rtfmm::real gsize = r0 * 2 * 1.05;
@@ -1993,26 +1935,17 @@ void rtfmm::LaplaceKernel::precompute_m2l(int P, real r0, Cells3 cs, PeriodicInt
     std::vector<complexr> Gk0(N_freq);
     fftw_plan plan_G = fftw_plan_dft_r2c_3d(N, N, N, G0.data(), reinterpret_cast<fftw_complex*>(Gk0.data()), FFTW_ESTIMATE);
     int range = images >= 2 ? 4 : 3;
-    std::map<int, int> m2l_gk_relx_idx_map; // hash(rel_x) -> idx
-    int m2l_gk_relx_idx_map_cnt = 0;
-    for(int k = -range; k <= range; k++)
-    {
-        for(int j = -range; j <= range; j++)
-        {
-            for(int i = -range; i <= range; i++)
-            {
-                if(std::abs(i) > 1 || std::abs(j) > 1 || std::abs(k) > 1)
-                {
-                    vec3i relx(i,j,k);
-                    m2l_gk_relx_idx_map[hash(relx)] = m2l_gk_relx_idx_map_cnt;
-                    //std::cout<<hash(relx)<<"->"<<m2l_gk_relx_idx_map_cnt<<std::endl;
-                    m2l_gk_relx_idx_map_cnt++;
-                }
-            }
-        }
-    }
+
+    /* 
+        hash(relx) -> index, 
+        where relx are all possible relative positions for any M2L pair
+        note, here is 'M2L pair', not 'M2l parent pair', therefore total number is at 316 instead of 26
+    */
+    std::map<int, int> m2l_gk_relx_idx_map = get_relx_idx_map(range, 2);
+    int m2l_gk_relx_idx_map_cnt = m2l_gk_relx_idx_map.size();
     std::cout<<"m2l_gk_relx_idx_map_cnt = "<<m2l_gk_relx_idx_map_cnt<<std::endl;
     std::vector<std::vector<rtfmm::complexr>> m2l_Gks_ordered(m2l_gk_relx_idx_map_cnt);
+
     #pragma omp parallel for collapse(3)
     for(int k = -range; k <= range; k++)
     {
@@ -2031,81 +1964,59 @@ void rtfmm::LaplaceKernel::precompute_m2l(int P, real r0, Cells3 cs, PeriodicInt
                     #pragma omp critical // std::map is not thread-safe
                     {
                         int hv = hash(relative_idx);
+                        // for m2l_precompute_advance2
                         m2l_Gks[hv] = Gk;
+
+                        // for m2l_precompute_advance3
                         m2l_Gk_idx[hv].first = Gk;
                         m2l_Gk_idx[hv].second = m2l_gk_relx_idx_map[hv];
-                        m2l_Gks_ordered[m2l_gk_relx_idx_map[hv]] = Gk;
+
+                        // for m2l_precompute_t
+                        // since the order for generating Gk is same as indices in m2l_gk_relx_idx_map, first generated Gk is stored in [0], second Gk in [1], ...
+                        // so it is called m2l_Gks_'ordered'
+                        m2l_Gks_ordered[m2l_gk_relx_idx_map[hv]] = Gk; 
                     }
                 }
             }
         }
     }
-    std::cout<<"m2l_Gk_idx.size() = "<<m2l_Gk_idx.size()<<std::endl;
     fftw_destroy_plan(plan_G);
 
-
-    // precompute for t
-    std::vector<vec3r> src_rels;
-    for(int z = -1; z <= 1; z++)
-    {
-        for(int y = -1; y <= 1; y++)
-        {
-            for(int x = -1; x <= 1; x++)
-            {
-                if(std::abs(x) >= 1 || std::abs(y) >= 1 || std::abs(z) >= 1)
-                {
-                    src_rels.push_back(vec3r(x,y,z));
-                }
-            }
-        }
-    }
-    int m2l_par_rel_num = src_rels.size(); //26
-
-    /**
-     * @brief gk8x8_map[5][17] means Gk matrix when Ci's 2nd child interacts to Cj's 1st child(namely, 17=2*8+1), 
-     * where Ci and Cj are two neighbour cells in pattern-5 relative position(of 26 patterns for nonperiodic m2l).
+    /* 
+        Q : What happened behind m2l_Gks_ordered[m2l_gk_relx_idx_map[hash(relx)]] ? : 
+        A : relx -> index -> Gk
     */
-    std::vector<std::vector<int>> gk8x8_map;
-    gk8x8_map = std::vector<std::vector<int>>(m2l_par_rel_num, std::vector<int>(8*8));
+
+    /* 
+        Precomputation for M2L_precompute_t
+        For two neighbour cells, generate(store) interaction matrix Gk for their children.
+        Since each cell has at most 8 child for nonperiodic M2L, 8*8=64 matrix(real Gk or dummy matrix) will be stored for each neighbour pattern.
+        Also, since there are at most 26 patterns of neighouring, the total # of matrices stored in ccGks is 26 * 64.
+    */
+    std::vector<vec3r> src_par_rels = get_relx<real>(1,1); // all possible relative coordinates for any M2L pair's parents
+    int m2l_par_rel_num = src_par_rels.size(); // # of neighbouring patterns, 26 for nonperiodic M2L
+    ccGks.resize(m2l_par_rel_num, AlignedVec(N_freq * 2 * 8 * 8)); 
     for(int i = 0; i < m2l_par_rel_num; i++)
     {
-        vec3r relative_x = src_rels[i] * 2;
+        vec3r relative_x = src_par_rels[i] * 2;
         for(int isrc = 0; isrc < 8; isrc++)
         {
             vec3r xsrc = Tree::get_child_cell_x(relative_x,1,isrc,0);
             for(int itar = 0; itar < 8; itar++)
             {
-                int ccidx = isrc * 8 + itar;
                 vec3r xtar = Tree::get_child_cell_x(vec3r(0,0,0),1,itar,0);
                 vec3i dx = (xsrc - xtar).round();
                 int hv = hash(dx);
                 if(m2l_gk_relx_idx_map.find(hv) != m2l_gk_relx_idx_map.end())
                 {
-                    int gk_idx = m2l_gk_relx_idx_map[hash(dx)];
-                    gk8x8_map[i][ccidx] = gk_idx;
-                }
-                else
-                {
-                    gk8x8_map[i][ccidx] = -1;
-                }
-            }
-        }
-    }
-
-    ccGks.resize(m2l_par_rel_num, AlignedVec(N_freq * 2 * 8 * 8)); 
-    #pragma omp parallel for
-    for(int i = 0; i < m2l_par_rel_num; i++)
-    {
-        for(int j = 0; j < 8 * 8; j++)
-        {
-            int gk_idx = gk8x8_map[i][j];
-            if(gk_idx != -1) // keep GK of neighbour cells to all-zero
-            {
-                for(int f = 0; f < N_freq; f++)
-                {
-                    int idx = f * 2 * 8 * 8 + j * 2;
-                    ccGks[i][idx + 0] = m2l_Gks_ordered[gk_idx][f].r;
-                    ccGks[i][idx + 1] = m2l_Gks_ordered[gk_idx][f].i;
+                    int ccidx = isrc * 8 + itar;
+                    int gk_idx = m2l_gk_relx_idx_map[hv];
+                    for(int f = 0; f < N_freq; f++)
+                    {
+                        int idx = f * 2 * 8 * 8 + ccidx * 2;
+                        ccGks[i][idx + 0] = m2l_Gks_ordered[gk_idx][f].r;
+                        ccGks[i][idx + 1] = m2l_Gks_ordered[gk_idx][f].i;
+                    }
                 }
             }
         }
