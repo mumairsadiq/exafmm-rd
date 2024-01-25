@@ -28,6 +28,7 @@ rtfmm::Argument::Argument(int argc, char* argv[])
     cmd.add<int>("zero_netcharge", 0, "if zero net charge", false, 1);
     cmd.add<int>("print_body_number", 0, "print body number", false, 3);
     cmd.add<int>("divide_4pi", 0, "if divide 4pi", false, 0);
+    cmd.add<int>("setting_t", 0, "set some parameters to match the result with exafmm-t", false, 0);
     cmd.parse_check(argc, argv);
     P = cmd.get<int>("P");
     n = cmd.get<int>("nbody");
@@ -43,6 +44,7 @@ rtfmm::Argument::Argument(int argc, char* argv[])
     print_body_number = cmd.get<int>("print_body_number");
     divide_4pi = cmd.get<int>("divide_4pi");
     use_simd = cmd.get<int>("use_simd");
+    setting_t = cmd.get<int>("setting_t");
 
     num_compare = cmd.get<int>("num_compare");
     if(num_compare == -1) num_compare = n;
@@ -58,6 +60,13 @@ rtfmm::Argument::Argument(int argc, char* argv[])
 
     x = vec3r(0,0,0);
     r = cycle / 2;
+
+    if(setting_t)
+    {
+        dipole_correction = 0;
+        zero_netcharge = 0;
+        divide_4pi = 1;
+    }
 }
 
 void rtfmm::Argument::show()
@@ -86,6 +95,7 @@ void rtfmm::Argument::show()
     printf("  %-20s = %d\n","zero_netcharge",zero_netcharge);
     printf("  %-20s = %d\n","print_body_number",print_body_number);
     printf("  %-20s = %d\n","divide_4pi",divide_4pi);
+    printf("  %-20s = %d\n","setting_t",setting_t);
     printf("]\n\n");
 
 }

@@ -40,6 +40,8 @@ public:
     int use_fft;
     int use_precompute;
     int use_simd;
+
+    int setting_t;
 };
 
 }

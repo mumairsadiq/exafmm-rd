@@ -148,9 +148,11 @@ void rtfmm::LaplaceFMM::M2L()
     PeriodicInteractionMap m2l_map = traverser.get_map(OperatorType::M2L);
     PeriodicInteractionPairs m2l_pairs = traverser.get_pairs(OperatorType::M2L);
     PeriodicInteractionMap m2l_parent_map = traverser.get_map(OperatorType::M2L_parent);
+    //PeriodicInteractionMap m2l_map2 = traverser.get_m2l_map_from_m2l_parent_map();
     if(args.use_precompute)
     {
         TIME_BEGIN(M2L_kernel);
+        //kernel.m2l_fft_precompute_advanced2(args.P, cs, m2l_map2);
         //kernel.m2l_fft_precompute_advanced2(args.P, cs, m2l_map);
         //kernel.m2l_fft_precompute_advanced3(args.P, cs, m2l_map, m2l_pairs);
         kernel.m2l_fft_precompute_t(args.P, cs, m2l_parent_map);

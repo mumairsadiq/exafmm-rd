@@ -858,6 +858,7 @@ void rtfmm::LaplaceKernel::m2l_fft_precompute_advanced2(int P, Cells3& cs, Perio
         int interaciton_number = 0;
         for(auto m2l : m2l_map)
         {
+            std::cout<<m2l.first<<","<<m2l.second.size()<<std::endl;
             interaciton_number += m2l.second.size();
         }
         std::cout<<"interaciton_number = "<<interaciton_number<<std::endl;
@@ -1123,6 +1124,73 @@ void rtfmm::LaplaceKernel::m2l_fft_precompute_advanced3(int P, Cells3& cs, Perio
     tend(down);
 }
 
+void rtfmm::LaplaceKernel::matmult_8x8x1(real*& M_, real*& IN0, real*& OUT0)
+{
+    real out_reg000, out_reg001, out_reg010, out_reg011;
+    real  in_reg000,  in_reg001,  in_reg010,  in_reg011;
+    real   m_reg000,   m_reg001,   m_reg010,   m_reg011;
+    real   m_reg100,   m_reg101,   m_reg110,   m_reg111;
+    for(int i1=0;i1<8;i1+=2){
+      real* IN0_=IN0;
+      out_reg000=OUT0[ 0]; out_reg001=OUT0[ 1];
+      out_reg010=OUT0[ 2]; out_reg011=OUT0[ 3];
+      for(int i2=0;i2<8;i2+=2){
+        m_reg000=M_[ 0]; m_reg001=M_[ 1];
+        m_reg010=M_[ 2]; m_reg011=M_[ 3];
+        m_reg100=M_[16]; m_reg101=M_[17];
+        m_reg110=M_[18]; m_reg111=M_[19];
+
+        in_reg000=IN0_[0]; in_reg001=IN0_[1];
+        in_reg010=IN0_[2]; in_reg011=IN0_[3];
+
+        out_reg000 += m_reg000*in_reg000 - m_reg001*in_reg001;
+        out_reg001 += m_reg000*in_reg001 + m_reg001*in_reg000;
+        out_reg010 += m_reg010*in_reg000 - m_reg011*in_reg001;
+        out_reg011 += m_reg010*in_reg001 + m_reg011*in_reg000;
+
+        out_reg000 += m_reg100*in_reg010 - m_reg101*in_reg011;
+        out_reg001 += m_reg100*in_reg011 + m_reg101*in_reg010;
+        out_reg010 += m_reg110*in_reg010 - m_reg111*in_reg011;
+        out_reg011 += m_reg110*in_reg011 + m_reg111*in_reg010;
+
+        M_+=32; // Jump to (column+2).
+        IN0_+=4;
+      }
+      OUT0[ 0]=out_reg000; OUT0[ 1]=out_reg001;
+      OUT0[ 2]=out_reg010; OUT0[ 3]=out_reg011;
+      M_+=4-64*2; // Jump back to first column (row+2).
+      OUT0+=4;
+    }
+}
+
+void rtfmm::LaplaceKernel::matmult_8x8x1_naive(real*& M_, real*& IN, real*& OUT)
+{
+    real pkr, pki;
+    real qkr, qki;
+    real gkr, gki;
+    for(int idx_out = 0; idx_out < 8; idx_out++)
+    {
+        real* IN0_ = IN;
+        pkr = OUT[0]; 
+        pki = OUT[1];
+        for(int idx_in = 0; idx_in < 8; idx_in++)
+        {
+            gkr = M_[ 0]; 
+            gki = M_[ 1];
+            qkr = IN0_[0]; 
+            qki = IN0_[1];
+            pkr += gkr * qkr - gki * qki;
+            pki += gkr * qki + gki * qkr; 
+            M_ += 2 * 8; // move to next row
+            IN0_ += 2; // move to next in complex
+        }
+        OUT[0] = pkr; 
+        OUT[1] = pki;
+        M_ += -2 * 8 * 8 + 2; // move to next colum
+        OUT += 2; // move to next out complex
+    }
+}
+
 void rtfmm::LaplaceKernel::matmult_8x8x2(real*& M_, real*& IN0, real*& IN1, real*& OUT0, real*& OUT1)
 {
     real out_reg000, out_reg001, out_reg010, out_reg011;
@@ -1318,6 +1386,7 @@ void rtfmm::LaplaceKernel::m2l_fft_precompute_t(int P, Cells3& cs, PeriodicInter
     for(auto m2l_parent : m2l_parent_map)
     {
         tar_cell_idxs.push_back(m2l_parent.first);
+        //std::cout<<"tar = "<<m2l_parent.first<<std::endl;
         for(int i = 0; i < m2l_parent.second.size(); i++)
         {
             src_cell_idxs_.insert(m2l_parent.second[i].first);
@@ -1363,6 +1432,11 @@ void rtfmm::LaplaceKernel::m2l_fft_precompute_t(int P, Cells3& cs, PeriodicInter
             vec3r rv = (src_cell.x - tar_cell.x) / (tar_cell.r * 2);
             vec3i rvi(std::round(rv[0]), std::round(rv[1]), std::round(rv[2]));
             int octant = rel2idx_map[hash(rvi)];
+            if(rel2idx_map.find(hash(rvi)) == rel2idx_map.end())
+            {
+                std::cout<<"cannot find rvi\n";
+                exit(1);
+            }
             if(std::abs(rvi[0]) > 1 || std::abs(rvi[1]) > 1 || std::abs(rvi[1]) > 1 || octant >= 26)
             {
                 std::cout<<"error!"<<std::endl;
@@ -1382,12 +1456,18 @@ void rtfmm::LaplaceKernel::m2l_fft_precompute_t(int P, Cells3& cs, PeriodicInter
             int src_idx = m2l_parent_octant_map[tar_idx][k];
             if(src_idx != -1)
             {
+                if(src_cell_local_map.find(src_idx) == src_cell_local_map.end())
+                {
+                    std::cout<<"cannnot find srcidx\n";
+                    exit(1);
+                }
                 int src_cell_local_idx = src_cell_local_map[src_idx];
                 if(src_cell_local_idx < 0 || src_cell_local_idx > src_cell_idxs.size() - 1)
                 {
                     std::cout<<"src_cell_local_idx error\n";
                     exit(1);
                 }
+                //printf("[%d] %d(%d) -> %d(%d)\n", k, src_cell_local_idx, src_idx, i, tar_idx);
                 interaction_offset_f.push_back(src_cell_local_idx * fft_size);
                 interaction_offset_f.push_back(i * fft_size);
                 interaction_count_offset_++;
@@ -1438,10 +1518,12 @@ void rtfmm::LaplaceKernel::m2l_fft_precompute_t(int P, Cells3& cs, PeriodicInter
       {
         rtfmm::vec3i idx3 = surf_conv_map[k];
         int idx = idx3[2] * N * N + idx3[1] * N + idx3[0];
-        for (int i=0; i<cs[src_cell_idxs[node_idx]].crange.number; i++)
+        int cpidx = src_cell_idxs[node_idx];
+        Cell3& cp = cs[cpidx];
+        for (int i=0; i<cp.crange.number; i++)
         {
-            int j = cs[cs[src_cell_idxs[node_idx]].crange.offset + i].octant;
-            up_equiv_f[idx+j * N3] = up_equiv[j*num_surf+k];
+            int octant = cs[cp.crange.offset + i].octant;
+            up_equiv_f[idx + octant * N3] = up_equiv[i*num_surf+k];
         }
       }
       fftw_execute_dft_r2c(plan_up, up_equiv_f, (fftw_complex*)&buffer[0]);
@@ -1496,15 +1578,24 @@ void rtfmm::LaplaceKernel::m2l_fft_precompute_t(int P, Cells3& cs, PeriodicInter
             real** IN  = &IN_ [ipos * BLOCK_SIZE];
             real** OUT = &OUT_[ipos * BLOCK_SIZE];
             real* M = &ccGks[ipos][f * 2 * NCHILD * NCHILD];
-            for(size_t j = 0; j < count; j+=2)
+            /*for(size_t j = 0; j < count; j+=2)
             {
                 real* M_ = M;
                 real* IN0  = IN [j+0] + f * NCHILD * 2;
                 real* IN1  = IN [j+1] + f * NCHILD * 2;
                 real* OUT0 = OUT[j+0] + f * NCHILD * 2;
                 real* OUT1 = OUT[j+1] + f * NCHILD * 2;
-                //matmult_8x8x2(M_, IN0, IN1, OUT0, OUT1);
-                matmult_8x8x2_avx(M_, IN0, IN1, OUT0, OUT1);
+                matmult_8x8x2(M_, IN0, IN1, OUT0, OUT1);
+                //matmult_8x8x2_avx(M_, IN0, IN1, OUT0, OUT1);
+            }*/
+
+            for(size_t j = 0; j < count; j++)
+            {
+                real* M_ = M;
+                real* IN0  = IN [j+0] + f * NCHILD * 2; //src
+                real* OUT0 = OUT[j+0] + f * NCHILD * 2; //tar
+                //matmult_8x8x1(M_, IN0, OUT0);
+                matmult_8x8x1_naive(M_, IN0, OUT0);
             }
         }
     }
@@ -1536,19 +1627,21 @@ void rtfmm::LaplaceKernel::m2l_fft_precompute_t(int P, Cells3& cs, PeriodicInter
         }
         fftw_execute_dft_c2r(plan_down, (fftw_complex*)&buffer0[0], (real*)&buffer1[0]);
         int tar_idx = tar_cell_idxs[i];
+        //std::cout<<"tar_idx = "<<tar_idx<<std::endl;
         Cell3& ctar = cs[tar_idx];
         real scale = std::pow(2, ctar.depth + 1);
         for(int k = 0; k < num_surf; k++)
         {
+            rtfmm::vec3i idx3 = surf_conv_map[k] + rtfmm::vec3i(P-1,P-1,P-1);
+            int idx = idx3[2] * N * N + idx3[1] * N + idx3[0];
             for(int j = 0; j < ctar.crange.number; j++)
             {
                 int octant = cs[ctar.crange.offset + j].octant;
-                rtfmm::vec3i idx3 = surf_conv_map[k] + rtfmm::vec3i(P-1,P-1,P-1);
-                int idx = idx3[2] * N * N + idx3[1] * N + idx3[0];
-                dn_equiv[j * num_surf + k] = buffer1[N3 * octant + idx] / N3 * scale;
+                dn_equiv[j * num_surf + k] += buffer1[N3 * octant + idx] / N3 * scale;
             }
         }
     }
+    fftw_destroy_plan(plan_down);
     tend(down);
 
     #pragma omp parallel for

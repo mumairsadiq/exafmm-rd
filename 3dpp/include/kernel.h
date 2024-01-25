@@ -107,6 +107,10 @@ private:
     std::map<int, std::vector<complexr>> m2l_Gks;
     std::map<int, std::pair<std::vector<complexr>, int>> m2l_Gk_idx;
 
+    void matmult_8x8x1(real*& M_, real*& IN0, real*& OUT0);
+    
+    void matmult_8x8x1_naive(real*& M_, real*& IN0, real*& OUT0);
+
     void matmult_8x8x2(real*& M_, real*& IN0, real*& IN1, real*& OUT0, real*& OUT1);
 
     void matmult_8x8x2_avx(double*& M_, double*& IN0, double*& IN1, double*& OUT0, double*& OUT1);
