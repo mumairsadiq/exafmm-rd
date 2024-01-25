@@ -4,26 +4,26 @@ from matplotlib.pyplot import figure
 import re
 
 
-def get_exafmmt_data(step):
+def get_exafmmt_data(step,n=20):
     #res = open("/home/jiamian/exafmm-t/exafmm-t/tests/slurm-147765.out") # -T 8
     #res = open("/home/jiamian/exafmm-t/exafmm-t/tests/slurm-147767.out") # -T 12
-    res = open("/home/jiamian/exafmm-t/exafmm-t/tests/slurm-149349.out") # -T 8 ad4_1
+    res = open("/home/jiamian/exafmm-t/exafmm-t/tests/slurm-149351.out") # -T 8 ad4_1
     txt = res.read()
-    data1 = re.findall(step + r'                  : (.*)\n',txt)
+    data1 = re.findall(step + r'                  : (.*)\n',txt)[:n]
     value = [eval(e) for e in data1]
-    fmmdata = re.findall(r'P                    : (.*)', txt)
+    fmmdata = re.findall(r'P                    : (.*)', txt)[:n]
     p = [eval(fmm) for fmm in fmmdata]
     return p, value
 
-def get_rtfmm_data(step):
+def get_rtfmm_data(step,n=20):
     #res = open("slurm-147766.out") # --th_num 8 sse
     #res = open("slurm-148810.out") # --th_num 12 avx
     #res = open("slurm-148813.out") # --th_num 8 avx
     res = open("slurm-149348.out") # --th_num 8 avx t
     txt = res.read()
-    data1 = re.findall(step + r' time measured : (.*) seconds.\]',txt)
+    data1 = re.findall(step + r' time measured : (.*) seconds.\]',txt)[:n]
     value = [eval(e) for e in data1]
-    fmmdata = re.findall(r'  P                    = (.*)', txt)
+    fmmdata = re.findall(r'  P                    = (.*)', txt)[:n]
     p = [eval(fmm) for fmm in fmmdata]
     return p, value
 
