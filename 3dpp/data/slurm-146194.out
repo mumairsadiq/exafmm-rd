@@ -1,0 +1,132 @@
+Sun Jan 14 00:55:23 2024       
++---------------------------------------------------------------------------------------+
+| NVIDIA-SMI 535.54.03              Driver Version: 535.54.03    CUDA Version: 12.2     |
+|-----------------------------------------+----------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |         Memory-Usage | GPU-Util  Compute M. |
+|                                         |                      |               MIG M. |
+|=========================================+======================+======================|
+|   0  NVIDIA RTX 6000 Ada Gene...    Off | 00000000:61:00.0 Off |                  Off |
+| 30%   34C    P8              29W / 300W |     16MiB / 49140MiB |      0%      Default |
+|                                         |                      |                  N/A |
++-----------------------------------------+----------------------+----------------------+
+                                                                                         
++---------------------------------------------------------------------------------------+
+| Processes:                                                                            |
+|  GPU   GI   CI        PID   Type   Process name                            GPU Memory |
+|        ID   ID                                                             Usage      |
+|=======================================================================================|
++---------------------------------------------------------------------------------------+
+<rtfmm_3dpp_test_pbc>
+
+input parameters=[
+  P               = 10
+  n               = 24000
+  ncrit           = 128
+  images          = 3
+  cycle           = 6.2832
+  ewald_ksize     = 21
+  (f,d,e)         = (1,1,1)
+  num_compare     = 24000
+  th_num          = 4
+  seed            = 5
+  check_tree      = 0
+  timing          = 1
+  verbose         = 1
+  use_fft         = 1
+  use_precompute  = 1
+]
+
+# of threads = 4
+build adaptive octree
+horizontal_periodic_near
+add cell 585, r = 9.4248, depth = -1, child = 0
+horizontal_periodic_far
+add cell 586, r = 28.2743, depth = -2, child = 585
+add cell 587, r = 84.8230, depth = -3, child = 586
+icell_idx = 0, cycle = 6.2832
+icell_idx = 585, cycle = 18.8496
+precompute
+[precompute time measured : 0.77038 seconds.]
+[P2M time measured : 0.18350 seconds.]
+min_depth = -3, max_depth = 3
+[M2M time measured : 0.08248 seconds.]
+[M2L time measured : 65.90039 seconds.]
+[P2L time measured : 0.00000 seconds.]
+min_depth = -3, max_depth = 3
+[L2L time measured : 0.06077 seconds.]
+[L2P time measured : 0.24609 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.14871 seconds.]
+dipole correction
+[FMM time measured : 67.41690 seconds.]
+ksize = 21
+scale = 1.0000
+build adaptive octree
+[real_part time measured : 23.36252 seconds.]
+[fourier_part time measured : 28.41306 seconds.]
+[self_correction time measured : 0.00026 seconds.]
+[EWALD time measured : 51.77908 seconds.]
+dm = 13
+pz = -13
+pz = -12
+pz = -11
+pz = -10
+pz = -9
+pz = -8
+pz = -7
+pz = -6
+pz = -5
+pz = -4
+pz = -3
+pz = -2
+pz = -1
+pz = 0
+pz = 1
+pz = 2
+pz = 3
+pz = 4
+pz = 5
+pz = 6
+pz = 7
+pz = 8
+pz = 9
+pz = 10
+pz = 11
+pz = 12
+pz = 13
+dipole correction
+[DIRECT time measured : 15014.33013 seconds.]
+fmm:
+[0],(0.1561,-1.4272,1.8133),-0.3025,21.979793063100,(-3.50385513,28.63026100,-54.24281964)
+[1],(0.1146,2.2974,-2.0787),-0.0234,-16.247990093343,(26.93849833,-14.35567715,33.46338525)
+[2],(-1.5276,2.2053,2.9648),-0.0487,-6.281153690027,(-10.81422853,-71.10106669,2.39486319)
+
+direct:
+[0],(0.1561,-1.4272,1.8133),-0.3025,21.979793551222,(-3.50385544,28.63026100,-54.24281955)
+[1],(0.1146,2.2974,-2.0787),-0.0234,-16.247989712318,(26.93850037,-14.35567793,33.46338087)
+[2],(-1.5276,2.2053,2.9648),-0.0487,-6.281152712995,(-10.81422696,-71.10106686,2.39486292)
+
+ewald:
+[0],(0.1561,-1.4272,1.8133),-0.3025,10.245108425876,(-3.50336182,28.62943049,-54.24397373)
+[1],(0.1146,2.2974,-2.0787),-0.0234,-11.922418500428,(26.93824367,-14.35676965,33.46606597)
+[2],(-1.5276,2.2053,2.9648),-0.0487,-13.416476068752,(-10.81402831,-71.09832787,2.39147922)
+
+-----------------------------FMM vs Direct------------------------------[24000]
+L2  (p)  : 2.28725e-09   L2  (f)  : 9.83921e-08   L2  (e)  : 1.02498e-06
+Rms (p)  : 1.14223e-06   Rms (f)  : 1.24513e-05
+p-energy1 : 2.758382339653e+01
+p-energy2 : 2.758379512357e+01
+
+------------------------------FMM vs Ewald------------------------------[24000]
+L2  (p)  : 4.48377e+01   L2  (f)  : 2.04071e-05   L2  (e)  : 5.18415e-03
+Rms (p)  : 4.99102e+02   Rms (f)  : 2.58248e-03
+p-energy1 : 2.758382339653e+01
+p-energy2 : 2.772756715353e+01
+
+----------------------------Direct vs Ewald-----------------------------[24000]
+L2  (p)  : 4.48377e+01   L2  (f)  : 2.04068e-05   L2  (e)  : 5.18517e-03
+Rms (p)  : 4.99102e+02   Rms (f)  : 2.58244e-03
+p-energy1 : 2.758379512357e+01
+p-energy2 : 2.772756715353e+01
+

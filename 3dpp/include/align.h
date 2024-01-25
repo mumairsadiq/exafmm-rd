@@ -30,6 +30,7 @@ struct AlignedAllocator : public std::allocator<T> {
 };
 
 typedef AlignedAllocator<real, MEM_ALIGN> AlignAllocator;
+typedef std::vector<real, AlignAllocator> AlignedVec;
 
 }
 

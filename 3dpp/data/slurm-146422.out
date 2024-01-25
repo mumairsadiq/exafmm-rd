@@ -1,0 +1,80 @@
+Mon Jan 15 15:58:10 2024       
++---------------------------------------------------------------------------------------+
+| NVIDIA-SMI 535.54.03              Driver Version: 535.54.03    CUDA Version: 12.2     |
+|-----------------------------------------+----------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |         Memory-Usage | GPU-Util  Compute M. |
+|                                         |                      |               MIG M. |
+|=========================================+======================+======================|
+|   0  NVIDIA RTX 6000 Ada Gene...    Off | 00000000:81:00.0 Off |                  Off |
+| 30%   33C    P8              14W / 300W |     16MiB / 49140MiB |      0%      Default |
+|                                         |                      |                  N/A |
++-----------------------------------------+----------------------+----------------------+
+                                                                                         
++---------------------------------------------------------------------------------------+
+| Processes:                                                                            |
+|  GPU   GI   CI        PID   Type   Process name                            GPU Memory |
+|        ID   ID                                                             Usage      |
+|=======================================================================================|
++---------------------------------------------------------------------------------------+
+<rtfmm_3dpp_test_pbc>
+
+input parameters=[
+  P               = 10
+  n               = 24000
+  ncrit           = 128
+  images          = 3
+  cycle           = 6.2832
+  ewald_ksize     = 21
+  (f,d,e)         = (1,1,1)
+  num_compare     = 24000
+  th_num          = 4
+  seed            = 5
+  check_tree      = 0
+  timing          = 1
+  verbose         = 1
+  use_fft         = 1
+  use_precompute  = 1
+]
+
+# of threads = 4
+build adaptive octree
+horizontal_periodic_near
+add cell 585, r = 9.4248, depth = -1, child = 0
+horizontal_periodic_far
+add cell 586, r = 28.2743, depth = -2, child = 585
+add cell 587, r = 84.8230, depth = -3, child = 586
+icell_idx = 0, cycle = 6.2832
+icell_idx = 585, cycle = 18.8496
+precompute
+# of cells = 588
+# of m2l_tar = 586
+# of m2l_src = 586
+[precompute time measured : 0.65765 seconds.]
+[P2M time measured : 0.07951 seconds.]
+min_depth = -3, max_depth = 3
+[M2M time measured : 0.01172 seconds.]
+m2l_fft_precompute_advanced2
+num_fft = 111780
+[init_map time measured : 0.00006 seconds.]
+[init_mem time measured : 4.88132 seconds.]
+[setup time measured : 0.00897 seconds.]
+[create_plan time measured : 0.00327 seconds.]
+[Q time measured : 0.01642 seconds.]
+[P time measured : 3.21852 seconds.]
+[add time measured : 0.86425 seconds.]
+[destroy_plan time measured : 0.00001 seconds.]
+[M2L_kernel time measured : 9.68501 seconds.]
+[M2L time measured : 9.68713 seconds.]
+[P2L time measured : 0.00000 seconds.]
+min_depth = -3, max_depth = 3
+[L2L time measured : 0.01216 seconds.]
+[L2P time measured : 0.13797 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.16076 seconds.]
+dipole correction
+[FMM time measured : 10.77056 seconds.]
+ksize = 21
+scale = 1.0000
+build adaptive octree
+slurmstepd-rtx6000-ada: error: *** JOB 146422 ON rtx6000-ada CANCELLED AT 2024-01-15T16:22:43 ***

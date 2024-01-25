@@ -20,7 +20,8 @@ enum class OperatorType
     P2P,
     M2L,
     M2P,
-    P2L
+    P2L,
+    M2L_parent
 };
 
 class Traverser
@@ -36,6 +37,8 @@ public:
     PeriodicInteractionMap get_map(OperatorType type);
 
     Cells3 get_cells() {return cells;}
+
+    PeriodicInteractionMap get_m2l_map_from_m2l_parent_map();
 
 private:
     
@@ -58,6 +61,8 @@ private:
 
     int is_leaf(int c);
 
+    void make_M2L_parent_map();
+
     Cells3 cells;
 
 public:
@@ -68,6 +73,8 @@ public:
 
     PeriodicInteractionMap M2L_map;
     PeriodicInteractionMap P2P_map;
+
+    PeriodicInteractionMap M2L_parent_map;
 };
 
 }

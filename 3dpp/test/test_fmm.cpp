@@ -31,6 +31,17 @@ int main(int argc, char* argv[])
     cell.brange = {0, args.n};
     TIME_BEGIN(direct);
     kernel.p2p(bs, res_direct, cell, cell, rtfmm::vec3r(0,0,0), args.use_simd);
+    /*std::vector<rtfmm::vec3r> xs = rtfmm::get_bodies_x(res_direct, cell.brange);
+    std::vector<rtfmm::real> qs = rtfmm::get_bodies_q(res_direct, cell.brange).d;
+    std::vector<rtfmm::real> ps(args.n);
+    std::vector<rtfmm::vec3r> fs(args.n);
+    rtfmm::LaplaceKernel::p2p_pf(xs,qs,xs,ps,fs);
+    rtfmm::Matrix psmat(args.n, 1);
+    psmat.d = ps;
+    rtfmm::Matriv fsmat(args.n, 1);
+    fsmat.d = fs;
+    rtfmm::add_boides_p(res_direct,psmat,cell.brange);
+    rtfmm::add_boides_f(res_direct,fsmat,cell.brange);*/
     if(args.divide_4pi)
         rtfmm::scale_bodies(res_direct);
     if(args.dipole_correction)

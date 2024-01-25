@@ -147,10 +147,13 @@ void rtfmm::LaplaceFMM::M2L()
     TIME_BEGIN(M2L);
     PeriodicInteractionMap m2l_map = traverser.get_map(OperatorType::M2L);
     PeriodicInteractionPairs m2l_pairs = traverser.get_pairs(OperatorType::M2L);
+    PeriodicInteractionMap m2l_parent_map = traverser.get_map(OperatorType::M2L_parent);
     if(args.use_precompute)
     {
         TIME_BEGIN(M2L_kernel);
-        kernel.m2l_fft_precompute_advanced2(args.P, cs, m2l_map, m2l_pairs);
+        //kernel.m2l_fft_precompute_advanced2(args.P, cs, m2l_map);
+        //kernel.m2l_fft_precompute_advanced3(args.P, cs, m2l_map, m2l_pairs);
+        kernel.m2l_fft_precompute_t(args.P, cs, m2l_parent_map);
         TIME_END(M2L_kernel);
     }
     else
@@ -261,7 +264,12 @@ void rtfmm::LaplaceFMM::P2P()
         Cell3& ctar = cs[p2p->first];
         if(args.use_simd)
         {
-            kernel.p2p_1toN(bs,bs,cs,p2p->second,ctar);
+            kernel.p2p_1toN_256(bs,bs,cs,p2p->second,ctar);
+            /*for(int j = 0; j < p2p->second.size(); j++)
+            {
+                Cell3& csrc = cs[p2p->second[j].first];
+                kernel.p2p(bs,bs,csrc,ctar,p2p->second[j].second, 1);
+            }*/
         }
         else
         {

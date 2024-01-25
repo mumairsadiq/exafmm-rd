@@ -1,0 +1,352 @@
+Sat Jan 13 22:47:24 2024       
++---------------------------------------------------------------------------------------+
+| NVIDIA-SMI 535.54.03              Driver Version: 535.54.03    CUDA Version: 12.2     |
+|-----------------------------------------+----------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |         Memory-Usage | GPU-Util  Compute M. |
+|                                         |                      |               MIG M. |
+|=========================================+======================+======================|
+|   0  NVIDIA GeForce RTX 4090        Off | 00000000:46:00.0 Off |                  Off |
+| 35%   33C    P8              15W / 350W |     15MiB / 24564MiB |      0%      Default |
+|                                         |                      |                  N/A |
++-----------------------------------------+----------------------+----------------------+
+                                                                                         
++---------------------------------------------------------------------------------------+
+| Processes:                                                                            |
+|  GPU   GI   CI        PID   Type   Process name                            GPU Memory |
+|        ID   ID                                                             Usage      |
+|=======================================================================================|
++---------------------------------------------------------------------------------------+
+<rtfmm_3dpp_test_pbc>
+
+input parameters=[
+  P               = 12
+  n               = 1000
+  ncrit           = 16
+  images          = 5
+  cycle           = 6.2832
+  ewald_ksize     = 51
+  (f,d,e)         = (1,1,1)
+  num_compare     = 1000
+  th_num          = 4
+  seed            = 5
+  check_tree      = 0
+  timing          = 1
+  verbose         = 1
+  use_fft         = 1
+  use_precompute  = 1
+]
+
+# of threads = 4
+build adaptive octree
+horizontal_periodic_near
+add cell 229, r = 9.4248, depth = -1, child = 0
+horizontal_periodic_far
+add cell 230, r = 28.2743, depth = -2, child = 229
+add cell 231, r = 84.8230, depth = -3, child = 230
+add cell 232, r = 254.4690, depth = -4, child = 231
+add cell 233, r = 763.4070, depth = -5, child = 232
+icell_idx = 0, cycle = 6.2832
+icell_idx = 229, cycle = 18.8496
+icell_idx = 230, cycle = 56.5487
+icell_idx = 231, cycle = 169.6460
+precompute
+[precompute time measured : 1.88409 seconds.]
+[P2M time measured : 0.32869 seconds.]
+min_depth = -5, max_depth = 3
+[M2M time measured : 0.17026 seconds.]
+[M2L time measured : 22.67207 seconds.]
+[P2L time measured : 0.11642 seconds.]
+min_depth = -5, max_depth = 3
+[L2L time measured : 0.10404 seconds.]
+[L2P time measured : 0.27546 seconds.]
+[M2P time measured : 0.20089 seconds.]
+[P2P time measured : 0.00884 seconds.]
+dipole correction
+[FMM time measured : 25.76893 seconds.]
+ksize = 51
+scale = 1.0000
+build adaptive octree
+[real_part time measured : 0.04155 seconds.]
+[fourier_part time measured : 15.22033 seconds.]
+[self_correction time measured : 0.00001 seconds.]
+[EWALD time measured : 15.26208 seconds.]
+dm = 121
+pz = -121
+pz = -120
+pz = -119
+pz = -118
+pz = -117
+pz = -116
+pz = -115
+pz = -114
+pz = -113
+pz = -112
+pz = -111
+pz = -110
+pz = -109
+pz = -108
+pz = -107
+pz = -106
+pz = -105
+pz = -104
+pz = -103
+pz = -102
+pz = -101
+pz = -100
+pz = -99
+pz = -98
+pz = -97
+pz = -96
+pz = -95
+pz = -94
+pz = -93
+pz = -92
+pz = -91
+pz = -90
+pz = -89
+pz = -88
+pz = -87
+pz = -86
+pz = -85
+pz = -84
+pz = -83
+pz = -82
+pz = -81
+pz = -80
+pz = -79
+pz = -78
+pz = -77
+pz = -76
+pz = -75
+pz = -74
+pz = -73
+pz = -72
+pz = -71
+pz = -70
+pz = -69
+pz = -68
+pz = -67
+pz = -66
+pz = -65
+pz = -64
+pz = -63
+pz = -62
+pz = -61
+pz = -60
+pz = -59
+pz = -58
+pz = -57
+pz = -56
+pz = -55
+pz = -54
+pz = -53
+pz = -52
+pz = -51
+pz = -50
+pz = -49
+pz = -48
+pz = -47
+pz = -46
+pz = -45
+pz = -44
+pz = -43
+pz = -42
+pz = -41
+pz = -40
+pz = -39
+pz = -38
+pz = -37
+pz = -36
+pz = -35
+pz = -34
+pz = -33
+pz = -32
+pz = -31
+pz = -30
+pz = -29
+pz = -28
+pz = -27
+pz = -26
+pz = -25
+pz = -24
+pz = -23
+pz = -22
+pz = -21
+pz = -20
+pz = -19
+pz = -18
+pz = -17
+pz = -16
+pz = -15
+pz = -14
+pz = -13
+pz = -12
+pz = -11
+pz = -10
+pz = -9
+pz = -8
+pz = -7
+pz = -6
+pz = -5
+pz = -4
+pz = -3
+pz = -2
+pz = -1
+pz = 0
+pz = 1
+pz = 2
+pz = 3
+pz = 4
+pz = 5
+pz = 6
+pz = 7
+pz = 8
+pz = 9
+pz = 10
+pz = 11
+pz = 12
+pz = 13
+pz = 14
+pz = 15
+pz = 16
+pz = 17
+pz = 18
+pz = 19
+pz = 20
+pz = 21
+pz = 22
+pz = 23
+pz = 24
+pz = 25
+pz = 26
+pz = 27
+pz = 28
+pz = 29
+pz = 30
+pz = 31
+pz = 32
+pz = 33
+pz = 34
+pz = 35
+pz = 36
+pz = 37
+pz = 38
+pz = 39
+pz = 40
+pz = 41
+pz = 42
+pz = 43
+pz = 44
+pz = 45
+pz = 46
+pz = 47
+pz = 48
+pz = 49
+pz = 50
+pz = 51
+pz = 52
+pz = 53
+pz = 54
+pz = 55
+pz = 56
+pz = 57
+pz = 58
+pz = 59
+pz = 60
+pz = 61
+pz = 62
+pz = 63
+pz = 64
+pz = 65
+pz = 66
+pz = 67
+pz = 68
+pz = 69
+pz = 70
+pz = 71
+pz = 72
+pz = 73
+pz = 74
+pz = 75
+pz = 76
+pz = 77
+pz = 78
+pz = 79
+pz = 80
+pz = 81
+pz = 82
+pz = 83
+pz = 84
+pz = 85
+pz = 86
+pz = 87
+pz = 88
+pz = 89
+pz = 90
+pz = 91
+pz = 92
+pz = 93
+pz = 94
+pz = 95
+pz = 96
+pz = 97
+pz = 98
+pz = 99
+pz = 100
+pz = 101
+pz = 102
+pz = 103
+pz = 104
+pz = 105
+pz = 106
+pz = 107
+pz = 108
+pz = 109
+pz = 110
+pz = 111
+pz = 112
+pz = 113
+pz = 114
+pz = 115
+pz = 116
+pz = 117
+pz = 118
+pz = 119
+pz = 120
+pz = 121
+dipole correction
+[DIRECT time measured : 17813.86996 seconds.]
+fmm:
+[0],(0.1561,-1.4272,1.8133),-0.2990,4.408975661512,(-0.58127965,0.20706918,0.08573442)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-4.210649132797,(0.02899505,1.30830660,-1.54107939)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-0.993214484766,(3.46858207,4.21969483,1.32028537)
+
+direct:
+[0],(0.1561,-1.4272,1.8133),-0.2990,4.408975641425,(-0.58127965,0.20706918,0.08573442)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-4.210649153044,(0.02899505,1.30830660,-1.54107938)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-0.993214505100,(3.46858207,4.21969483,1.32028537)
+
+ewald:
+[0],(0.1561,-1.4272,1.8133),-0.2990,3.039583549256,(-0.58128145,0.20707293,0.08573753)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.339332176497,(0.02900927,1.30830466,-1.54106361)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-1.783296617228,(3.46858124,4.21970129,1.32028547)
+
+-----------------------------FMM vs Direct------------------------------[1000]
+L2  (p)  : 2.22302e-09   L2  (f)  : 9.64550e-11   L2  (e)  : 1.34730e-10
+Rms (p)  : 2.02927e-08   Rms (f)  : 2.89614e-09
+p-energy1 : -2.310480994366e+01
+p-energy2 : -2.310480994677e+01
+
+------------------------------FMM vs Ewald------------------------------[1000]
+L2  (p)  : 3.59711e+00   L2  (f)  : 6.93635e-07   L2  (e)  : 2.75033e-05
+Rms (p)  : 8.67384e+00   Rms (f)  : 2.08270e-05
+p-energy1 : -2.310480994366e+01
+p-energy2 : -2.310544541975e+01
+
+----------------------------Direct vs Ewald-----------------------------[1000]
+L2  (p)  : 3.59711e+00   L2  (f)  : 6.93635e-07   L2  (e)  : 2.75032e-05
+Rms (p)  : 8.67384e+00   Rms (f)  : 2.08270e-05
+p-energy1 : -2.310480994677e+01
+p-energy2 : -2.310544541975e+01
+

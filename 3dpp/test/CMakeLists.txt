@@ -20,6 +20,8 @@ set(exec
     test_matmul
     test_fftw2
     test_fft2
+    test_simd
+    test_up
 )
 
 foreach(filename IN LISTS exec)

@@ -6,6 +6,8 @@
 #include <vector>
 #include <chrono>
 #include <assert.h>
+#include "emmintrin.h"
+#include "immintrin.h"
 
 #define TIME_BEGIN(a) auto time_begin_##a = std::chrono::high_resolution_clock::now()
 
@@ -287,32 +289,240 @@ public:
         }
         return res;
     }
+    vec<N, int> round()
+    {
+        vec<N,int> res;
+        for(int i = 0; i < N; i++)
+        {
+            res[i] = std::round(this->data[i]);
+        }
+        return res;
+    }
 };
 
 template<>
-class vec<2, double>
+class vec<4, double>
 {
 private:
-    double data[2];
+    union 
+    {
+        __m256d d;
+        double data[4];
+    };
 public:
     vec(){}
     vec(double v)
     {
-        for(int i = 0; i < 2; i++)
-        {
-            this->data[i] = v;
-        }
+        d = _mm256_set1_pd(v);
     }
-    vec(double v0, double v1)
+    vec(double v0, double v1, double v2, double v3)
     {  
-        data[0] = v0;
-        data[1] = v1;
+        //although 'r' means reversed, 
+        //the memory order is also reversed, 
+        //so it is more intuitive than _mm256_set_pd
+        d = _mm256_setr_pd(v0, v1, v2, v3);  
+    }
+    vec(const __m256d v) 
+    {
+        d = v;
+    }
+    vec(const vec &v) 
+    {
+        d = v.d;
+    }
+    double &operator[](int i) 
+    {
+        return data[i];
+    }
+    const double &operator[](int i) const
+    {
+        return data[i];
+    }
+    vec operator+(const double& v) const 
+    {
+        return vec(*this) += v;
+    }
+    vec operator-(const double& v) const 
+    {
+        return vec(*this) -= v;
+    }
+    vec operator-() const
+    {
+        return vec(_mm256_sub_pd(_mm256_set1_pd(0), d));
+    }
+    vec operator*(const double& v) const 
+    {
+        return vec(*this) *= v;
+    }
+    vec operator/(const double& v) const 
+    {
+        return vec(*this) /= v;
+    }
+    vec operator&(const vec& v) const 
+    {
+        return vec(*this) &= v;
+    }
+    vec operator+(const vec& v) const 
+    {
+        return vec(*this) += v;
+    }
+    vec operator-(const vec& v) const 
+    {
+        return vec(*this) -= v;
+    }
+    vec operator*(const vec& v) const 
+    {
+        return vec(*this) *= v;
+    }
+    vec operator/(const vec& v) const 
+    {
+        return vec(*this) /= v;
+    }
+    const vec &operator+=(const double& v) 
+    {
+        d = _mm256_add_pd(d, _mm256_set1_pd(v));
+        return *this;
+    }
+    const vec &operator-=(const double& v) 
+    {
+        d = _mm256_sub_pd(d, _mm256_set1_pd(v));
+        return *this;
+    }
+    const vec &operator*=(const double& v) 
+    {
+        d = _mm256_mul_pd(d, _mm256_set1_pd(v));
+        return *this;
+    }
+    const vec &operator/=(const double& v) 
+    {
+        d = _mm256_div_pd(d, _mm256_set1_pd(v));
+        return *this;
+    }
+    const vec &operator+=(const vec& v) 
+    {
+        d = _mm256_add_pd(d, v.d);
+        return *this;
+    }
+    const vec &operator-=(const vec& v) 
+    {
+        d = _mm256_sub_pd(d, v.d);
+        return *this;
+    }
+    const vec &operator*=(const vec& v) 
+    {
+        d = _mm256_mul_pd(d, v.d);
+        return *this;
+    }
+    const vec &operator/=(const vec& v) 
+    {
+        d = _mm256_div_pd(d, v.d);
+        return *this;
+    }
+    const vec &operator&=(const vec& v) 
+    {
+        d = _mm256_and_pd(d, v.d);
+        return *this;
+    }
+    vec operator==(const vec& v) 
+    {
+        return vec(_mm256_cmp_pd(d,v.d,_CMP_EQ_OQ));
+    }
+    vec operator>(const vec& v) 
+    {
+        return vec(_mm256_cmp_pd(d,v.d,_CMP_GT_OQ));
+    }
+    vec operator>=(const vec& v) 
+    {
+        return vec(_mm256_cmp_pd(d,v.d,_CMP_GE_OQ));
+    }
+    vec operator<(const vec& v) 
+    {
+        return vec(_mm256_cmp_pd(d,v.d,_CMP_LT_OQ));
+    }
+    vec operator<=(const vec& v) 
+    {
+        return vec(_mm256_cmp_pd(d,v.d,_CMP_LE_OQ));
+    }
+    vec operator!=(const vec& v) 
+    {
+        return vec(_mm256_cmp_pd(d,v.d,_CMP_NEQ_OQ));
+    }
+    friend vec operator*(const double v, const vec& _vec)  // value * this
+    {
+        return vec(_mm256_mul_pd(_mm256_set1_pd(v), _vec.d));
+    }
+
+    friend std::ostream &operator<<(std::ostream & os, const vec & v) 
+    {
+        os << "__m256d[";
+        os << v.data[0] << ",";
+        os << v.data[1] << ",";
+        os << v.data[2] << ",";
+        os << v.data[3] << "]";
+        return os;
+    }
+    double norm()
+    {
+        union
+        {
+            __m256d res;
+            double data[4];
+        };
+        __m256d d2 = _mm256_mul_pd(d,d);
+        res = _mm256_permute2f128_pd(d2,d2,1);;
+        res = _mm256_add_pd(res,d2);
+        res = _mm256_hadd_pd(res,res);
+        return data[0];
+    }
+    double r()
+    {
+        return std::sqrt(norm());
+    }
+    double sum()
+    {
+        union
+        {
+            __m256d res;
+            double data[4];
+        };
+        res = _mm256_permute2f128_pd(d,d,1);;
+        res = _mm256_add_pd(res,d);
+        res = _mm256_hadd_pd(res,res);
+        return data[0];
+    }
+    vec sqrt()
+    {
+        return vec(_mm256_sqrt_pd(d));
     }
 };
 
+
+
+inline void print_simd(__m128d v)
+{
+    union {
+            __m128d temp;
+            double data[2];
+        };
+    temp = v;
+    printf("(%.4f, %.4f)\n", data[0], data[1]);
+}
+
+inline void print_simd(__m256d v)
+{
+    union {
+            __m256d temp;
+            double data[4];
+        };
+    temp = v;
+    printf("(%.4f, %.4f, %.4f, %.4f)\n", data[0], data[1], data[2], data[3]);
+}
+
 using vec2r = vec<2, real>;
 using vec3r = vec<3, real>;
+using vec2i = vec<2, int>;
 using vec3i = vec<3, int>;
+using vec4d = vec<4, double>;
 
 template<typename T>
 struct MatrixBase
@@ -353,5 +563,6 @@ struct OffsetAndNumber
 };
 
 using Range = OffsetAndNumber;
+
 
 }

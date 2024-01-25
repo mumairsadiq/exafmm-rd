@@ -1,0 +1,1102 @@
+Mon Jan 22 23:10:35 2024       
++---------------------------------------------------------------------------------------+
+| NVIDIA-SMI 535.54.03              Driver Version: 535.54.03    CUDA Version: 12.2     |
+|-----------------------------------------+----------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |         Memory-Usage | GPU-Util  Compute M. |
+|                                         |                      |               MIG M. |
+|=========================================+======================+======================|
+|   0  NVIDIA RTX 6000 Ada Gene...    Off | 00000000:41:00.0 Off |                  Off |
+| 30%   33C    P8              24W / 300W |     16MiB / 49140MiB |      0%      Default |
+|                                         |                      |                  N/A |
++-----------------------------------------+----------------------+----------------------+
+                                                                                         
++---------------------------------------------------------------------------------------+
+| Processes:                                                                            |
+|  GPU   GI   CI        PID   Type   Process name                            GPU Memory |
+|        ID   ID                                                             Usage      |
+|=======================================================================================|
++---------------------------------------------------------------------------------------+
+rtfmm_3dp_test_fmm
+input parameters=[
+  P                    = 2
+  n                    = 24000
+  ncrit                = 128
+  images               = 0
+  cycle                = 6.2832
+  ewald_ksize          = 11
+  (f,d,e)              = (1,1,1)
+  num_compare          = 24000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 0
+  zero_netcharge       = 0
+  print_body_number    = 3
+  divide_4pi           = 1
+]
+
+[precompute_others time measured : 0.00607 seconds.]
+N_freq = 18
+[precompute_m2l time measured : 0.00864 seconds.]
+[precompute time measured : 0.01474 seconds.]
+P2M leaf_number = 512
+[P2M time measured : 0.00037 seconds.]
+[M2M time measured : 0.00007 seconds.]
+N = 3, N3 = 27, N_freq = 18
+num_src = 576, num_tar = 576
+num_src = 576, batch_size = 8, batch_num = 72
+[init time measured : 0.00005 seconds.]
+[up time measured : 0.00028 seconds.]
+[hadamard time measured : 0.00145 seconds.]
+[down time measured : 0.00040 seconds.]
+[destroy_plan time measured : 0.00000 seconds.]
+[M2L_kernel time measured : 0.00227 seconds.]
+[M2L time measured : 0.00365 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.00004 seconds.]
+L2P leaf_number = 512
+[L2P time measured : 0.00025 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.01344 seconds.]
+[FMM_kernels time measured : 0.01833 seconds.]
+[FMM time measured : 0.04689 seconds.]
+[direct time measured : 2.03199 seconds.]
+pnrm = 30197.33842929
+-----------------------------FMM vs Direct------------------------------[24000]
+L2  (p)  : 2.89349e-02   L2  (f)  : 1.33731e-02   L2  (e)  : 9.99019e-02
+Rms (p)  : 3.24565e-02   Rms (f)  : 1.34112e-01
+p-energy1 : 3.619214666749e+01
+p-energy2 : 4.020911501419e+01
+
+rtfmm_3dp_test_fmm
+input parameters=[
+  P                    = 3
+  n                    = 24000
+  ncrit                = 128
+  images               = 0
+  cycle                = 6.2832
+  ewald_ksize          = 11
+  (f,d,e)              = (1,1,1)
+  num_compare          = 24000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 0
+  zero_netcharge       = 0
+  print_body_number    = 3
+  divide_4pi           = 1
+]
+
+[precompute_others time measured : 0.00109 seconds.]
+N_freq = 75
+[precompute_m2l time measured : 0.00328 seconds.]
+[precompute time measured : 0.00438 seconds.]
+P2M leaf_number = 512
+[P2M time measured : 0.00103 seconds.]
+[M2M time measured : 0.00008 seconds.]
+N = 5, N3 = 125, N_freq = 75
+num_src = 576, num_tar = 576
+num_src = 576, batch_size = 8, batch_num = 72
+[init time measured : 0.00004 seconds.]
+[up time measured : 0.00034 seconds.]
+[hadamard time measured : 0.00361 seconds.]
+[down time measured : 0.00061 seconds.]
+[destroy_plan time measured : 0.00000 seconds.]
+[M2L_kernel time measured : 0.00466 seconds.]
+[M2L time measured : 0.00564 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.00005 seconds.]
+L2P leaf_number = 512
+[L2P time measured : 0.00058 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.01021 seconds.]
+[FMM_kernels time measured : 0.01793 seconds.]
+[FMM time measured : 0.03779 seconds.]
+[direct time measured : 2.02570 seconds.]
+pnrm = 30197.33842929
+-----------------------------FMM vs Direct------------------------------[24000]
+L2  (p)  : 1.39426e-03   L2  (f)  : 1.30033e-03   L2  (e)  : 1.40891e-03
+Rms (p)  : 1.56395e-03   Rms (f)  : 1.30404e-02
+p-energy1 : 4.015246399661e+01
+p-energy2 : 4.020911501419e+01
+
+rtfmm_3dp_test_fmm
+input parameters=[
+  P                    = 4
+  n                    = 24000
+  ncrit                = 128
+  images               = 0
+  cycle                = 6.2832
+  ewald_ksize          = 11
+  (f,d,e)              = (1,1,1)
+  num_compare          = 24000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 0
+  zero_netcharge       = 0
+  print_body_number    = 3
+  divide_4pi           = 1
+]
+
+[precompute_others time measured : 0.00183 seconds.]
+N_freq = 196
+[precompute_m2l time measured : 0.00340 seconds.]
+[precompute time measured : 0.00525 seconds.]
+P2M leaf_number = 512
+[P2M time measured : 0.00108 seconds.]
+[M2M time measured : 0.00011 seconds.]
+N = 7, N3 = 343, N_freq = 196
+num_src = 576, num_tar = 576
+num_src = 576, batch_size = 8, batch_num = 72
+[init time measured : 0.00004 seconds.]
+[up time measured : 0.00043 seconds.]
+[hadamard time measured : 0.00540 seconds.]
+[down time measured : 0.00049 seconds.]
+[destroy_plan time measured : 0.00000 seconds.]
+[M2L_kernel time measured : 0.00663 seconds.]
+[M2L time measured : 0.00758 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.00011 seconds.]
+L2P leaf_number = 512
+[L2P time measured : 0.00120 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.00973 seconds.]
+[FMM_kernels time measured : 0.02014 seconds.]
+[FMM time measured : 0.04217 seconds.]
+[direct time measured : 2.03257 seconds.]
+pnrm = 30197.33842929
+-----------------------------FMM vs Direct------------------------------[24000]
+L2  (p)  : 1.96109e-04   L2  (f)  : 2.42386e-04   L2  (e)  : 1.65430e-04
+Rms (p)  : 2.19977e-04   Rms (f)  : 2.43079e-03
+p-energy1 : 4.021576679885e+01
+p-energy2 : 4.020911501419e+01
+
+rtfmm_3dp_test_fmm
+input parameters=[
+  P                    = 5
+  n                    = 24000
+  ncrit                = 128
+  images               = 0
+  cycle                = 6.2832
+  ewald_ksize          = 11
+  (f,d,e)              = (1,1,1)
+  num_compare          = 24000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 0
+  zero_netcharge       = 0
+  print_body_number    = 3
+  divide_4pi           = 1
+]
+
+[precompute_others time measured : 0.00472 seconds.]
+N_freq = 405
+[precompute_m2l time measured : 0.00470 seconds.]
+[precompute time measured : 0.00944 seconds.]
+P2M leaf_number = 512
+[P2M time measured : 0.00351 seconds.]
+[M2M time measured : 0.00097 seconds.]
+N = 9, N3 = 729, N_freq = 405
+num_src = 576, num_tar = 576
+num_src = 576, batch_size = 8, batch_num = 72
+[init time measured : 0.00005 seconds.]
+[up time measured : 0.00067 seconds.]
+[hadamard time measured : 0.00601 seconds.]
+[down time measured : 0.00060 seconds.]
+[destroy_plan time measured : 0.00000 seconds.]
+[M2L_kernel time measured : 0.00810 seconds.]
+[M2L time measured : 0.00913 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.00028 seconds.]
+L2P leaf_number = 512
+[L2P time measured : 0.00180 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.00956 seconds.]
+[FMM_kernels time measured : 0.02562 seconds.]
+[FMM time measured : 0.04849 seconds.]
+[direct time measured : 2.03341 seconds.]
+pnrm = 30197.33842929
+-----------------------------FMM vs Direct------------------------------[24000]
+L2  (p)  : 1.61886e-05   L2  (f)  : 2.81848e-05   L2  (e)  : 1.56038e-05
+Rms (p)  : 1.81589e-05   Rms (f)  : 2.82653e-04
+p-energy1 : 4.020848759954e+01
+p-energy2 : 4.020911501419e+01
+
+rtfmm_3dp_test_fmm
+input parameters=[
+  P                    = 6
+  n                    = 24000
+  ncrit                = 128
+  images               = 0
+  cycle                = 6.2832
+  ewald_ksize          = 11
+  (f,d,e)              = (1,1,1)
+  num_compare          = 24000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 0
+  zero_netcharge       = 0
+  print_body_number    = 3
+  divide_4pi           = 1
+]
+
+[precompute_others time measured : 0.01518 seconds.]
+N_freq = 726
+[precompute_m2l time measured : 0.00444 seconds.]
+[precompute time measured : 0.01964 seconds.]
+P2M leaf_number = 512
+[P2M time measured : 0.00314 seconds.]
+[M2M time measured : 0.00107 seconds.]
+N = 11, N3 = 1331, N_freq = 726
+num_src = 576, num_tar = 576
+num_src = 576, batch_size = 8, batch_num = 72
+[init time measured : 0.00005 seconds.]
+[up time measured : 0.00109 seconds.]
+[hadamard time measured : 0.00826 seconds.]
+[down time measured : 0.00101 seconds.]
+[destroy_plan time measured : 0.00000 seconds.]
+[M2L_kernel time measured : 0.01161 seconds.]
+[M2L time measured : 0.01263 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.00082 seconds.]
+L2P leaf_number = 512
+[L2P time measured : 0.00293 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.00951 seconds.]
+[FMM_kernels time measured : 0.03042 seconds.]
+[FMM time measured : 0.06701 seconds.]
+[direct time measured : 2.03041 seconds.]
+pnrm = 30197.33842929
+-----------------------------FMM vs Direct------------------------------[24000]
+L2  (p)  : 2.03953e-06   L2  (f)  : 4.51072e-06   L2  (e)  : 4.76803e-07
+Rms (p)  : 2.28775e-06   Rms (f)  : 4.52360e-05
+p-energy1 : 4.020909584236e+01
+p-energy2 : 4.020911501419e+01
+
+rtfmm_3dp_test_fmm
+input parameters=[
+  P                    = 7
+  n                    = 24000
+  ncrit                = 128
+  images               = 0
+  cycle                = 6.2832
+  ewald_ksize          = 11
+  (f,d,e)              = (1,1,1)
+  num_compare          = 24000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 0
+  zero_netcharge       = 0
+  print_body_number    = 3
+  divide_4pi           = 1
+]
+
+[precompute_others time measured : 0.02879 seconds.]
+N_freq = 1183
+[precompute_m2l time measured : 0.00475 seconds.]
+[precompute time measured : 0.03356 seconds.]
+P2M leaf_number = 512
+[P2M time measured : 0.00424 seconds.]
+[M2M time measured : 0.00101 seconds.]
+N = 13, N3 = 2197, N_freq = 1183
+num_src = 576, num_tar = 576
+num_src = 576, batch_size = 8, batch_num = 72
+[init time measured : 0.00007 seconds.]
+[up time measured : 0.00183 seconds.]
+[hadamard time measured : 0.01190 seconds.]
+[down time measured : 0.00132 seconds.]
+[destroy_plan time measured : 0.00000 seconds.]
+[M2L_kernel time measured : 0.01704 seconds.]
+[M2L time measured : 0.01742 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.00117 seconds.]
+L2P leaf_number = 512
+[L2P time measured : 0.00445 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.00944 seconds.]
+[FMM_kernels time measured : 0.03797 seconds.]
+[FMM time measured : 0.08567 seconds.]
+[direct time measured : 2.02530 seconds.]
+pnrm = 30197.33842929
+-----------------------------FMM vs Direct------------------------------[24000]
+L2  (p)  : 2.48529e-07   L2  (f)  : 6.97397e-07   L2  (e)  : 1.97164e-07
+Rms (p)  : 2.78776e-07   Rms (f)  : 6.99389e-06
+p-energy1 : 4.020912294198e+01
+p-energy2 : 4.020911501419e+01
+
+rtfmm_3dp_test_fmm
+input parameters=[
+  P                    = 8
+  n                    = 24000
+  ncrit                = 128
+  images               = 0
+  cycle                = 6.2832
+  ewald_ksize          = 11
+  (f,d,e)              = (1,1,1)
+  num_compare          = 24000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 0
+  zero_netcharge       = 0
+  print_body_number    = 3
+  divide_4pi           = 1
+]
+
+[precompute_others time measured : 0.07336 seconds.]
+N_freq = 1800
+[precompute_m2l time measured : 0.00781 seconds.]
+[precompute time measured : 0.08120 seconds.]
+P2M leaf_number = 512
+[P2M time measured : 0.00748 seconds.]
+[M2M time measured : 0.00168 seconds.]
+N = 15, N3 = 3375, N_freq = 1800
+num_src = 576, num_tar = 576
+num_src = 576, batch_size = 8, batch_num = 72
+[init time measured : 0.00009 seconds.]
+[up time measured : 0.00278 seconds.]
+[hadamard time measured : 0.01746 seconds.]
+[down time measured : 0.00174 seconds.]
+[destroy_plan time measured : 0.00000 seconds.]
+[M2L_kernel time measured : 0.02484 seconds.]
+[M2L time measured : 0.02535 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.00181 seconds.]
+L2P leaf_number = 512
+[L2P time measured : 0.00651 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.00962 seconds.]
+[FMM_kernels time measured : 0.05264 seconds.]
+[FMM time measured : 0.14767 seconds.]
+[direct time measured : 2.02790 seconds.]
+pnrm = 30197.33842929
+-----------------------------FMM vs Direct------------------------------[24000]
+L2  (p)  : 4.02287e-08   L2  (f)  : 1.23363e-07   L2  (e)  : 1.23690e-07
+Rms (p)  : 4.51248e-08   Rms (f)  : 1.23716e-06
+p-energy1 : 4.020911998767e+01
+p-energy2 : 4.020911501419e+01
+
+rtfmm_3dp_test_fmm
+input parameters=[
+  P                    = 9
+  n                    = 24000
+  ncrit                = 128
+  images               = 0
+  cycle                = 6.2832
+  ewald_ksize          = 11
+  (f,d,e)              = (1,1,1)
+  num_compare          = 24000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 0
+  zero_netcharge       = 0
+  print_body_number    = 3
+  divide_4pi           = 1
+]
+
+[precompute_others time measured : 0.10957 seconds.]
+N_freq = 2601
+[precompute_m2l time measured : 0.01506 seconds.]
+[precompute time measured : 0.12466 seconds.]
+P2M leaf_number = 512
+[P2M time measured : 0.01025 seconds.]
+[M2M time measured : 0.00266 seconds.]
+N = 17, N3 = 4913, N_freq = 2601
+num_src = 576, num_tar = 576
+num_src = 576, batch_size = 8, batch_num = 72
+[init time measured : 0.00013 seconds.]
+[up time measured : 0.00798 seconds.]
+[hadamard time measured : 0.02593 seconds.]
+[down time measured : 0.00675 seconds.]
+[destroy_plan time measured : 0.00000 seconds.]
+[M2L_kernel time measured : 0.04467 seconds.]
+[M2L time measured : 0.04515 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.00293 seconds.]
+L2P leaf_number = 512
+[L2P time measured : 0.00915 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.00963 seconds.]
+[FMM_kernels time measured : 0.08009 seconds.]
+[FMM time measured : 0.21906 seconds.]
+[direct time measured : 2.02931 seconds.]
+pnrm = 30197.33842929
+-----------------------------FMM vs Direct------------------------------[24000]
+L2  (p)  : 6.17204e-09   L2  (f)  : 2.19963e-08   L2  (e)  : 1.02037e-08
+Rms (p)  : 6.92321e-09   Rms (f)  : 2.20591e-07
+p-energy1 : 4.020911460391e+01
+p-energy2 : 4.020911501419e+01
+
+rtfmm_3dp_test_fmm
+input parameters=[
+  P                    = 10
+  n                    = 24000
+  ncrit                = 128
+  images               = 0
+  cycle                = 6.2832
+  ewald_ksize          = 11
+  (f,d,e)              = (1,1,1)
+  num_compare          = 24000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 0
+  zero_netcharge       = 0
+  print_body_number    = 3
+  divide_4pi           = 1
+]
+
+[precompute_others time measured : 0.19526 seconds.]
+N_freq = 3610
+[precompute_m2l time measured : 0.01424 seconds.]
+[precompute time measured : 0.20953 seconds.]
+P2M leaf_number = 512
+[P2M time measured : 0.01191 seconds.]
+[M2M time measured : 0.00664 seconds.]
+N = 19, N3 = 6859, N_freq = 3610
+num_src = 576, num_tar = 576
+num_src = 576, batch_size = 8, batch_num = 72
+[init time measured : 0.00012 seconds.]
+[up time measured : 0.01278 seconds.]
+[hadamard time measured : 0.03771 seconds.]
+[down time measured : 0.01023 seconds.]
+[destroy_plan time measured : 0.00000 seconds.]
+[M2L_kernel time measured : 0.06657 seconds.]
+[M2L time measured : 0.06709 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.00706 seconds.]
+L2P leaf_number = 512
+[L2P time measured : 0.01206 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.00958 seconds.]
+[FMM_kernels time measured : 0.11460 seconds.]
+[FMM time measured : 0.34007 seconds.]
+[direct time measured : 2.02841 seconds.]
+pnrm = 30197.33842929
+-----------------------------FMM vs Direct------------------------------[24000]
+L2  (p)  : 2.37502e-08   L2  (f)  : 5.77643e-08   L2  (e)  : 5.43698e-08
+Rms (p)  : 2.66407e-08   Rms (f)  : 5.79293e-07
+p-energy1 : 4.020911282803e+01
+p-energy2 : 4.020911501419e+01
+
+rtfmm_3dp_test_fmm
+input parameters=[
+  P                    = 11
+  n                    = 24000
+  ncrit                = 128
+  images               = 0
+  cycle                = 6.2832
+  ewald_ksize          = 11
+  (f,d,e)              = (1,1,1)
+  num_compare          = 24000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 0
+  zero_netcharge       = 0
+  print_body_number    = 3
+  divide_4pi           = 1
+]
+
+[precompute_others time measured : 0.32641 seconds.]
+N_freq = 4851
+[precompute_m2l time measured : 0.01817 seconds.]
+[precompute time measured : 0.34461 seconds.]
+P2M leaf_number = 512
+[P2M time measured : 0.01532 seconds.]
+[M2M time measured : 0.01290 seconds.]
+N = 21, N3 = 9261, N_freq = 4851
+num_src = 576, num_tar = 576
+num_src = 576, batch_size = 8, batch_num = 72
+[init time measured : 0.00018 seconds.]
+[up time measured : 0.01446 seconds.]
+[hadamard time measured : 0.05789 seconds.]
+[down time measured : 0.01271 seconds.]
+[destroy_plan time measured : 0.00001 seconds.]
+[M2L_kernel time measured : 0.09288 seconds.]
+[M2L time measured : 0.09339 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.01333 seconds.]
+L2P leaf_number = 512
+[L2P time measured : 0.01735 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.00956 seconds.]
+[FMM_kernels time measured : 0.16214 seconds.]
+[FMM time measured : 0.52091 seconds.]
+[direct time measured : 2.03253 seconds.]
+pnrm = 30197.33842929
+-----------------------------FMM vs Direct------------------------------[24000]
+L2  (p)  : 1.24042e-10   L2  (f)  : 6.65368e-10   L2  (e)  : 6.92004e-12
+Rms (p)  : 1.39139e-10   Rms (f)  : 6.67268e-09
+p-energy1 : 4.020911501447e+01
+p-energy2 : 4.020911501419e+01
+
+rtfmm_3dp_test_fmm
+input parameters=[
+  P                    = 12
+  n                    = 24000
+  ncrit                = 128
+  images               = 0
+  cycle                = 6.2832
+  ewald_ksize          = 11
+  (f,d,e)              = (1,1,1)
+  num_compare          = 24000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 0
+  zero_netcharge       = 0
+  print_body_number    = 3
+  divide_4pi           = 1
+]
+
+[precompute_others time measured : 0.53156 seconds.]
+N_freq = 6348
+[precompute_m2l time measured : 0.02187 seconds.]
+[precompute time measured : 0.55347 seconds.]
+P2M leaf_number = 512
+[P2M time measured : 0.01977 seconds.]
+[M2M time measured : 0.01928 seconds.]
+N = 23, N3 = 12167, N_freq = 6348
+num_src = 576, num_tar = 576
+num_src = 576, batch_size = 8, batch_num = 72
+[init time measured : 0.00014 seconds.]
+[up time measured : 0.02292 seconds.]
+[hadamard time measured : 0.07874 seconds.]
+[down time measured : 0.01913 seconds.]
+[destroy_plan time measured : 0.00000 seconds.]
+[M2L_kernel time measured : 0.13157 seconds.]
+[M2L time measured : 0.13209 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.01969 seconds.]
+L2P leaf_number = 512
+[L2P time measured : 0.02094 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.00947 seconds.]
+[FMM_kernels time measured : 0.22149 seconds.]
+[FMM time measured : 0.79089 seconds.]
+[direct time measured : 2.03740 seconds.]
+pnrm = 30197.33842929
+-----------------------------FMM vs Direct------------------------------[24000]
+L2  (p)  : 2.48155e-11   L2  (f)  : 1.23917e-10   L2  (e)  : 3.52595e-11
+Rms (p)  : 2.78356e-11   Rms (f)  : 1.24271e-09
+p-energy1 : 4.020911501561e+01
+p-energy2 : 4.020911501419e+01
+
+rtfmm_3dp_test_fmm
+input parameters=[
+  P                    = 13
+  n                    = 24000
+  ncrit                = 128
+  images               = 0
+  cycle                = 6.2832
+  ewald_ksize          = 11
+  (f,d,e)              = (1,1,1)
+  num_compare          = 24000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 0
+  zero_netcharge       = 0
+  print_body_number    = 3
+  divide_4pi           = 1
+]
+
+[precompute_others time measured : 0.85399 seconds.]
+N_freq = 8125
+[precompute_m2l time measured : 0.01946 seconds.]
+[precompute time measured : 0.87349 seconds.]
+P2M leaf_number = 512
+[P2M time measured : 0.02846 seconds.]
+[M2M time measured : 0.02416 seconds.]
+N = 25, N3 = 15625, N_freq = 8125
+num_src = 576, num_tar = 576
+num_src = 576, batch_size = 8, batch_num = 72
+[init time measured : 0.00015 seconds.]
+[up time measured : 0.01250 seconds.]
+[hadamard time measured : 0.10434 seconds.]
+[down time measured : 0.00802 seconds.]
+[destroy_plan time measured : 0.00001 seconds.]
+[M2L_kernel time measured : 0.13850 seconds.]
+[M2L time measured : 0.13901 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.02464 seconds.]
+L2P leaf_number = 512
+[L2P time measured : 0.02871 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.00951 seconds.]
+[FMM_kernels time measured : 0.25478 seconds.]
+[FMM time measured : 1.14336 seconds.]
+[direct time measured : 2.03267 seconds.]
+pnrm = 30197.33842929
+-----------------------------FMM vs Direct------------------------------[24000]
+L2  (p)  : 3.93966e-12   L2  (f)  : 2.34522e-11   L2  (e)  : 1.07259e-11
+Rms (p)  : 4.41914e-12   Rms (f)  : 2.35192e-10
+p-energy1 : 4.020911501462e+01
+p-energy2 : 4.020911501419e+01
+
+rtfmm_3dp_test_fmm
+input parameters=[
+  P                    = 14
+  n                    = 24000
+  ncrit                = 128
+  images               = 0
+  cycle                = 6.2832
+  ewald_ksize          = 11
+  (f,d,e)              = (1,1,1)
+  num_compare          = 24000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 0
+  zero_netcharge       = 0
+  print_body_number    = 3
+  divide_4pi           = 1
+]
+
+[precompute_others time measured : 1.36122 seconds.]
+N_freq = 10206
+[precompute_m2l time measured : 0.03254 seconds.]
+[precompute time measured : 1.39380 seconds.]
+P2M leaf_number = 512
+[P2M time measured : 0.04801 seconds.]
+[M2M time measured : 0.03293 seconds.]
+N = 27, N3 = 19683, N_freq = 10206
+num_src = 576, num_tar = 576
+num_src = 576, batch_size = 8, batch_num = 72
+[init time measured : 0.00016 seconds.]
+[up time measured : 0.02728 seconds.]
+[hadamard time measured : 0.13750 seconds.]
+[down time measured : 0.02524 seconds.]
+[destroy_plan time measured : 0.00001 seconds.]
+[M2L_kernel time measured : 0.20617 seconds.]
+[M2L time measured : 0.20667 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.03174 seconds.]
+L2P leaf_number = 512
+[L2P time measured : 0.04650 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.00935 seconds.]
+[FMM_kernels time measured : 0.37548 seconds.]
+[FMM time measured : 1.78449 seconds.]
+[direct time measured : 2.03805 seconds.]
+pnrm = 30197.33842929
+-----------------------------FMM vs Direct------------------------------[24000]
+L2  (p)  : 1.08940e-12   L2  (f)  : 6.65627e-12   L2  (e)  : 2.72172e-12
+Rms (p)  : 1.22198e-12   Rms (f)  : 6.67528e-11
+p-energy1 : 4.020911501408e+01
+p-energy2 : 4.020911501419e+01
+
+rtfmm_3dp_test_fmm
+input parameters=[
+  P                    = 15
+  n                    = 24000
+  ncrit                = 128
+  images               = 0
+  cycle                = 6.2832
+  ewald_ksize          = 11
+  (f,d,e)              = (1,1,1)
+  num_compare          = 24000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 0
+  zero_netcharge       = 0
+  print_body_number    = 3
+  divide_4pi           = 1
+]
+
+[precompute_others time measured : 2.18694 seconds.]
+N_freq = 12615
+[precompute_m2l time measured : 0.04314 seconds.]
+[precompute time measured : 2.23012 seconds.]
+P2M leaf_number = 512
+[P2M time measured : 0.07105 seconds.]
+[M2M time measured : 0.03753 seconds.]
+N = 29, N3 = 24389, N_freq = 12615
+num_src = 576, num_tar = 576
+num_src = 576, batch_size = 8, batch_num = 72
+[init time measured : 0.00018 seconds.]
+[up time measured : 0.04153 seconds.]
+[hadamard time measured : 0.13804 seconds.]
+[down time measured : 0.03836 seconds.]
+[destroy_plan time measured : 0.00001 seconds.]
+[M2L_kernel time measured : 0.23737 seconds.]
+[M2L time measured : 0.23787 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.04012 seconds.]
+L2P leaf_number = 512
+[L2P time measured : 0.07236 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.00970 seconds.]
+[FMM_kernels time measured : 0.47051 seconds.]
+[FMM time measured : 2.71633 seconds.]
+[direct time measured : 2.03846 seconds.]
+pnrm = 30197.33842929
+-----------------------------FMM vs Direct------------------------------[24000]
+L2  (p)  : 2.79449e-13   L2  (f)  : 1.69676e-12   L2  (e)  : 4.19337e-13
+Rms (p)  : 3.13459e-13   Rms (f)  : 1.70161e-11
+p-energy1 : 4.020911501421e+01
+p-energy2 : 4.020911501419e+01
+
+rtfmm_3dp_test_fmm
+input parameters=[
+  P                    = 16
+  n                    = 24000
+  ncrit                = 128
+  images               = 0
+  cycle                = 6.2832
+  ewald_ksize          = 11
+  (f,d,e)              = (1,1,1)
+  num_compare          = 24000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 0
+  zero_netcharge       = 0
+  print_body_number    = 3
+  divide_4pi           = 1
+]
+
+[precompute_others time measured : 3.24688 seconds.]
+N_freq = 15376
+[precompute_m2l time measured : 0.05114 seconds.]
+[precompute time measured : 3.29806 seconds.]
+P2M leaf_number = 512
+[P2M time measured : 0.09648 seconds.]
+[M2M time measured : 0.04843 seconds.]
+N = 31, N3 = 29791, N_freq = 15376
+num_src = 576, num_tar = 576
+num_src = 576, batch_size = 8, batch_num = 72
+[init time measured : 0.00017 seconds.]
+[up time measured : 0.05306 seconds.]
+[hadamard time measured : 0.19209 seconds.]
+[down time measured : 0.05089 seconds.]
+[destroy_plan time measured : 0.00000 seconds.]
+[M2L_kernel time measured : 0.31949 seconds.]
+[M2L time measured : 0.31999 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.05128 seconds.]
+L2P leaf_number = 512
+[L2P time measured : 0.10899 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.00992 seconds.]
+[FMM_kernels time measured : 0.63551 seconds.]
+[FMM time measured : 3.95138 seconds.]
+[direct time measured : 2.03489 seconds.]
+pnrm = 30197.33842929
+-----------------------------FMM vs Direct------------------------------[24000]
+L2  (p)  : 6.71434e-14   L2  (f)  : 3.87074e-13   L2  (e)  : 6.59135e-14
+Rms (p)  : 7.53151e-14   Rms (f)  : 3.88180e-12
+p-energy1 : 4.020911501419e+01
+p-energy2 : 4.020911501419e+01
+
+rtfmm_3dp_test_fmm
+input parameters=[
+  P                    = 17
+  n                    = 24000
+  ncrit                = 128
+  images               = 0
+  cycle                = 6.2832
+  ewald_ksize          = 11
+  (f,d,e)              = (1,1,1)
+  num_compare          = 24000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 0
+  zero_netcharge       = 0
+  print_body_number    = 3
+  divide_4pi           = 1
+]
+
+[precompute_others time measured : 5.32659 seconds.]
+N_freq = 18513
+[precompute_m2l time measured : 0.05568 seconds.]
+[precompute time measured : 5.38231 seconds.]
+P2M leaf_number = 512
+[P2M time measured : 0.13796 seconds.]
+[M2M time measured : 0.07202 seconds.]
+N = 33, N3 = 35937, N_freq = 18513
+num_src = 576, num_tar = 576
+num_src = 576, batch_size = 8, batch_num = 72
+[init time measured : 0.00021 seconds.]
+[up time measured : 0.04740 seconds.]
+[hadamard time measured : 0.23067 seconds.]
+[down time measured : 0.03889 seconds.]
+[destroy_plan time measured : 0.00001 seconds.]
+[M2L_kernel time measured : 0.34548 seconds.]
+[M2L time measured : 0.34599 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.07219 seconds.]
+L2P leaf_number = 512
+[L2P time measured : 0.12600 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.01280 seconds.]
+[FMM_kernels time measured : 0.76729 seconds.]
+[FMM time measured : 6.16987 seconds.]
+[direct time measured : 2.03681 seconds.]
+pnrm = 30197.33842929
+-----------------------------FMM vs Direct------------------------------[24000]
+L2  (p)  : 1.77039e-14   L2  (f)  : 1.09586e-13   L2  (e)  : 2.29725e-14
+Rms (p)  : 1.98585e-14   Rms (f)  : 1.09899e-12
+p-energy1 : 4.020911501419e+01
+p-energy2 : 4.020911501419e+01
+
+rtfmm_3dp_test_fmm
+input parameters=[
+  P                    = 18
+  n                    = 24000
+  ncrit                = 128
+  images               = 0
+  cycle                = 6.2832
+  ewald_ksize          = 11
+  (f,d,e)              = (1,1,1)
+  num_compare          = 24000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 0
+  zero_netcharge       = 0
+  print_body_number    = 3
+  divide_4pi           = 1
+]
+
+[precompute_others time measured : 7.57642 seconds.]
+N_freq = 22050
+[precompute_m2l time measured : 0.06450 seconds.]
+[precompute time measured : 7.64097 seconds.]
+P2M leaf_number = 512
+[P2M time measured : 0.15014 seconds.]
+[M2M time measured : 0.07603 seconds.]
+N = 35, N3 = 42875, N_freq = 22050
+num_src = 576, num_tar = 576
+num_src = 576, batch_size = 8, batch_num = 72
+[init time measured : 0.00020 seconds.]
+[up time measured : 0.05781 seconds.]
+[hadamard time measured : 0.30997 seconds.]
+[down time measured : 0.04732 seconds.]
+[destroy_plan time measured : 0.00001 seconds.]
+[M2L_kernel time measured : 0.44920 seconds.]
+[M2L time measured : 0.44972 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.09074 seconds.]
+L2P leaf_number = 512
+[L2P time measured : 0.14939 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.00981 seconds.]
+[FMM_kernels time measured : 0.92617 seconds.]
+[FMM time measured : 8.58571 seconds.]
+[direct time measured : 2.03675 seconds.]
+pnrm = 30197.33842929
+-----------------------------FMM vs Direct------------------------------[24000]
+L2  (p)  : 9.46876e-15   L2  (f)  : 4.40298e-14   L2  (e)  : 1.04260e-14
+Rms (p)  : 1.06212e-14   Rms (f)  : 4.41555e-13
+p-energy1 : 4.020911501419e+01
+p-energy2 : 4.020911501419e+01
+
+rtfmm_3dp_test_fmm
+input parameters=[
+  P                    = 19
+  n                    = 24000
+  ncrit                = 128
+  images               = 0
+  cycle                = 6.2832
+  ewald_ksize          = 11
+  (f,d,e)              = (1,1,1)
+  num_compare          = 24000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 0
+  zero_netcharge       = 0
+  print_body_number    = 3
+  divide_4pi           = 1
+]
+
+[precompute_others time measured : 11.95797 seconds.]
+N_freq = 26011
+[precompute_m2l time measured : 0.10861 seconds.]
+[precompute time measured : 12.06663 seconds.]
+P2M leaf_number = 512
+[P2M time measured : 0.18468 seconds.]
+[M2M time measured : 0.18159 seconds.]
+N = 37, N3 = 50653, N_freq = 26011
+num_src = 576, num_tar = 576
+num_src = 576, batch_size = 8, batch_num = 72
+[init time measured : 0.00022 seconds.]
+[up time measured : 0.12745 seconds.]
+[hadamard time measured : 0.43011 seconds.]
+[down time measured : 0.12554 seconds.]
+[destroy_plan time measured : 0.00002 seconds.]
+[M2L_kernel time measured : 0.72315 seconds.]
+[M2L time measured : 0.72366 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.12164 seconds.]
+L2P leaf_number = 512
+[L2P time measured : 0.18231 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.00981 seconds.]
+[FMM_kernels time measured : 1.40405 seconds.]
+[FMM time measured : 13.49418 seconds.]
+[direct time measured : 2.03803 seconds.]
+pnrm = 30197.33842929
+-----------------------------FMM vs Direct------------------------------[24000]
+L2  (p)  : 6.46282e-15   L2  (f)  : 1.29562e-14   L2  (e)  : 3.71095e-15
+Rms (p)  : 7.24938e-15   Rms (f)  : 1.29932e-13
+p-energy1 : 4.020911501419e+01
+p-energy2 : 4.020911501419e+01
+
+rtfmm_3dp_test_fmm
+input parameters=[
+  P                    = 20
+  n                    = 24000
+  ncrit                = 128
+  images               = 0
+  cycle                = 6.2832
+  ewald_ksize          = 11
+  (f,d,e)              = (1,1,1)
+  num_compare          = 24000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 0
+  zero_netcharge       = 0
+  print_body_number    = 3
+  divide_4pi           = 1
+]
+
+[precompute_others time measured : 16.46302 seconds.]
+N_freq = 30420
+[precompute_m2l time measured : 0.08590 seconds.]
+[precompute time measured : 16.54897 seconds.]
+P2M leaf_number = 512
+[P2M time measured : 0.25261 seconds.]
+[M2M time measured : 0.12351 seconds.]
+N = 39, N3 = 59319, N_freq = 30420
+num_src = 576, num_tar = 576
+num_src = 576, batch_size = 8, batch_num = 72
+[init time measured : 0.00021 seconds.]
+[up time measured : 0.07852 seconds.]
+[hadamard time measured : 0.39200 seconds.]
+[down time measured : 0.06847 seconds.]
+[destroy_plan time measured : 0.00001 seconds.]
+[M2L_kernel time measured : 0.58580 seconds.]
+[M2L time measured : 0.58685 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.11582 seconds.]
+L2P leaf_number = 512
+[L2P time measured : 0.21442 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.00974 seconds.]
+[FMM_kernels time measured : 1.30344 seconds.]
+[FMM time measured : 17.87224 seconds.]
+[direct time measured : 2.03247 seconds.]
+pnrm = 30197.33842929
+-----------------------------FMM vs Direct------------------------------[24000]
+L2  (p)  : 6.17431e-15   L2  (f)  : 7.35581e-15   L2  (e)  : 1.29000e-14
+Rms (p)  : 6.92575e-15   Rms (f)  : 7.37681e-14
+p-energy1 : 4.020911501419e+01
+p-energy2 : 4.020911501419e+01
+
