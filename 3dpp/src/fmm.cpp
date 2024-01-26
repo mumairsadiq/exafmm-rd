@@ -72,10 +72,10 @@ rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
 
 void rtfmm::LaplaceFMM::P2M()
 {
-    TIME_BEGIN(P2M);
     Indices lcidx = get_leaf_cell_indices(cs);
     int leaf_number = lcidx.size();
-    std::cout<<"P2M leaf_number = "<<leaf_number<<std::endl;
+    if(verbose) std::cout<<"P2M leaf_number = "<<leaf_number<<std::endl;
+    TIME_BEGIN(P2M);
     #pragma omp parallel for
     for(int i = 0; i < leaf_number; i++)
     {
@@ -104,7 +104,7 @@ void rtfmm::LaplaceFMM::M2M()
     int min_depth = get_min_depth(cs);
     int max_depth = get_max_depth(cs);
     if(verbose) printf("min_depth = %d, max_depth = %d\n", min_depth, max_depth);
-    for(int depth = max_depth; depth >= min_depth; depth--)
+    for(int depth = max_depth; depth > min_depth; depth--)
     {
         Indices nlcidx = get_nonleaf_cell_indices(cs, depth);
         int num = nlcidx.size();
@@ -192,7 +192,7 @@ void rtfmm::LaplaceFMM::L2L()
     int min_depth = get_min_depth(cs);
     int max_depth = get_max_depth(cs);
     if(verbose) printf("min_depth = %d, max_depth = %d\n", min_depth, max_depth);
-    for(int depth = min_depth; depth <= max_depth; depth++)
+    for(int depth = min_depth; depth < max_depth; depth++)
     {
         Indices nlcidx = get_nonleaf_cell_indices(cs, depth);
         int num = nlcidx.size();

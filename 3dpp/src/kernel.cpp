@@ -261,135 +261,22 @@ void rtfmm::LaplaceKernel::p2p_1toN_128(Bodies3& bs_src, Bodies3& bs_tar, Cells3
 
 void rtfmm::LaplaceKernel::p2p_1toN_256(Bodies3& bs_src, Bodies3& bs_tar, Cells3& cs, std::vector<std::pair<int, vec3r>>& p2ps, Cell3& cell_tar)
 {
-    /*__m256d zero = _mm256_set1_pd(0);
-    __m256d one = _mm256_set1_pd(1);
-    for(int j = 0; j < cell_tar.brange.number; j+=4)
-    {
-        Body3* btar = &bs_tar[cell_tar.brange.offset + j];
-        __m256d xj,yj,zj;
-        int padding = j + 4 - cell_tar.brange.number;
-        padding = padding <= 0 ? 0 : padding;
-        if(padding <= 0)
-        {
-            xj = _mm256_setr_pd(btar->x[0],(btar+1)->x[0],(btar+2)->x[0],(btar+3)->x[0]);
-            yj = _mm256_setr_pd(btar->x[1],(btar+1)->x[1],(btar+2)->x[1],(btar+3)->x[1]);
-            zj = _mm256_setr_pd(btar->x[2],(btar+1)->x[2],(btar+2)->x[2],(btar+3)->x[2]);
-        }
-        else if(padding == 1)
-        {
-            xj = _mm256_setr_pd(btar->x[0],(btar+1)->x[0],(btar+2)->x[0],0);
-            yj = _mm256_setr_pd(btar->x[1],(btar+1)->x[1],(btar+2)->x[1],0);
-            zj = _mm256_setr_pd(btar->x[2],(btar+1)->x[2],(btar+2)->x[2],0);
-        }
-        else if(padding == 2)
-        {
-            xj = _mm256_setr_pd(btar->x[0],(btar+1)->x[0],0,0);
-            yj = _mm256_setr_pd(btar->x[1],(btar+1)->x[1],0,0);
-            zj = _mm256_setr_pd(btar->x[2],(btar+1)->x[2],0,0);
-        }
-        else if(padding == 3)
-        {
-            xj = _mm256_setr_pd(btar->x[0],0,0,0);
-            yj = _mm256_setr_pd(btar->x[1],0,0,0);
-            zj = _mm256_setr_pd(btar->x[2],0,0,0);
-        }
-        
-        union{
-            __m256d pj = _mm256_set1_pd(0);
-            double pdata[4];
-        };
-        union{
-            __m256d fxj = _mm256_set1_pd(0);
-            double fxjdata[4];
-        };
-        union{
-            __m256d fyj = _mm256_set1_pd(0);
-            double fyjdata[4];
-        };
-        union{
-            __m256d fzj = _mm256_set1_pd(0);
-            double fzjdata[4];
-        };
-        __m256d xi, yi, zi, qi, invr, f, qinvr;
-        for(int si = 0; si < p2ps.size(); si++)
-        {
-            Cell3& cell_src = cs[p2ps[si].first];
-            vec3r& offset = p2ps[si].second;
-            for(int i = 0; i < cell_src.brange.number; i++)
-            {
-                Body3& bsrc = bs_src[cell_src.brange.offset + i];
-                vec3r bsrc_xi = bsrc.x + offset;
-                xi = _mm256_set1_pd(bsrc_xi[0]);
-                yi = _mm256_set1_pd(bsrc_xi[1]);
-                zi = _mm256_set1_pd(bsrc_xi[2]);
-                qi = _mm256_set1_pd(bsrc.q);
-                xi = _mm256_sub_pd(xj, xi);
-                yi = _mm256_sub_pd(yj, yi);
-                zi = _mm256_sub_pd(zj, zi);
-                invr = _mm256_mul_pd(xi, xi);
-                invr = _mm256_add_pd(invr, _mm256_mul_pd(yi, yi));
-                invr = _mm256_add_pd(invr, _mm256_mul_pd(zi, zi));
-                f = _mm256_cmp_pd(invr, zero, _CMP_GT_OQ);
-                invr = _mm256_sqrt_pd(invr);
-                invr = _mm256_div_pd(one, invr);
-                invr = _mm256_and_pd(invr, f);
-                qinvr = _mm256_mul_pd(qi, invr);
-                pj = _mm256_add_pd(pj, qinvr);
-                qinvr = _mm256_mul_pd(qinvr, invr);
-                qinvr = _mm256_mul_pd(qinvr, invr);
-                fxj = _mm256_add_pd(fxj, _mm256_mul_pd(qinvr, xi));
-                fyj = _mm256_add_pd(fyj, _mm256_mul_pd(qinvr, yi));
-                fzj = _mm256_add_pd(fzj, _mm256_mul_pd(qinvr, zi));
-            }
-        }
-        for(int k = 0; k < 4 - padding; k++)
-        {
-            (btar + k)->p    += pdata[k];
-            (btar + k)->f[0] -= fxjdata[k];
-            (btar + k)->f[1] -= fyjdata[k];
-            (btar + k)->f[2] -= fzjdata[k];
-        }
-    }*/
-
     vec4d zero(0);
     vec4d one(1);
+    vec4d dx, dy, dz, qi, invr, f, qinvr;
     for(int j = 0; j < cell_tar.brange.number; j+=4)
     {
         Body3* btar = &bs_tar[cell_tar.brange.offset + j];
-        vec4d xj,yj,zj;
+        vec4d xj(0),yj(0),zj(0);
         int padding = j + 4 - cell_tar.brange.number;
         padding = padding <= 0 ? 0 : padding;
-        if(padding <= 0)
+        for(int k = 0; k < 4 - padding; k++)
         {
-            xj = vec4d(btar->x[0],(btar+1)->x[0],(btar+2)->x[0],(btar+3)->x[0]);
-            yj = vec4d(btar->x[1],(btar+1)->x[1],(btar+2)->x[1],(btar+3)->x[1]);
-            zj = vec4d(btar->x[2],(btar+1)->x[2],(btar+2)->x[2],(btar+3)->x[2]);
+            xj[k] = (btar+k)->x[0];
+            yj[k] = (btar+k)->x[1];
+            zj[k] = (btar+k)->x[2];
         }
-        else if(padding == 1)
-        {
-            xj = vec4d(btar->x[0],(btar+1)->x[0],(btar+2)->x[0],0);
-            yj = vec4d(btar->x[1],(btar+1)->x[1],(btar+2)->x[1],0);
-            zj = vec4d(btar->x[2],(btar+1)->x[2],(btar+2)->x[2],0);
-        }
-        else if(padding == 2)
-        {
-            xj = vec4d(btar->x[0],(btar+1)->x[0],0,0);
-            yj = vec4d(btar->x[1],(btar+1)->x[1],0,0);
-            zj = vec4d(btar->x[2],(btar+1)->x[2],0,0);
-        }
-        else if(padding == 3)
-        {
-            xj = vec4d(btar->x[0],0,0,0);
-            yj = vec4d(btar->x[1],0,0,0);
-            zj = vec4d(btar->x[2],0,0,0);
-        }
-        
-        vec4d pj(0);
-        vec4d fxj(0);
-        vec4d fyj(0);
-        vec4d fzj(0);
-
-        vec4d dx, dy, dz, qi, invr, f, qinvr;
+        vec4d pj(0),fxj(0),fyj(0),fzj(0);
         for(int si = 0; si < p2ps.size(); si++)
         {
             Cell3& cell_src = cs[p2ps[si].first];
@@ -449,25 +336,40 @@ void rtfmm::LaplaceKernel::p2m(int P, Bodies3& bs_src, Cell3& cell_src)
 void rtfmm::LaplaceKernel::p2m_precompute(int P, Bodies3& bs_src, Cell3& cell_src)
 {
     int num_surf = get_surface_point_num(P);
+    real scale = std::pow(0.5, cell_src.depth);
     std::vector<vec3r> x_check = get_surface_points(P, cell_src.r * 2.95, cell_src.x);
-    Matrix p_check(num_surf, 1);
-    for(int j = 0; j < num_surf; j++)
+    Matrix buffer(num_surf, 1);
+    Matrix& p_check = cell_src.q_equiv; // use q_equiv as p_check_buffer temporarily
+    vec4d zero(0),one(1);
+    vec4d dx,dy,dz,invr,f;
+    for(int j = 0; j < num_surf; j += 4)
     {
-        vec3r& xj = x_check[j];
-        real potential = 0;
+        vec4d xj(0),yj(0),zj(0),pj(0);
+        int padding = j + 4 - num_surf;
+        padding = padding <= 0 ? 0 : padding;
+        for(int idx = 0; idx < 4 - padding; idx++)
+        {
+            xj[idx] = x_check[j+idx][0];
+            yj[idx] = x_check[j+idx][1];
+            zj[idx] = x_check[j+idx][2];
+        }
+        Body3* bi = &bs_src[cell_src.brange.offset];
         for(int i = 0; i < cell_src.brange.number; i++)
         {
-            Body3& bi = bs_src[cell_src.brange.offset + i];
-            real r = (xj - bi.x).r();
-            real invr = r == 0 ? 0 : 1 / r;
-            potential += bi.q * invr;
+            dx = xj - vec4d(bi->x[0]);
+            dy = yj - vec4d(bi->x[1]);
+            dz = zj - vec4d(bi->x[2]);
+            invr = dx * dx + dy * dy + dz * dz;
+            f = invr > zero;
+            invr = one / invr.sqrt();
+            pj += vec4d(bi->q) * (invr & f);
+            bi++;
         }
-        p_check[j] = potential;
+        for(int k = 0; k < 4 - padding; k++)
+        {
+            p_check[j+k] += pj[k];
+        }
     }
-
-    /* get equivalent charge */
-    real scale = std::pow(0.5, cell_src.depth);
-    Matrix buffer(num_surf, 1);
     mat_vec_mul(UT_p2m_precompute, p_check, buffer);
     mat_vec_mul(VSinv_p2m_precompute, buffer, cell_src.q_equiv, scale);
 }
@@ -496,10 +398,10 @@ void rtfmm::LaplaceKernel::m2m(int P, Cell3& cell_parent, Cells3& cs)
 
 void rtfmm::LaplaceKernel::m2m_precompute(int P, Cell3& cell_parent, Cells3& cs)
 {
+    Matrix q_equiv_parent(get_surface_point_num(P), 1);
     for(int i = 0; i < cell_parent.crange.number; i++)
     {
         Cell3& cell_child = cs[cell_parent.crange.offset + i];
-        Matrix q_equiv_parent(get_surface_point_num(P), 1);
         mat_vec_mul(matrix_m2m[cell_child.octant], cell_child.q_equiv, q_equiv_parent);
         mat_mat_increment(cell_parent.q_equiv, q_equiv_parent);
     }
@@ -1446,6 +1348,20 @@ void rtfmm::LaplaceKernel::m2l_fft_precompute_t(int P, Cells3& cs, PeriodicInter
         }
         interaction_count_offset.push_back(interaction_count_offset_);
     }
+    std::vector<int> surf_conv_idx_map_up(num_surf);
+    for (int k = 0; k < num_surf; k++) 
+    {
+        rtfmm::vec3i idx3 = surf_conv_map[k];
+        int idx = idx3[2] * N * N + idx3[1] * N + idx3[0];
+        surf_conv_idx_map_up[k] = idx;
+    }
+    std::vector<int> surf_conv_idx_map_down(num_surf);
+    for (int k = 0; k < num_surf; k++) 
+    {
+        rtfmm::vec3i idx3 = surf_conv_map[k] + vec3i(P-1,P-1,P-1); // vec3i(P-1,P-1,P-1) is conv offset, see test_fft.cpp
+        int idx = idx3[2] * N * N + idx3[1] * N + idx3[0];
+        surf_conv_idx_map_down[k] = idx;
+    }
     tend(setup);
 
     tbegin(prepare_memory);
@@ -1485,14 +1401,14 @@ void rtfmm::LaplaceKernel::m2l_fft_precompute_t(int P, Cells3& cs, PeriodicInter
     #pragma omp parallel for
     for (int isrc = 0; isrc < num_src_cell; isrc++)
     {
-        std::vector<real> buffer(fft_size, 0);
+        std::vector<real> buffer;
+        buffer.reserve(fft_size);
         real* Q_children = &Q_all[fft_offset[isrc]];
         real* Qk_children = &Qk_all[fft_size * isrc]; // Qk of isrc's children
         std::memset(Qk_children, 0, fft_size * sizeof(real));
         for (int k = 0; k < num_surf; k++) 
         {
-            rtfmm::vec3i idx3 = surf_conv_map[k];
-            int idx = idx3[2] * N * N + idx3[1] * N + idx3[0];
+            int idx = surf_conv_idx_map_up[k];
             int cpidx = src_cell_idxs[isrc];
             Cell3& cp = cs[cpidx];
             for (int i = 0; i < cp.crange.number; i++)
@@ -1518,7 +1434,8 @@ void rtfmm::LaplaceKernel::m2l_fft_precompute_t(int P, Cells3& cs, PeriodicInter
     /* hadamard product */
     tbegin(hadamard);
     AlignedVec zero_vec0(fft_size, 0.);
-    AlignedVec zero_vec1(fft_size, 0.);
+    AlignedVec zero_vec1;
+    zero_vec1.reserve(fft_size);
     int npos = ccGks.size();
     int nblk_inter = interaction_count_offset.size();
     int BLOCK_SIZE = CACHE_SIZE * 2 / sizeof(real);
@@ -1605,8 +1522,7 @@ void rtfmm::LaplaceKernel::m2l_fft_precompute_t(int P, Cells3& cs, PeriodicInter
         real scale = std::pow(2, ctar.depth + 1); // since we store children's P, the depth should + 1
         for(int k = 0; k < num_surf; k++)
         {
-            rtfmm::vec3i idx3 = surf_conv_map[k] + vec3i(P-1,P-1,P-1); // vec3i(P-1,P-1,P-1) is conv offset, see test_fft.cpp
-            int idx = idx3[2] * N * N + idx3[1] * N + idx3[0];
+            int idx = surf_conv_idx_map_down[k];
             for(int j = 0; j < ctar.crange.number; j++)
             {
                 int octant = cs[ctar.crange.offset + j].octant;
@@ -1651,10 +1567,10 @@ void rtfmm::LaplaceKernel::l2l(int P, Cell3& cell_parent, Cells3& cs)
 
 void rtfmm::LaplaceKernel::l2l_precompute(int P, Cell3& cell_parent, Cells3& cs)
 {
+    Matrix p_check_child(get_surface_point_num(P), 1);
     for(int i = 0; i < cell_parent.crange.number; i++)
     {
         Cell3& cell_child = cs[cell_parent.crange.offset + i];
-        Matrix p_check_child(get_surface_point_num(P), 1);
         mat_vec_mul(matrix_l2l[cell_child.octant], cell_parent.p_check, p_check_child);
         mat_mat_increment(cell_child.p_check, p_check_child);
     }
@@ -1694,26 +1610,52 @@ void rtfmm::LaplaceKernel::l2p_precompute(int P, Bodies3& bs_tar, Cell3& cell_ta
     std::vector<rtfmm::vec3r> x_equiv = get_surface_points(P, cell_tar.r * 2.95, cell_tar.x);
 
     real scale = std::pow(0.5, cell_tar.depth);
-    Matrix UTb = mat_vec_mul(UT_l2p_precompute, cell_tar.p_check);
-    Matrix q_equiv = mat_vec_mul(VSinv_l2p_precompute, UTb, scale);
+    Matrix UTb(num_surf, 1);
+    mat_vec_mul(UT_l2p_precompute, cell_tar.p_check, UTb);
+    Matrix& q_equiv = cell_tar.p_check; //as in p2m, we can use p_check as buffer here
+    mat_vec_mul(VSinv_l2p_precompute, UTb, q_equiv, scale);
 
-    for(int j = 0; j < cell_tar.brange.number; j++)
+    vec4d zero(0), one(1);
+    vec4d dx, dy, dz, qi, invr, f, qinvr;
+    for(int j = 0; j < cell_tar.brange.number; j += 4)
     {
-        Body3& bj = bs_tar[cell_tar.brange.offset + j];
-        real potential = 0;
-        vec3r force(0,0,0);
+        vec4d xj(0), yj(0), zj(0);
+        vec4d pj(0),fxj(0),fyj(0),fzj(0);
+        int padding = j + 4 - cell_tar.brange.number;
+        padding = padding <= 0 ? 0 : padding;
+        for(int idx = 0; idx < 4 - padding; idx++)
+        {
+            xj[idx] = bs_tar[cell_tar.brange.offset + j + idx].x[0];
+            yj[idx] = bs_tar[cell_tar.brange.offset + j + idx].x[1];
+            zj[idx] = bs_tar[cell_tar.brange.offset + j + idx].x[2];
+        }
         for(int i = 0; i < num_surf; i++)
         {
-            vec3r& xi = x_equiv[i];
-            real qi = q_equiv[i];
-            vec3r dx = bj.x - xi;
-            real r = dx.r();
-            real invr = r == 0 ? 0 : 1 / r;
-            potential += qi * invr;
-            force += qi * invr * invr * invr * (-dx);
+            dx = vec4d(x_equiv[i][0]);
+            dy = vec4d(x_equiv[i][1]);
+            dz = vec4d(x_equiv[i][2]);
+            qi = vec4d(q_equiv[i]);
+            dx = xj - dx;
+            dy = yj - dy;
+            dz = zj - dz;
+            invr = dx * dx + dy * dy + dz * dz;
+            f = invr > zero;
+            invr = one / invr.sqrt();
+            invr &= f;
+            qinvr = qi * invr;
+            pj += qinvr;
+            qinvr *= invr * invr;
+            fxj += qinvr * dx;
+            fyj += qinvr * dy;
+            fzj += qinvr * dz;
         }
-        bj.p += potential;
-        bj.f += force;
+        for(int idx = 0; idx < 4 - padding; idx++)
+        {
+            bs_tar[cell_tar.brange.offset + j + idx].p += pj[idx];
+            bs_tar[cell_tar.brange.offset + j + idx].f[0] -= fxj[idx];
+            bs_tar[cell_tar.brange.offset + j + idx].f[1] -= fyj[idx];
+            bs_tar[cell_tar.brange.offset + j + idx].f[2] -= fzj[idx];
+        }
     }
 }
 
