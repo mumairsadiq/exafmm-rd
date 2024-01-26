@@ -55,13 +55,21 @@ private:
 
     void horizontal_periodic_far(real cycle, int image);
 
+    /**
+     * @brief if b+offset adjacent with a
+    */
     int adjacent(int a, int b, vec3r offset = vec3r(0,0,0));
 
+    /**
+     * @brief if b+offset neighbour with a
+    */
     int neighbour(int a, int b, vec3r offset = vec3r(0,0,0));
 
     int is_leaf(int c);
 
     void make_M2L_parent_map();
+
+    void make_M2L_parent_map_i1(real cycle);
 
     Cells3 cells;
 

@@ -746,7 +746,8 @@ void rtfmm::LaplaceKernel::m2l_fft_precompute_advanced2(int P, Cells3& cs, Perio
         int interaciton_number = 0;
         for(auto m2l : m2l_map)
         {
-            std::cout<<m2l.first<<","<<m2l.second.size()<<std::endl;
+            int tar_idx = m2l.first;
+            Cell3& ctar = cs[tar_idx];
             interaciton_number += m2l.second.size();
         }
         std::cout<<"interaciton_number = "<<interaciton_number<<std::endl;
@@ -1302,8 +1303,9 @@ void rtfmm::LaplaceKernel::m2l_fft_precompute_t(int P, Cells3& cs, PeriodicInter
         for(int j = 0; j < m2l_list.size(); j++)
         {
             int src_idx = m2l_list[j].first;
+            vec3r src_offset = m2l_list[j].second;
             Cell3& src_cell = cs[src_idx];
-            vec3r rv = (src_cell.x - tar_cell.x) / (tar_cell.r * 2);
+            vec3r rv = (src_cell.x + src_offset - tar_cell.x) / (tar_cell.r * 2);
             vec3i rvi(std::round(rv[0]), std::round(rv[1]), std::round(rv[2]));
             int octant = rel2idx_map[hash(rvi)];
             if(rel2idx_map.find(hash(rvi)) == rel2idx_map.end())
