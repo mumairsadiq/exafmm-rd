@@ -13,6 +13,7 @@ rtfmm::LaplaceFMM::LaplaceFMM(const Bodies3& bs_, const Argument& args_)
 rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
 {
     /* build tree */
+    tbegin(tree_traverse);
     Tree tree;
     tree.build(bs, args.x, args.r, args.ncrit, Tree::TreeType::nonuniform);
     cs = tree.get_cells();
@@ -23,8 +24,13 @@ rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
     cs = traverser.get_cells();
     if(verbose && args.check_tree) check_traverser(traverser);
     if(verbose && args.check_tree) check_cells(cs);
+    tree_depth_range = get_min_max_depth(cs);
+    if(verbose) std::cout<<"tree_depth_range = "<<tree_depth_range<<std::endl;
+    tend(tree_traverse);
 
+    tbegin(init_cell_matrix);
     init_cell_matrix(cs);
+    tend(init_cell_matrix);
 
     if(args.use_precompute)
     {
@@ -101,10 +107,7 @@ void rtfmm::LaplaceFMM::P2M()
 void rtfmm::LaplaceFMM::M2M()
 {
     TIME_BEGIN(M2M);
-    int min_depth = get_min_depth(cs);
-    int max_depth = get_max_depth(cs);
-    if(verbose) printf("min_depth = %d, max_depth = %d\n", min_depth, max_depth);
-    for(int depth = max_depth; depth >= min_depth; depth--)
+    for(int depth = tree_depth_range[1]; depth > tree_depth_range[0]; depth--)
     {
         Indices nlcidx = get_nonleaf_cell_indices(cs, depth);
         int num = nlcidx.size();
@@ -151,12 +154,10 @@ void rtfmm::LaplaceFMM::M2L()
     //PeriodicInteractionMap m2l_map2 = traverser.get_m2l_map_from_m2l_parent_map();
     if(args.use_precompute)
     {
-        TIME_BEGIN(M2L_kernel);
         //kernel.m2l_fft_precompute_advanced2(args.P, cs, m2l_map2);
         //kernel.m2l_fft_precompute_advanced2(args.P, cs, m2l_map);
         //kernel.m2l_fft_precompute_advanced3(args.P, cs, m2l_map, m2l_pairs);
         kernel.m2l_fft_precompute_t(args.P, cs, m2l_parent_map);
-        TIME_END(M2L_kernel);
     }
     else
     {
@@ -190,10 +191,7 @@ void rtfmm::LaplaceFMM::M2L()
 void rtfmm::LaplaceFMM::L2L()
 {
     TIME_BEGIN(L2L);
-    int min_depth = get_min_depth(cs);
-    int max_depth = get_max_depth(cs);
-    if(verbose) printf("min_depth = %d, max_depth = %d\n", min_depth, max_depth);
-    for(int depth = min_depth; depth <= max_depth; depth++)
+    for(int depth = tree_depth_range[0]; depth < tree_depth_range[1]; depth++)
     {
         Indices nlcidx = get_nonleaf_cell_indices(cs, depth);
         int num = nlcidx.size();
@@ -231,7 +229,7 @@ void rtfmm::LaplaceFMM::L2P()
     TIME_BEGIN(L2P);
     Indices lcidx = get_leaf_cell_indices(cs);
     int leaf_number = lcidx.size();
-    std::cout<<"L2P leaf_number = "<<leaf_number<<std::endl;
+    if(verbose) std::cout<<"L2P leaf_number = "<<leaf_number<<std::endl;
     #pragma omp parallel for
     for(int i = 0; i < leaf_number; i++)
     {
@@ -256,9 +254,9 @@ void rtfmm::LaplaceFMM::L2P()
 
 void rtfmm::LaplaceFMM::P2P()
 {
+    TIME_BEGIN(P2P);
     PeriodicInteractionMap p2p_map = traverser.get_map(OperatorType::P2P);
     if(verbose) std::cout<<"p2p_pair.size() = "<<traverser.get_pairs(OperatorType::P2P).size()<<std::endl;
-    TIME_BEGIN(P2P);
     #pragma omp parallel for
     for(int i = 0; i < p2p_map.size(); i++)
     {
@@ -268,11 +266,6 @@ void rtfmm::LaplaceFMM::P2P()
         if(args.use_simd)
         {
             kernel.p2p_1toN_256(bs,bs,cs,p2p->second,ctar);
-            /*for(int j = 0; j < p2p->second.size(); j++)
-            {
-                Cell3& csrc = cs[p2p->second[j].first];
-                kernel.p2p(bs,bs,csrc,ctar,p2p->second[j].second, 1);
-            }*/
         }
         else
         {
@@ -349,22 +342,13 @@ void rtfmm::LaplaceFMM::init_cell_matrix(Cells3& cells)
     }
 }
 
-int rtfmm::LaplaceFMM::get_min_depth(const Cells3& cells)
+rtfmm::vec2i rtfmm::LaplaceFMM::get_min_max_depth(const Cells3& cells)
 {
-    int res = cells[0].depth;
+    vec2i res = {cells[0].depth, cells[0].depth};
     for(int i = 0; i < cells.size(); i++)
     {
-        res = std::min(res, cells[i].depth);
-    }
-    return res;
-}
-
-int rtfmm::LaplaceFMM::get_max_depth(const Cells3& cells)
-{
-    int res = 0;
-    for(int i = 0; i < cells.size(); i++)
-    {
-        res = std::max(res, cells[i].depth);
+        res[0] = std::min(res[0], cells[i].depth);
+        res[1] = std::max(res[1], cells[i].depth);
     }
     return res;
 }
