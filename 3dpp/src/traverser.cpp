@@ -32,6 +32,28 @@ void rtfmm::Traverser::traverse(Tree& tree, real cycle, int images)
         if(images >= 2)
         {
             horizontal_periodic_far(cycle,images);
+            // for t
+            int idx = cells.size() - 1 - images;
+            for(int m = 1; m < images; m++)
+            {
+                int cidx = idx + m;
+                Cell3& c = cells[cidx];
+                for(int pz = -1; pz <= 1; pz++)
+                {
+                    for(int py = -1; py <= 1; py++)
+                    {
+                        for(int px = -1; px <= 1; px++)
+                        {
+                            if(px != 0 || py != 0 || pz != 0)
+                            {
+                                vec3r offset = vec3r(px,py,pz) * c.r * 2;
+                                // since c's child is hitorikko, we should mark c->c as image/periodic interaction()
+                                M2L_parent_map[cidx].push_back(PeriodicParentSource(cidx, offset , 1)); 
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -123,6 +145,7 @@ void rtfmm::Traverser::horizontal_periodic_near(real cycle)
     Cell3 c;
     c.idx = cells.size();
     c.depth = -1;
+    c.octant = 13;
     c.r = cells[0].r * 3;
     c.x = cells[0].x;
     c.crange = Range(0, 1);
@@ -154,6 +177,7 @@ void rtfmm::Traverser::horizontal_periodic_far(real cycle, int images)
         Cell3 c;
         c.idx = cells.size();
         c.depth = -1 - m;
+        c.octant = 13;
         c.r = cells[child_idx].r * 3;
         c.x = cells[child_idx].x;
         c.crange = Range(child_idx, 1);
@@ -208,7 +232,8 @@ void rtfmm::Traverser::make_M2L_parent_map()
             Cell3& csrc = cells[i];
             if(i != j && !is_leaf(j) && !is_leaf(i) && neighbour(i,j))
             {
-                M2L_parent_map[j].push_back(std::make_pair(i, vec3r(0,0,0)));
+                //M2L_parent_map[j].push_back(std::make_pair(i, vec3r(0,0,0)));
+                M2L_parent_map[j].push_back(PeriodicParentSource(i, vec3r(0,0,0),0));
             }
         }
     }
@@ -235,7 +260,8 @@ void rtfmm::Traverser::make_M2L_parent_map_i1(real cycle)
                             vec3r offset = vec3r(px,py,pz) * cycle;
                             if(!is_leaf(j) && !is_leaf(i) && neighbour(j,i,offset))
                             {
-                                M2L_parent_map[j].push_back(std::make_pair(i, offset));
+                                //M2L_parent_map[j].push_back(std::make_pair(i, offset));
+                                M2L_parent_map[j].push_back(PeriodicParentSource(i, offset, 0));
                             }
                         }
                     }
@@ -254,8 +280,8 @@ rtfmm::PeriodicInteractionMap rtfmm::Traverser::get_m2l_map_from_m2l_parent_map(
         Cell3& ctar = cells[m2l_parent.first];
         for(int i = 0; i < m2l_parent.second.size(); i++)
         {
-            Cell3& csrc = cells[m2l_parent.second[i].first];
-            vec3r offset = m2l_parent.second[i].second;
+            Cell3& csrc = cells[m2l_parent.second[i].idx];
+            vec3r offset = m2l_parent.second[i].offset;
             for(int cj = 0; cj < ctar.crange.number; cj++)
             {
                 int cjidx = ctar.crange.offset + cj;
@@ -312,7 +338,11 @@ rtfmm::PeriodicInteractionMap rtfmm::Traverser::get_map(OperatorType type)
     {
         case OperatorType::M2L : return M2L_map; break;
         case OperatorType::P2P : return P2P_map; break;
-        case OperatorType::M2L_parent : return M2L_parent_map;
         default: return PeriodicInteractionMap();
     }
+}
+
+rtfmm::PeriodicM2LMap rtfmm::Traverser::get_M2L_parent_map()
+{
+    return M2L_parent_map;
 }

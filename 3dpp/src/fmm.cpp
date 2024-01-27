@@ -104,7 +104,7 @@ void rtfmm::LaplaceFMM::M2M()
     int min_depth = get_min_depth(cs);
     int max_depth = get_max_depth(cs);
     if(verbose) printf("min_depth = %d, max_depth = %d\n", min_depth, max_depth);
-    for(int depth = max_depth; depth > min_depth; depth--)
+    for(int depth = max_depth; depth >= min_depth; depth--)
     {
         Indices nlcidx = get_nonleaf_cell_indices(cs, depth);
         int num = nlcidx.size();
@@ -146,9 +146,9 @@ void rtfmm::LaplaceFMM::M2L()
 {
     TIME_BEGIN(M2L);
     //PeriodicInteractionPairs m2l_pairs = traverser.get_pairs(OperatorType::M2L);
-    PeriodicInteractionMap m2l_map = traverser.get_map(OperatorType::M2L);
-    PeriodicInteractionMap m2l_parent_map = traverser.get_map(OperatorType::M2L_parent);
-    PeriodicInteractionMap m2l_map2 = traverser.get_m2l_map_from_m2l_parent_map();
+    //PeriodicInteractionMap m2l_map = traverser.get_map(OperatorType::M2L);
+    PeriodicM2LMap m2l_parent_map = traverser.get_M2L_parent_map();
+    //PeriodicInteractionMap m2l_map2 = traverser.get_m2l_map_from_m2l_parent_map();
     if(args.use_precompute)
     {
         TIME_BEGIN(M2L_kernel);
@@ -160,6 +160,7 @@ void rtfmm::LaplaceFMM::M2L()
     }
     else
     {
+        PeriodicInteractionMap m2l_map = traverser.get_map(OperatorType::M2L);
         for(int i = 0; i < m2l_map.size(); i++)
         {
             auto m2l_list = m2l_map.begin();
@@ -192,7 +193,7 @@ void rtfmm::LaplaceFMM::L2L()
     int min_depth = get_min_depth(cs);
     int max_depth = get_max_depth(cs);
     if(verbose) printf("min_depth = %d, max_depth = %d\n", min_depth, max_depth);
-    for(int depth = min_depth; depth < max_depth; depth++)
+    for(int depth = min_depth; depth <= max_depth; depth++)
     {
         Indices nlcidx = get_nonleaf_cell_indices(cs, depth);
         int num = nlcidx.size();

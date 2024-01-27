@@ -2,6 +2,7 @@
 #include "type.h"
 #include <vector>
 #include <map>
+#include <ostream>
 
 namespace rtfmm
 {
@@ -9,30 +10,6 @@ namespace rtfmm
 inline int get_surface_point_num(int p)
 {
     return 6 * (p - 1) * (p - 1) + 2;
-}
-
-/**
- * @brief 2 * P - 1
- * @note check P.41 and P.42 of kernel_independent.pptx
-*/
-inline int get_conv_grid_point_num_per_dim(int P)
-{
-    int N = 2 * P - 1;
-    return N;
-}
-
-/**
- * @brief N * N * (N / 2 + 1), where N = 2 * P - 1
- * @note according to fft's properity, 
- * when inputs are real numbers, the out[N/2,N] is conj to out[1,N/2], 
- * therefore FFTW left out[N/2,N] zero, 
- * so when use r2c or c2r, we also store half of full frequences
-*/
-inline int get_nfreq(int P)
-{
-    int N = 2 * P - 1;
-    int N_freq = N * N * (N / 2 + 1); 
-    return N_freq;
 }
 
 /**
@@ -69,5 +46,43 @@ inline std::map<int,rtfmm::vec3i> get_surface_conv_map(int p)
     }
     return map;
 }
+
+/**
+ * @brief
+ * N = 2 * P - 1;
+ * N3 = N * N * N;
+ * N_freq = N * N * (N / 2 + 1);
+ * delta = 2 * r / (P - 1) * 1.05;
+ * gsize = r * 2 * 1.05;
+*/
+struct conv_grid_setting
+{
+    conv_grid_setting(int P, real r)
+    {
+        N = 2 * P - 1; // check P.41 and P.42 of kernel_independent.pptx
+        N3 = N * N * N;
+        N_freq = N * N * (N / 2 + 1);
+        delta = 2 * r / (P - 1) * 1.05;
+        gsize = r * 2 * 1.05;
+    }
+    int N; // number of points per dim
+    int N3; // total number of points(as the name implies, N * N * N)
+    /**
+     * @brief total number of points in Fourier space, N * N * (N / 2 + 1)
+     * @note according to fft's property, 
+     * when inputs are real numbers, the out[N/2,N] is conj to out[1,N/2], 
+     * therefore FFTW left out[N/2,N] zero, 
+     * so when use r2c or c2r, we also store half of full frequences
+    */
+    int N_freq;
+    real delta; // interval distance of grid points per dim
+    real gsize; // size of grid per dim
+
+    friend std::ostream &operator<<(std::ostream& os, conv_grid_setting& conv_grid)
+    {
+        os << "conv_grid(N = " << conv_grid.N << ", N3 = "<<conv_grid.N3<<", N_freq = "<<conv_grid.N_freq<<", delta = "<<conv_grid.delta<<", gsize = "<<conv_grid.gsize<<")";
+        return os;
+    }
+};
 
 }

@@ -53,19 +53,7 @@ int main(int argc, char* argv[])
         rtfmm::Cell3 cell_tar;
         cell_tar.brange = {0, args.num_compare};
         TIME_BEGIN(DIRECT);
-        int dm = (std::pow(3, args.images) - 1) / 2;
-        if(rtfmm::verbose) printf("dm = %d\n", dm);
-        for(int pz = -dm; pz <= dm; pz++)
-        {
-            if(rtfmm::verbose) printf("pz = %d\n", pz);
-            for(int py = -dm; py <= dm; py++)
-            {
-                for(int px = -dm; px <= dm; px++)
-                {
-                    kernel.p2p(bs, res_direct, cell_src, cell_tar, rtfmm::vec3r(px,py,pz) * args.cycle, args.use_simd);
-                }   
-            }
-        }
+        kernel.direct(res_direct, res_direct, args.images, args.cycle);
         if(args.dipole_correction)
             rtfmm::dipole_correction(res_direct, args.cycle);
         if(args.divide_4pi)

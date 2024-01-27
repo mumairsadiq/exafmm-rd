@@ -107,7 +107,7 @@ void rtfmm::Tree::build_nonuniform_octree(Bodies3& bodies, vec3r x, real r, int 
     int num_body = bodies.size();
     Cell3 root;
     root.idx = 0;
-    root.octant = -1;
+    root.octant = 13;
     root.depth = 0;
     root.r = r;
     root.x = x;

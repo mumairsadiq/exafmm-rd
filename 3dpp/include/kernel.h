@@ -6,6 +6,7 @@
 #include "traverser.h"
 #include <fftw3.h>
 #include "align.h"
+#include "surface.h"
 
 namespace rtfmm
 {
@@ -13,16 +14,28 @@ namespace rtfmm
 class LaplaceKernel
 {
 public:
-    LaplaceKernel();
+    LaplaceKernel(){}
 
-    //static void p2p_p(std::vector<vec3r>& xs_src, std::vector<real>& qs_src, std::vector<vec3r>& xs_tar, std::vector<real>& ps_tar, const vec3r& offset = vec3r(0,0,0));
+    /**
+     * @brief direct method use AVX
+    */
+    void direct(Bodies3& bs_src, Bodies3& bs_tar, int images, real cycle);
 
-    static void p2p_pf(std::vector<vec3r>& xs_src, std::vector<real>& qs_src, std::vector<vec3r>& xs_tar, std::vector<real>& ps_tar, std::vector<vec3r>& fs_tar, const vec3r& offset = vec3r(0,0,0));
-
+    /**
+     * @brief cell_src -> cell_tar P2P
+     * @param offset offset of cell_src
+     * @param use_simd true to use AVX
+    */
     void p2p(Bodies3& bs_src, Bodies3& bs_tar, Cell3& cell_src, Cell3& cell_tar, vec3r offset = vec3r(0,0,0), int use_simd = 1);
 
+    /**
+     * @brief (cells in p2ps) -> cell_tar P2P use SSE
+    */
     void p2p_1toN_128(Bodies3& bs_src, Bodies3& bs_tar, Cells3& cs, std::vector<std::pair<int, vec3r>>& p2ps, Cell3& cell_tar);
 
+    /**
+     * @brief (cells in p2ps) -> cell_tar P2P use AVX
+    */
     void p2p_1toN_256(Bodies3& bs_src, Bodies3& bs_tar, Cells3& cs, std::vector<std::pair<int, vec3r>>& p2ps, Cell3& cell_tar);
 
     void p2m(int P, Bodies3& bs_src, Cell3& cell_src);
@@ -37,19 +50,51 @@ public:
 
     void m2m_img_precompute(int P, Cell3& cell_parent, Cells3& cs, real cycle);
 
+    /**
+     * @brief naive M2L performing O(N^2) potential computation
+    */
     void m2l(int P, Cell3& cell_src, Cell3& cell_tar, vec3r offset = vec3r(0,0,0));
 
+    /**
+     * @brief M2L using naive FFT for each pair(cell_src -> cell_tar)
+    */
     void m2l_fft(int P, Cell3& cell_src, Cell3& cell_tar, vec3r offset = vec3r(0,0,0));
 
-    void m2l_fft_precompute_naive(int P, Cells3& cs, PeriodicInteractionMap& m2l_map, PeriodicInteractionPairs& m2l_pairs);
+    /**
+     * @brief M2L using naive FFT for all pairs
+    */
+    void m2l_fft_precompute_naive(int P, Cells3& cs, PeriodicInteractionPairs& m2l_pairs);
 
-    void m2l_fft_precompute_advanced(int P, Cells3& cs, PeriodicInteractionMap& m2l_map, PeriodicInteractionPairs& m2l_pairs);
+    /**
+     * @brief M2L using naive FFT for all pairs, reuse fftw_plan
+    */
+    void m2l_fft_precompute_advanced(int P, Cells3& cs, PeriodicInteractionPairs& m2l_pairs);
 
+    /**
+     * @brief M2L using FFT in the order of m2l_map.
+     * Precompute all possible Gks, 
+     * compute Qks for all src cells, 
+     * then hadamard routine picks up Gk and Qk according to m2l, add Gk*Qk to corresponding Pk, 
+     * finally convert Pk to all tar cells.
+     * Since Gk for each real M2L is queried from map by m2l relative coordinate, 
+     * we don't need to distinguish non-periodic/periodic cells in hadamard product stage(but the scale is different at the final store stage).
+     * @note 2nd fast
+    */
     void m2l_fft_precompute_advanced2(int P, Cells3& cs, PeriodicInteractionMap& m2l_map);
 
+    /**
+     * @brief Hadamard transposed version of m2l_fft_precompute_advanced2, frequency-wise parallelization.
+     * @note 3rd fast
+    */
     void m2l_fft_precompute_advanced3(int P, Cells3& cs, PeriodicInteractionMap& m2l_map, PeriodicInteractionPairs& m2l_pairs);
 
-    void m2l_fft_precompute_t(int P, Cells3& cs, PeriodicInteractionMap& m2l_parent_map);
+    /**
+     * @brief M2L with FFT like exafmm-t.
+     * Instead of computing M2L directly, it traverses neighbouring parent cell pairs, then compute M2L of children inside them,
+     * namely, 8x8 child-to-child M2L interaction for non-periodic cells, 1x27 for periodic cells.
+     * @note 1st fast
+    */
+    void m2l_fft_precompute_t(int P, Cells3& cs, PeriodicM2LMap& m2l_parent_map);
 
     void l2l(int P, Cell3& cell_parent, Cells3& cs);
 
@@ -170,18 +215,34 @@ private:
     std::map<int, std::vector<complexr>> m2l_Gks;
     std::map<int, std::pair<std::vector<complexr>, int>> m2l_Gk_idx;
 
-    void matmult_8x8x1(real*& M_, real*& IN0, real*& OUT0);
-    
-    void matmult_8x8x1_naive(real*& M_, real*& IN0, real*& OUT0);
-
-    void matmult_8x8x2(real*& M_, real*& IN0, real*& IN1, real*& OUT0, real*& OUT1);
-
-    void matmult_8x8x2_avx(double*& M_, double*& IN0, double*& IN1, double*& OUT0, double*& OUT1);
-
     /**
-     * @brief matrix vector storing child-child interaction Gk of 2 neighbour cells
+     * @brief matrix vector storing 8x8 child-child interaction Gk of 2 neighbour cells
      * @note ### number of matrix = 26, size of each matrix = N_freq * 8 * 8 * complex
     */
-    std::vector<AlignedVec> ccGks;
+    std::vector<AlignedVec> ccGks_8x8;
+
+    /**
+     * @brief matrix vector storing 1x7 child-child interaction Gk of 2 neighbour cells
+     * @note ### number of matrix = 26, size of each matrix = N_freq * 1 * 27 * complex
+    */
+    std::vector<AlignedVec> ccGks_1x27;
+
+    void hadamard_8x8(
+        int fft_size, 
+        conv_grid_setting& cgrid,
+        std::vector<size_t>& interaction_count_offset_8x8,
+        std::vector<size_t>& interaction_offset_f_8x8,
+        AlignedVec& Qk_all, 
+        AlignedVec& Pk_all
+    );
+
+    void hadamard_1x27(
+        int fft_size, 
+        conv_grid_setting& cgrid,
+        std::vector<size_t>& interaction_count_offset_1x27,
+        std::vector<size_t>& interaction_offset_f_1x27,
+        AlignedVec& Qk_all, 
+        AlignedVec& Pk_all
+    );
 };
 };

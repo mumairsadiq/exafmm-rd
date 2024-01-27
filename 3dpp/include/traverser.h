@@ -12,6 +12,20 @@ using PeriodicInteractionPairs = std::vector<PeriodicInteractionPair>;
 
 using PeriodicInteractionMap = std::map<int, std::vector<std::pair<int, vec3r>>>;
 
+
+struct PeriodicParentSource
+{
+    PeriodicParentSource(int idx_, vec3r offset_, int is_single_parent_) : idx(idx_), offset(offset_), is_single_parent(is_single_parent_){}
+    int idx;
+    vec3r offset;
+    int is_single_parent; // is the cell has only one child(namely, is the cell a image cell)
+};
+
+/**
+ * @brief map to store M2L parent pair
+*/
+using PeriodicM2LMap = std::map<int, std::vector<PeriodicParentSource>>;
+
 InteractionPair make_pair(int tar, int src);
 PeriodicInteractionPair make_pair(int tar, int src, vec3r offset);
 
@@ -20,8 +34,7 @@ enum class OperatorType
     P2P,
     M2L,
     M2P,
-    P2L,
-    M2L_parent
+    P2L
 };
 
 class Traverser
@@ -35,6 +48,8 @@ public:
     PeriodicInteractionPairs get_pairs(OperatorType type);
 
     PeriodicInteractionMap get_map(OperatorType type);
+
+    PeriodicM2LMap get_M2L_parent_map();
 
     Cells3 get_cells() {return cells;}
 
@@ -82,7 +97,8 @@ public:
     PeriodicInteractionMap M2L_map;
     PeriodicInteractionMap P2P_map;
 
-    PeriodicInteractionMap M2L_parent_map;
+    //PeriodicInteractionMap M2L_parent_map;
+    PeriodicM2LMap M2L_parent_map;
 };
 
 }

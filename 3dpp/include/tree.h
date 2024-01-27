@@ -11,7 +11,9 @@ struct Cell3
     int idx;
     /**
      * @brief octant relative to parent cell
-     * @warning for cell whose depth <=0, octant is uninitialized because unnecessary
+     * @note 
+     * when [0,7], it means a relative position of 2x2x2 children of the parent cell;
+     * when == 13, it means the central position of a 3x3x3 child of the image parent cell, namely, it is hitorikko of its parent(cells whose depth <= 0 are hitorikko).
     */
     int octant;
     int depth;
