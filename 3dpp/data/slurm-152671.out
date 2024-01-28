@@ -1,0 +1,73 @@
+Sun Jan 28 22:14:09 2024       
++---------------------------------------------------------------------------------------+
+| NVIDIA-SMI 535.54.03              Driver Version: 535.54.03    CUDA Version: 12.2     |
+|-----------------------------------------+----------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |         Memory-Usage | GPU-Util  Compute M. |
+|                                         |                      |               MIG M. |
+|=========================================+======================+======================|
+|   0  NVIDIA RTX 6000 Ada Gene...    Off | 00000000:61:00.0 Off |                  Off |
+| 30%   34C    P8              28W / 300W |     16MiB / 49140MiB |      0%      Default |
+|                                         |                      |                  N/A |
++-----------------------------------------+----------------------+----------------------+
+                                                                                         
++---------------------------------------------------------------------------------------+
+| Processes:                                                                            |
+|  GPU   GI   CI        PID   Type   Process name                            GPU Memory |
+|        ID   ID                                                             Usage      |
+|=======================================================================================|
++---------------------------------------------------------------------------------------+
+rtfmm_3dp_test_fmm
+input parameters=[
+  P                    = 20
+  n                    = 24000
+  ncrit                = 128
+  images               = 0
+  cycle                = 6.2832
+  ewald_ksize          = 11
+  (f,d,e)              = (1,1,1)
+  num_compare          = 24000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 0
+  zero_netcharge       = 0
+  print_body_number    = 3
+  divide_4pi           = 1
+  setting_t            = 1
+]
+
+[tree_traverse time measured : 0.01343 seconds.]
+[init_cell_matrix time measured : 0.00618 seconds.]
+[precompute_others time measured : 16.73847 seconds.]
+[precompute_m2l time measured : 0.46744 seconds.]
+[precompute time measured : 17.20596 seconds.]
+[P2M time measured : 0.24028 seconds.]
+[M2M time measured : 0.11742 seconds.]
+[setup time measured : 0.00076 seconds.]
+[prepare_memory time measured : 0.01592 seconds.]
+[up time measured : 0.06685 seconds.]
+[hadamard_8x8 time measured : 0.10219 seconds.]
+[down time measured : 0.06982 seconds.]
+[store time measured : 0.00033 seconds.]
+[M2L time measured : 0.28132 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.11656 seconds.]
+[L2P time measured : 0.19491 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.00455 seconds.]
+[FMM_kernels time measured : 0.95524 seconds.]
+[FMM time measured : 18.18278 seconds.]
+[direct time measured : 0.72401 seconds.]
+pnrm = 30197.33842929
+-----------------------------FMM vs Direct------------------------------[24000]
+L2  (p)  : 6.11526e-15   L2  (f)  : 7.35324e-15   L2  (e)  : 4.77122e-15
+Rms (p)  : 6.85951e-15   Rms (f)  : 7.37424e-14
+p-energy1 : 4.020911501419e+01
+p-energy2 : 4.020911501419e+01
+

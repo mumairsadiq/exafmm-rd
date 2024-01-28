@@ -1,5 +1,5 @@
 #!/bin/bash
-#YBATCH -r ad4_1
+#YBATCH -r rtx6000-ada_1
 #SBATCH -N 1
 #SBATCH -J RTFMM
 #SBATCH --time=24:00:00

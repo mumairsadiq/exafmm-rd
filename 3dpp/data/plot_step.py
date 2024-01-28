@@ -2,12 +2,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.pyplot import figure
 import re
-
+import sys
 
 def get_exafmmt_data(step,n=20):
     #res = open("/home/jiamian/exafmm-t/exafmm-t/tests/slurm-147765.out") # -T 8
     #res = open("/home/jiamian/exafmm-t/exafmm-t/tests/slurm-147767.out") # -T 12
-    res = open("/home/jiamian/exafmm-t/exafmm-t/tests/slurm-149351.out") # -T 8 ad4_1
+    #res = open("/home/jiamian/exafmm-t/exafmm-t/tests/slurm-149351.out") # -T 8 ad4_1
+    res = open("/home/jiamian/exafmm-t/exafmm-t/tests/slurm-152666.out") # -T 8 rtx6000-ada_1
     txt = res.read()
     data1 = re.findall(step + r'                  : (.*)\n',txt)[:n]
     value = [eval(e) for e in data1]
@@ -21,7 +22,8 @@ def get_rtfmm_data(step,n=20):
     #res = open("slurm-148813.out") # --th_num 8 avx
     #res = open("slurm-149348.out") # --th_num 8 avx t
     #res = open("slurm-149361.out") # --th_num 8 avx t 2
-    res = open("slurm-149364.out") # --th_num 8 avx t 3
+    #res = open("slurm-149364.out") # --th_num 8 avx t 3
+    res = open("slurm-152673.out") # --th_num 8 avx t rtx6000-ada_1
     txt = res.read()
     data1 = re.findall(step + r' time measured : (.*) seconds.\]',txt)[:n]
     value = [eval(e) for e in data1]
@@ -34,9 +36,12 @@ fig.set_figheight(7)
 fig.set_figwidth(15)
 stepnames = ['P2P', 'P2M', 'M2M', 'M2L', 'L2L', 'L2P']
 cnt = 1
+n = 20
+if len(sys.argv) > 1:
+    n = int(sys.argv[1])
 for stepname in stepnames:
-    p1, v1 = get_exafmmt_data(stepname)
-    p2, v2 = get_rtfmm_data(stepname)
+    p1, v1 = get_exafmmt_data(stepname,n)
+    p2, v2 = get_rtfmm_data(stepname,n)
 
     '''figure()
     plt.plot(p1,v1,'-d',label='exafmmt')
@@ -59,4 +64,4 @@ for stepname in stepnames:
     cnt+=1
 
 fig.tight_layout()
-fig.savefig("compare_allsteps.png", dpi=300)
+fig.savefig("compare_allsteps.png", dpi=100)
