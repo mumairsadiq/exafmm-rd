@@ -223,7 +223,8 @@ private:
 
     /**
      * @brief matrix vector storing 1x7 child-child interaction Gk of 2 neighbour cells
-     * @note ### number of matrix = 26, size of each matrix = N_freq * 1 * 27 * complex
+     * @note ### number of matrix = 26, size of each matrix = N_freq * 1 * 28 * complex
+     * 27 is padding to 28 for simd(because 28 % 4 = 0)
     */
     std::vector<AlignedVec> ccGks_1x27;
 

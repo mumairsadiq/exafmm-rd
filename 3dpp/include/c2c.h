@@ -102,6 +102,35 @@ inline void c2c_1x27x1_naive(real*& M_, real*& IN, real*& OUT)
 }
 
 /**
+ * @brief Compute Pk=Qk*Gk for 1x27 child-interactions in 1 parent-interaction pair(IN0 -> OUT0),
+ * every time compute a 1x2 child interaction using AVX
+*/
+inline void c2c_1x27x1_AVX(real*& M_, real*& IN, real*& OUT)
+{
+    union{
+      __m256d pk = _mm256_set1_pd(0);
+      double data[4];
+    };
+    __m256d qk_riri, qk_irir, gk, gk_0022, gk_1133, pk_a, pk_b;
+
+    qk_riri = _mm256_broadcast_pd((const __m128d*)IN);
+    qk_irir = _mm256_permute_pd(qk_riri, 5);
+
+    for(int i = 0; i < 56; i += 4)
+    {
+        gk = _mm256_load_pd(M_ + i);
+        gk_0022 = _mm256_unpacklo_pd(gk, gk);
+        gk_1133 = _mm256_unpackhi_pd(gk, gk);
+        pk_a = _mm256_mul_pd(qk_riri, gk_0022);
+        pk_b = _mm256_mul_pd(qk_irir, gk_1133);
+        pk = _mm256_add_pd(pk, _mm256_addsub_pd(pk_a, pk_b));
+    }
+    pk = _mm256_add_pd(pk, _mm256_permute2f128_pd(pk,pk,1));
+    OUT[0] += data[0]; 
+    OUT[1] += data[1];
+}
+
+/**
  * @brief Compute Pk=Qk*Gk for 8x8 child-interactions in 2 parent-interaction pair(IN0 -> OUT0, IN1 -> OUT1),
  * every time compute two 2x2 child interactions
 */
