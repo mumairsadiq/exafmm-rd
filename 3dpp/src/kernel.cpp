@@ -739,14 +739,14 @@ void rtfmm::LaplaceKernel::m2l_fft_precompute_advanced2(int P, Cells3& cs, Perio
 {
     if(verbose)
     {
-        int interaciton_number = 0;
+        int interaction_number = 0;
         for(auto m2l : m2l_map)
         {
             int tar_idx = m2l.first;
             Cell3& ctar = cs[tar_idx];
-            interaciton_number += m2l.second.size();
+            interaction_number += m2l.second.size();
         }
-        std::cout<<"interaciton_number = "<<interaciton_number<<std::endl;
+        std::cout<<"interaction_number = "<<interaction_number<<std::endl;
     }
     #define USE_MANY
     if(verbose) printf("m2l_fft_precompute_advanced2\n");
@@ -1022,43 +1022,49 @@ void rtfmm::LaplaceKernel::hadamard_8x8(
     AlignedVec zero_vec0(fft_size, 0.);
     AlignedVec zero_vec1;
     zero_vec1.reserve(fft_size);
-    int npos = ccGks_8x8.size();
-    int nblk_inter = npos;
-    int BLOCK_SIZE = CACHE_SIZE * 2 / sizeof(real);
-    std::vector<real*> IN_(nblk_inter * BLOCK_SIZE);
-    std::vector<real*> OUT_(nblk_inter * BLOCK_SIZE);
+    size_t max_num_interaction = 0;
+    for(int i = 0; i < 26; i++)
+    {
+        size_t offset0 = (i == 0 ? 0 : interaction_count_offset_8x8[i - 1]);
+        size_t offset1 = interaction_count_offset_8x8[i];
+        size_t num_interaction = offset1 - offset0;
+        max_num_interaction = std::max(max_num_interaction, num_interaction);
+    }
+    int BLOCK_SIZE = max_num_interaction + 1; // padding 1 to store ptr of zeros
+    std::vector<real*> Qk_ptrs(26 * BLOCK_SIZE);
+    std::vector<real*> Pk_ptrs(26 * BLOCK_SIZE);
     #pragma omp parallel for
-    for(int i = 0; i < nblk_inter; i++)
+    for(int i = 0; i < 26; i++)
     {
         size_t offset0 = (i == 0 ? 0 : interaction_count_offset_8x8[i - 1]);
         size_t offset1 = interaction_count_offset_8x8[i];
         size_t interaction_count = offset1 - offset0;
         for(size_t j = 0; j < interaction_count; j++)
         {
-            IN_[i * BLOCK_SIZE + j]  = &Qk_all[interaction_offset_f_8x8[2*(offset0 + j) + 0]];
-            OUT_[i * BLOCK_SIZE + j] = &Pk_all[interaction_offset_f_8x8[2*(offset0 + j) + 1]];
+            Qk_ptrs[i * BLOCK_SIZE + j] = &Qk_all[interaction_offset_f_8x8[2*(offset0 + j) + 0]];
+            Pk_ptrs[i * BLOCK_SIZE + j] = &Pk_all[interaction_offset_f_8x8[2*(offset0 + j) + 1]];
         }
-        IN_[i * BLOCK_SIZE + interaction_count]  = &zero_vec0[0];
-        OUT_[i * BLOCK_SIZE + interaction_count] = &zero_vec1[0];
+        Qk_ptrs[i * BLOCK_SIZE + interaction_count]  = &zero_vec0[0];
+        Pk_ptrs[i * BLOCK_SIZE + interaction_count] = &zero_vec1[0];
     }
     #pragma omp parallel for
     for(int f = 0; f < cgrid.N_freq; f++)
     {
-        for(int ipos = 0; ipos < npos; ipos++)
+        for(int ipos = 0; ipos < 26; ipos++)
         {
             size_t offset0 = (ipos == 0 ? 0 : interaction_count_offset_8x8[ipos - 1]);
             size_t offset1 = interaction_count_offset_8x8[ipos]; 
-            size_t count = offset1 - offset0;
-            real** IN  = &IN_ [ipos * BLOCK_SIZE];
-            real** OUT = &OUT_[ipos * BLOCK_SIZE];
+            size_t num_interaction = offset1 - offset0;
+            real** Qk_ptr  = &Qk_ptrs [ipos * BLOCK_SIZE];
+            real** Pk_ptr = &Pk_ptrs[ipos * BLOCK_SIZE];
             real* ccGk = &ccGks_8x8[ipos][f * 2 * MAX_CHILD_NUM * MAX_CHILD_NUM];
-            for(size_t j = 0; j < count; j += 2)
+            for(size_t j = 0; j < num_interaction; j += 2)
             {
                 real* Gk = ccGk;
-                real* Qk1 = IN [j+0] + f * MAX_CHILD_NUM * 2; // Qk of children in frequency f, size = 8 * 2
-                real* Qk2 = IN [j+1] + f * MAX_CHILD_NUM * 2; 
-                real* Pk1 = OUT[j+0] + f * MAX_CHILD_NUM * 2; // Pk of children in frequency f, size = 8 * 2
-                real* Pk2 = OUT[j+1] + f * MAX_CHILD_NUM * 2;
+                real* Qk1 = Qk_ptr[j + 0] + f * MAX_CHILD_NUM * 2; // Qk of children in frequency f, size = 8 * 2
+                real* Qk2 = Qk_ptr[j + 1] + f * MAX_CHILD_NUM * 2; 
+                real* Pk1 = Pk_ptr[j + 0] + f * MAX_CHILD_NUM * 2; // Pk of children in frequency f, size = 8 * 2
+                real* Pk2 = Pk_ptr[j + 1] + f * MAX_CHILD_NUM * 2;
                 //c2c_8x8x2(Gk, Qk1, Qk2, Pk1, Pk2);
                 c2c_8x8x2_avx(Gk, Qk1, Qk2, Pk1, Pk2);
             }
@@ -1066,8 +1072,8 @@ void rtfmm::LaplaceKernel::hadamard_8x8(
             /*for(size_t j = 0; j < count; j++)
             {
                 real* Gk = ccGk;
-                real* Qk  = IN [j+0] + f * MAX_CHILD_NUM * 2; //src
-                real* Pk = OUT[j+0] + f * MAX_CHILD_NUM * 2; //tar
+                real* Qk = Qk_ptr[j+0] + f * MAX_CHILD_NUM * 2; //src
+                real* Pk = Qk_ptr[j+0] + f * MAX_CHILD_NUM * 2; //tar
                 //c2c_8x8x1(Gk, Qk, Pk);
                 c2c_8x8x1_naive(Gk, Qk, Pk);  // for no-AVX case, this is most efficient
             }*/
@@ -1085,15 +1091,15 @@ void rtfmm::LaplaceKernel::hadamard_1x27(
 )
 {
     const int MAX_CHILD_NUM = 8;
-    int max_num_interaciton = 0;
+    int max_num_interaction = 0;
     for(int i = 0; i < 26; i++)
     {
         size_t offset0 = (i == 0 ? 0 : interaction_count_offset_1x27[i - 1]);
         size_t offset1 = interaction_count_offset_1x27[i];
-        int num_interaciton = offset1 - offset0;
-        max_num_interaciton = std::max(max_num_interaciton, num_interaciton);
+        int num_interaction = offset1 - offset0;
+        max_num_interaction = std::max(max_num_interaction, num_interaction);
     }
-    int& BLOCK_SIZE = max_num_interaciton;
+    int& BLOCK_SIZE = max_num_interaction;
     std::vector<real*> Qk_ptrs(26 * BLOCK_SIZE);
     std::vector<real*> Pk_ptrs(26 * BLOCK_SIZE);
     #pragma omp parallel for
@@ -1115,11 +1121,11 @@ void rtfmm::LaplaceKernel::hadamard_1x27(
         {
             size_t offset0 = (i == 0 ? 0 : interaction_count_offset_1x27[i - 1]);
             size_t offset1 = interaction_count_offset_1x27[i]; 
-            size_t num_interaciton = offset1 - offset0;
+            size_t num_interaction = offset1 - offset0;
             real** Qk_ptr = &Qk_ptrs[i * BLOCK_SIZE];
             real** Pk_ptr = &Pk_ptrs[i * BLOCK_SIZE];
             real* ccGk = &ccGks_1x27[i][f * 2 * 1 * 28];
-            for(size_t j = 0; j < num_interaciton; j++)
+            for(size_t j = 0; j < num_interaction; j++)
             {
                 real* Gk = ccGk;
                 real* Qk = Qk_ptr[j + 0] + f * MAX_CHILD_NUM * 2; //src
@@ -1203,6 +1209,7 @@ void rtfmm::LaplaceKernel::m2l_fft_precompute_t(int P, Cells3& cs, PeriodicM2LMa
             m2l_parent_octant_map[tar_idx][octant] = {src_idx, is_image}; // cell located at tar's octant direction is src(or -1)
         }
     }
+
     std::vector<size_t> interaction_offset_f_8x8;
     std::vector<size_t> interaction_count_offset_8x8;
     size_t interaction_cnt_8x8 = 0;

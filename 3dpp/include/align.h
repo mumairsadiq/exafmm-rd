@@ -7,7 +7,6 @@ namespace rtfmm
 {
 
 const int MEM_ALIGN = 64;
-const int CACHE_SIZE = 512;
 
 template <typename T, size_t NALIGN>
 struct AlignedAllocator : public std::allocator<T> {
