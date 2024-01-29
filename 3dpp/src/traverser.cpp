@@ -27,12 +27,20 @@ void rtfmm::Traverser::traverse(Tree& tree, real cycle, int images)
     }
     else if(images >= 1)
     {
+        tbegin(horizontal_periodic_near);
         horizontal_periodic_near(cycle);
+        tend(horizontal_periodic_near);
+        tbegin(make_M2L_parent_map_i1);
         make_M2L_parent_map_i1(cycle); // for t
+        tend(make_M2L_parent_map_i1);
         if(images >= 2)
         {
+            tbegin(horizontal_periodic_far);
             horizontal_periodic_far(cycle,images);
+            tend(horizontal_periodic_far);
+
             // for t
+            tbegin(t_image2);
             int idx = cells.size() - 1 - images;
             for(int m = 1; m < images; m++)
             {
@@ -54,6 +62,7 @@ void rtfmm::Traverser::traverse(Tree& tree, real cycle, int images)
                     }
                 }
             }
+            tend(t_image2);
         }
     }
 }
@@ -242,6 +251,7 @@ void rtfmm::Traverser::make_M2L_parent_map()
 void rtfmm::Traverser::make_M2L_parent_map_i1(real cycle)
 {
     make_M2L_parent_map();
+    #pragma omp parallel for
     for(int j = 0; j < cells.size(); j++)
     {
         Cell3& ctar = cells[j];

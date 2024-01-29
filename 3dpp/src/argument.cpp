@@ -13,7 +13,7 @@ rtfmm::Argument::Argument(int argc, char* argv[])
     cmd.add<int>("ncrit", 'm', "minimum number of bodies per leaf box", false, 16);
     cmd.add<int>("timing", 't', "if measure execution time of computational steps", false, 1);
     cmd.add<int>("images", 'i', "periodic images depth", false, 0, cmdline::range(0, 20));
-    cmd.add<int>("verbose", 'v', "is verbose", false, 1);
+    cmd.add<int>("verbose", 'v', "is verbose", false, 0);
     cmd.add<real>("cycle", 'c', "cycle of images(or box_r)", false, 2 * M_PI);
     cmd.add<int>("num_compare", 0, "compare number of target body(also direct calculation number)", false, -1);
     cmd.add<int>("ewald_ksize", 0, "ksize of ewald DFT", false, 11);

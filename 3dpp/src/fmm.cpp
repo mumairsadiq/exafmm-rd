@@ -13,20 +13,24 @@ rtfmm::LaplaceFMM::LaplaceFMM(const Bodies3& bs_, const Argument& args_)
 rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
 {
     /* build tree */
-    tbegin(tree_traverse);
+    tbegin(build_and_traverse);
+    tbegin(build_tree);
     Tree tree;
     tree.build(bs, args.x, args.r, args.ncrit, Tree::TreeType::nonuniform);
     cs = tree.get_cells();
     if(verbose && args.check_tree) check_tree(cs);
+    tend(build_tree);
 
     /* traverse to get interaction list */
+    tbegin(traverse);
     traverser.traverse(tree, args.cycle, args.images);
     cs = traverser.get_cells();
     if(verbose && args.check_tree) check_traverser(traverser);
     if(verbose && args.check_tree) check_cells(cs);
     tree_depth_range = get_min_max_depth(cs);
     if(verbose) std::cout<<"tree_depth_range = "<<tree_depth_range<<std::endl;
-    tend(tree_traverse);
+    tend(traverse);
+    tend(build_and_traverse);
 
     tbegin(init_cell_matrix);
     init_cell_matrix(cs);
