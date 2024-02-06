@@ -6,6 +6,10 @@
 
 . /etc/profile.d/modules.sh
 nvidia-smi
+lscpu
+ip a
+echo machine-id=$(cat /etc/machine-id)
+
 for p in $(seq 4 1 8)
 do
     for i in $(seq 0 1 9)

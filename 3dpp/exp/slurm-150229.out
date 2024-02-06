@@ -67,3 +67,4 @@ hadamard 1x27 npos = 26, BLOCK_SIZE = 128
 [P2L time measured : 0.00000 seconds.]
 [L2L time measured : 0.00499 seconds.]
 L2P leaf_number = 512
+slurmstepd-ad4: error: *** JOB 150229 ON ad4 CANCELLED AT 2024-01-30T23:18:19 DUE TO TIME LIMIT ***

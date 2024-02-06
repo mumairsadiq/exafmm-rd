@@ -1,5 +1,9 @@
 #exp on PBC
-#machine = rtx6000-ada_1
+#machine = many
+#WARNING : this file is used to test the py script
 
-slurm-152683.out
-slurm-152683.out
+slurm-149348.out
+slurm-149361.out
+slurm-149364.out
+slurm-152667.out
+slurm-152673.out
