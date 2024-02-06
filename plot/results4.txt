@@ -1,0 +1,19 @@
+#results from rtx6000-ada_1
+#for p in $(seq 4 1 8)
+#do
+#    for i in $(seq 0 1 9)
+#    do
+#        OPENBLAS_NUM_THREADS=1 ../build/test/test_pbc -P $p --th_num 8 -n 24000 -m 128 -v 0 -i $i -a fe
+#    done
+#done
+
+../3dpp/exp/slurm-152683.out
+../3dpp/exp/slurm-153076.out
+../3dpp/exp/slurm-153078.out
+../3dpp/exp/slurm-153079.out
+../3dpp/exp/slurm-153080.out
+../3dpp/exp/slurm-153081.out
+../3dpp/exp/slurm-153082.out
+../3dpp/exp/slurm-153084.out
+../3dpp/exp/slurm-153085.out
+../3dpp/exp/slurm-153086.out
