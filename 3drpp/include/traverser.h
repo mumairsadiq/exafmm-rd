@@ -1,0 +1,121 @@
+#pragma once
+#include "tree.h"
+#include <map>
+
+namespace rtfmm
+{
+
+using InteractionPair = std::pair<int, int>;
+using PeriodicInteractionPair = std::pair<int, std::pair<int, vec3r>>;
+using InteractionPairs = std::vector<InteractionPair>;
+using PeriodicInteractionPairs = std::vector<PeriodicInteractionPair>;
+
+using PeriodicInteractionMap = std::map<int, std::vector<std::pair<int, vec3r>>>;
+
+
+struct PeriodicParentSource
+{
+    PeriodicParentSource(int idx_, vec3r offset_, int is_single_parent_) : idx(idx_), offset(offset_), is_single_parent(is_single_parent_){}
+    int idx;
+    vec3r offset;
+    int is_single_parent; // is the cell has only one child(namely, is the cell a image cell)
+};
+
+/**
+ * @brief map to store M2L parent pair
+*/
+using PeriodicM2LMap = std::map<int, std::vector<PeriodicParentSource>>;
+
+InteractionPair make_pair(int tar, int src);
+PeriodicInteractionPair make_pair(int tar, int src, vec3r offset);
+
+enum class OperatorType
+{
+    P2P,
+    M2L,
+    M2P,
+    P2L
+};
+
+class Traverser
+{
+    
+public:
+    Traverser();
+
+    void traverse(Tree& tree, real cycle = 2 * M_PI, int images = 0);
+
+    PeriodicInteractionPairs get_pairs(OperatorType type);
+
+    PeriodicInteractionMap get_map(OperatorType type);
+
+    PeriodicM2LMap get_M2L_parent_map();
+
+    Cells3 get_cells() {return cells;}
+
+    PeriodicInteractionMap get_m2l_map_from_m2l_parent_map();
+
+    std::vector<int> get_cell_idx_having_bodies();
+
+private:
+    
+    /**
+     * @brief horizontal traverse
+     * @param tc target cell idx
+     * @param sc source cell idx
+     * @param tcp target cell's parent cell idx
+     * @param scp source cell's parent cell idx
+    */
+    void horizontal_origin(int tc, int sc, int tcp, int scp, vec3r offset = vec3r(0,0,0));
+
+    void horizontal_periodic_near(real cycle);
+
+    void horizontal_periodic_far(real cycle, int image);
+
+    /**
+     * @brief if b+offset adjacent with a
+    */
+    int adjacent(int a, int b, vec3r offset = vec3r(0,0,0));
+
+    /**
+     * @brief if b+offset neighbour with a
+    */
+    int neighbour(int a, int b, vec3r offset = vec3r(0,0,0));
+
+    int is_leaf(int c);
+
+    void make_M2L_parent_map();
+
+    void make_M2L_parent_map_i1(real cycle);
+
+    Cells3 cells;
+
+    void build_tree_depth_range();
+
+    void build_leaf_cell_idxs();
+
+    void build_nonleaf_cell_idxs();
+
+    void build_rw_body_cell_idxs();
+
+public:
+    PeriodicInteractionPairs P2P_pairs;
+    PeriodicInteractionPairs M2L_pairs;
+    PeriodicInteractionPairs M2P_pairs;
+    PeriodicInteractionPairs P2L_pairs;
+
+    PeriodicInteractionMap M2L_map;
+    PeriodicInteractionMap P2P_map;
+
+    PeriodicM2LMap M2L_parent_map;
+
+    Indices leaf_cell_idxs;
+
+    std::map<int,Indices> nonleaf_cell_idxs; // indices of non-leaf cell at each depth
+
+    vec2i tree_depth_range; // [min,max]
+
+    Indices rw_body_cell_idxs; // indices of cells that read/write bodies (leaf cells + p2p cells)
+};
+
+}
