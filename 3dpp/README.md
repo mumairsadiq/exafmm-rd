@@ -39,7 +39,7 @@ make
 ./test_fmm -n 24000 -m 128 -P 6 -v 0 -a fde --use_precompute 1
 ```
 
-2. 24000 bodies with 5-depth peridoic images, use FMM(P=6) and Ewald
+2. 24000 bodies with 5-depth peridoic images, use FMM(P=10) and Ewald
 ```
 ./test_pbc -n 24000 -m 128 -i 5 -P 10 -v 0 -a fe --use_precompute 1
 ```
