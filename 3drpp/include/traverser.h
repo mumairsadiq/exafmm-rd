@@ -55,8 +55,6 @@ public:
 
     PeriodicInteractionMap get_m2l_map_from_m2l_parent_map();
 
-    std::vector<int> get_cell_idx_having_bodies();
-
 private:
     
     /**

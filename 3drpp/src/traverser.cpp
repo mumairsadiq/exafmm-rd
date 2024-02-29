@@ -25,6 +25,22 @@ void rtfmm::Traverser::traverse(Tree& tree, real cycle, int images)
         if(verbose) printf("horizontal_origin\n");
         horizontal_origin(0,0,0,0);
         make_M2L_parent_map(); // for t
+        for(int j = 0; j < cells[0].crange.number; j++)
+        {
+            int jidx = cells[0].crange.offset + j;
+            for(int i = 0; i < cells[0].crange.number; i++)
+            {
+                if(i != j)
+                {
+                    int iidx = cells[0].crange.offset + i;
+                    if(!adjacent(jidx, iidx))
+                    {
+                        printf("%d <- %d\n", jidx, iidx);
+                        M2L_map[jidx].push_back(std::make_pair(iidx, vec3r(0,0,0)));
+                    }
+                }
+            }
+        }
     }
     else if(images >= 1)
     {
@@ -78,6 +94,7 @@ void rtfmm::Traverser::traverse(Tree& tree, real cycle, int images)
 
 void rtfmm::Traverser::horizontal_origin(int tc, int sc, int tcp, int scp, vec3r offset)
 {
+    //std::cout<<cells[tc]<<"   "<<cells[sc]<<std::endl;
     int divide = 0; // 0: nodivide, 1:tc, 2:sc
     if(!adjacent(tc, sc, offset))
     {
@@ -96,13 +113,16 @@ void rtfmm::Traverser::horizontal_origin(int tc, int sc, int tcp, int scp, vec3r
         else if(neighbour(tcp, scp, offset))
         {
             M2L_pairs.push_back(make_pair(tc, sc, offset));
-            M2L_map[tc].push_back(std::make_pair(sc, offset));
+            //M2L_map[tc].push_back(std::make_pair(sc, offset));
         }
         else
         {
             if(is_leaf(tc) && is_leaf(sc))
             {
                 printf("here\n");
+                std::cout<<cells[tc]<<"   "<<cells[sc]<<std::endl;
+                std::cout<<cells[tcp]<<"   "<<cells[scp]<<std::endl;
+                exit(0);
             }
             else if(!is_leaf(tc) && is_leaf(sc))
             {
@@ -227,7 +247,7 @@ void rtfmm::Traverser::horizontal_periodic_far(real cycle, int images)
                                 //M2L_pairs.push_back(make_pair(0,icell_idx,vec3r(ox,oy,oz) * cycle));
                                 //M2L_map[0].push_back(std::make_pair(icell_idx, vec3r(ox,oy,oz) * cycle));
                                 M2L_pairs.push_back(make_pair(icell_idx,icell_idx,vec3r(ox,oy,oz) * cycle));
-                                M2L_map[icell_idx].push_back(std::make_pair(icell_idx, vec3r(ox,oy,oz) * cycle));
+                                //M2L_map[icell_idx].push_back(std::make_pair(icell_idx, vec3r(ox,oy,oz) * cycle));
                             }
                         }
                     }
@@ -364,11 +384,6 @@ rtfmm::PeriodicInteractionMap rtfmm::Traverser::get_map(OperatorType type)
 rtfmm::PeriodicM2LMap rtfmm::Traverser::get_M2L_parent_map()
 {
     return M2L_parent_map;
-}
-
-std::vector<int> rtfmm::Traverser::get_cell_idx_having_bodies()
-{
-    std::vector<int> res;
 }
 
 void rtfmm::Traverser::build_leaf_cell_idxs()

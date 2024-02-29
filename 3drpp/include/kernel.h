@@ -22,13 +22,6 @@ public:
     void direct(Bodies3& bs_src, Bodies3& bs_tar, int images, real cycle);
 
     /**
-     * @brief cell_src -> cell_tar P2P
-     * @param offset offset of cell_src
-     * @param use_simd true to use AVX
-    */
-    void p2p(Cell3& cell_src, Cell3& cell_tar, vec3r offset = vec3r(0,0,0), int use_simd = 1);
-
-    /**
      * @brief (cells in p2ps) -> cell_tar P2P use AVX
     */
     void p2p_1toN_256(Cells3& cs, std::vector<std::pair<int, vec3r>>& p2ps, Cell3& cell_tar);

@@ -76,102 +76,6 @@ void rtfmm::LaplaceKernel::direct(Bodies3& bs_src, Bodies3& bs_tar, int images, 
     }
 }
 
-void rtfmm::LaplaceKernel::p2p(Cell3& cell_src, Cell3& cell_tar, vec3r offset, int use_simd)
-{
-    if(!use_simd)
-    {
-        for(int j = 0; j < cell_tar.bs.size(); j++)
-        {
-            Body3& btar = cell_tar.bs[j];
-            real potential = 0;
-            vec3r force(0,0,0);
-            for(int i = 0; i < cell_src.bs.size(); i++)
-            {
-                Body3& bsrc = cell_src.bs[i];
-                vec3r dx = btar.x - bsrc.x - offset;
-                real r = dx.r();
-                real invr = r == 0 ? 0 : 1 / r;
-                potential += bsrc.q * invr;
-                force += bsrc.q * invr * invr * invr * (-dx);
-            }
-            btar.p += potential;
-            btar.f += force;
-        }
-    }
-    else
-    {
-        vec4d zero(0);
-        vec4d one(1);
-        for(int j = 0; j < cell_tar.bs.size(); j+=4)
-        {
-            Body3* btar = &cell_tar.bs[j];
-            vec4d xj,yj,zj;
-            int padding = j + 4 - cell_tar.bs.size();
-            padding = padding <= 0 ? 0 : padding;
-            if(padding <= 0)
-            {
-                xj = vec4d(btar->x[0],(btar+1)->x[0],(btar+2)->x[0],(btar+3)->x[0]);
-                yj = vec4d(btar->x[1],(btar+1)->x[1],(btar+2)->x[1],(btar+3)->x[1]);
-                zj = vec4d(btar->x[2],(btar+1)->x[2],(btar+2)->x[2],(btar+3)->x[2]);
-            }
-            else if(padding == 1)
-            {
-                xj = vec4d(btar->x[0],(btar+1)->x[0],(btar+2)->x[0],0);
-                yj = vec4d(btar->x[1],(btar+1)->x[1],(btar+2)->x[1],0);
-                zj = vec4d(btar->x[2],(btar+1)->x[2],(btar+2)->x[2],0);
-            }
-            else if(padding == 2)
-            {
-                xj = vec4d(btar->x[0],(btar+1)->x[0],0,0);
-                yj = vec4d(btar->x[1],(btar+1)->x[1],0,0);
-                zj = vec4d(btar->x[2],(btar+1)->x[2],0,0);
-            }
-            else if(padding == 3)
-            {
-                xj = vec4d(btar->x[0],0,0,0);
-                yj = vec4d(btar->x[1],0,0,0);
-                zj = vec4d(btar->x[2],0,0,0);
-            }
-            
-            vec4d pj(0);
-            vec4d fxj(0);
-            vec4d fyj(0);
-            vec4d fzj(0);
-
-            vec4d dx, dy, dz, qi, invr, f, qinvr;
-            for(int i = 0; i < cell_src.bs.size(); i++)
-            {
-                Body3& bsrc = cell_src.bs[i];
-                vec3r bsrc_xi = bsrc.x + offset;
-                dx = vec4d(bsrc_xi[0]);
-                dy = vec4d(bsrc_xi[1]);
-                dz = vec4d(bsrc_xi[2]);
-                qi = vec4d(bsrc.q);
-                dx = xj - dx;
-                dy = yj - dy;
-                dz = zj - dz;
-                invr = dx * dx + dy * dy + dz * dz;
-                f = invr > zero;
-                invr = one / invr.sqrt();
-                invr &= f;
-                qinvr = qi * invr;
-                pj += qinvr;
-                qinvr = qinvr * invr * invr;
-                fxj += qinvr * dx;
-                fyj += qinvr * dy;
-                fzj += qinvr * dz;
-            }
-            for(int k = 0; k < 4 - padding; k++)
-            {
-                (btar + k)->p    += pj[k];
-                (btar + k)->f[0] -= fxj[k];
-                (btar + k)->f[1] -= fyj[k];
-                (btar + k)->f[2] -= fzj[k];
-            }
-        }
-    }
-}
-
 void rtfmm::LaplaceKernel::p2p_1toN_256(Cells3& cs, std::vector<std::pair<int, vec3r>>& p2ps, Cell3& cell_tar)
 {
     vec4d zero(0);
@@ -180,7 +84,8 @@ void rtfmm::LaplaceKernel::p2p_1toN_256(Cells3& cs, std::vector<std::pair<int, v
     for(int j = 0; j < cell_tar.bs.size(); j+=4)
     {
         Body3* btar = &cell_tar.bs[j];
-        vec4d xj(0),yj(0),zj(0);
+        real* wtar = &cell_tar.ws[j];
+        vec4d xj(0),yj(0),zj(0),wj(0);
         int padding = j + 4 - cell_tar.bs.size();
         padding = padding <= 0 ? 0 : padding;
         for(int k = 0; k < 4 - padding; k++)
@@ -188,6 +93,7 @@ void rtfmm::LaplaceKernel::p2p_1toN_256(Cells3& cs, std::vector<std::pair<int, v
             xj[k] = (btar+k)->x[0];
             yj[k] = (btar+k)->x[1];
             zj[k] = (btar+k)->x[2];
+            wj[k] = *(wtar+k);
         }
         vec4d pj(0),fxj(0),fyj(0),fzj(0);
         for(int si = 0; si < p2ps.size(); si++)
@@ -197,11 +103,12 @@ void rtfmm::LaplaceKernel::p2p_1toN_256(Cells3& cs, std::vector<std::pair<int, v
             for(int i = 0; i < cell_src.bs.size(); i++)
             {
                 Body3& bsrc = cell_src.bs[i];
+                real& wsrc = cell_src.ws[i];
                 vec3r bsrc_xi = bsrc.x + offset;
                 dx = vec4d(bsrc_xi[0]);
                 dy = vec4d(bsrc_xi[1]);
                 dz = vec4d(bsrc_xi[2]);
-                qi = vec4d(bsrc.q);
+                qi = vec4d(bsrc.q * wsrc);
                 dx = xj - dx;
                 dy = yj - dy;
                 dz = zj - dz;
@@ -217,6 +124,10 @@ void rtfmm::LaplaceKernel::p2p_1toN_256(Cells3& cs, std::vector<std::pair<int, v
                 fzj += qinvr * dz;
             }
         }
+        pj *= wj;
+        fxj *= wj;
+        fyj *= wj;
+        fzj *= wj;
         for(int k = 0; k < 4 - padding; k++)
         {
             (btar + k)->p    += pj[k];
@@ -248,7 +159,7 @@ void rtfmm::LaplaceKernel::p2m_precompute(int P, Cell3& cell_src)
             zj[idx] = x_check[j+idx][2];
         }
         Body3* bi = &cell_src.bs[0];
-        //real* wi = &cell_src.ws[0];
+        real* wi = &cell_src.ws[0];
         for(int i = 0; i < cell_src.bs.size(); i++)
         {
             dx = xj - vec4d(bi->x[0]);
@@ -257,8 +168,9 @@ void rtfmm::LaplaceKernel::p2m_precompute(int P, Cell3& cell_src)
             invr = dx * dx + dy * dy + dz * dz;
             f = invr > zero;
             invr = one / invr.sqrt();
-            pj += vec4d(bi->q) * (invr & f);
+            pj += vec4d(bi->q * (*wi)) * (invr & f);
             bi++;
+            wi++;
         }
         for(int k = 0; k < 4 - padding; k++)
         {
@@ -528,6 +440,12 @@ void rtfmm::LaplaceKernel::m2l_fft_precompute_advanced2(int P, Cells3& cs, Perio
             int tar_idx = m2l.first;
             Cell3& ctar = cs[tar_idx];
             interaction_number += m2l.second.size();
+            std::cout<<tar_idx<<":";
+            for(int i = 0; i < m2l.second.size(); i++)
+            {
+                std::cout<<m2l.second[i].first<<" ";
+            }
+            std::cout<<std::endl;
         }
         std::cout<<"interaction_number = "<<interaction_number<<std::endl;
     }
@@ -640,7 +558,7 @@ void rtfmm::LaplaceKernel::m2l_fft_precompute_advanced2(int P, Cells3& cs, Perio
         auto m2l = m2l_map.begin();
         std::advance(m2l, i);
         Cell3& cell_tar = cs[m2l->first];
-        real scale = std::pow(cell_tar.depth > 0 ? 2 : 3, cell_tar.depth);
+        real scale = std::pow(cell_tar.depth >= 0 ? 2 : 3, cell_tar.depth); // !
         for(int i = 0; i < surface_number; i++)
         {
             rtfmm::vec3i idx3 = surf_conv_map[i] + rtfmm::vec3i(P-1,P-1,P-1);
@@ -927,7 +845,7 @@ void rtfmm::LaplaceKernel::m2l_fft_precompute_t(int P, Cells3& cs, PeriodicM2LMa
     const int MAX_CHILD_NUM = 8;
     int num_cell = cs.size();
     int num_surf = get_surface_point_num(P);
-    conv_grid_setting cgrid(P, cs[0].r);
+    conv_grid_setting cgrid(P, cs[0].r); // radius is irrelevant here
     int dim[3] = {cgrid.N, cgrid.N, cgrid.N};
     std::map<int,rtfmm::vec3i> surf_conv_map = get_surface_conv_map(P);
     size_t fft_size = 2 * MAX_CHILD_NUM * cgrid.N_freq;
@@ -1212,7 +1130,7 @@ void rtfmm::LaplaceKernel::l2p_precompute(int P, Cell3& cell_tar)
     vec4d dx, dy, dz, qi, invr, f, qinvr;
     for(int j = 0; j < cell_tar.bs.size(); j += 4)
     {
-        vec4d xj(0), yj(0), zj(0);
+        vec4d xj(0),yj(0),zj(0),wj(0);
         vec4d pj(0),fxj(0),fyj(0),fzj(0);
         int padding = j + 4 - cell_tar.bs.size();
         padding = padding <= 0 ? 0 : padding;
@@ -1221,6 +1139,7 @@ void rtfmm::LaplaceKernel::l2p_precompute(int P, Cell3& cell_tar)
             xj[idx] = cell_tar.bs[j + idx].x[0];
             yj[idx] = cell_tar.bs[j + idx].x[1];
             zj[idx] = cell_tar.bs[j + idx].x[2];
+            wj[idx] = cell_tar.ws[j + idx];
         }
         for(int i = 0; i < num_surf; i++)
         {
@@ -1242,6 +1161,10 @@ void rtfmm::LaplaceKernel::l2p_precompute(int P, Cell3& cell_tar)
             fyj += qinvr * dy;
             fzj += qinvr * dz;
         }
+        pj *= wj;
+        fxj *= wj;
+        fyj *= wj;  
+        fzj *= wj;
         for(int idx = 0; idx < 4 - padding; idx++)
         {
             cell_tar.bs[j + idx].p += pj[idx];
