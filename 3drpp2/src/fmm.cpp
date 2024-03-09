@@ -16,7 +16,8 @@ rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
     tbegin(build_and_traverse);
     tbegin(build_tree);
     Tree tree;
-    tree.build(bs, args.x, args.r, args.ncrit, Tree::TreeType::nonuniform);
+    //tree.build(bs, args.x, args.r, args.ncrit, args.rega, Tree::TreeType::nonuniform);
+    tree.build(bs, args.x, args.r, args.ncrit, args.rega, Tree::TreeType::regnonuniform);
     cs = tree.get_cells();
     tend(build_tree);
 
@@ -33,6 +34,8 @@ rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
     init_cell_matrix(cs);
     tend(init_cell_matrix);
 
+    std::cout<<"cell number = "<<cs.size()<<std::endl;
+
     tbegin(load_leaf_body);
     for(int j = 0; j < cs.size(); j++)
     {
@@ -41,7 +44,17 @@ rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
         {
             for(int i = 0; i < c.brange.number; i++)
             {
-                c.bs.push_back(bs[c.brange.offset + i]);
+                Body3& b = bs[c.brange.offset + i];
+                real w = LaplaceKernel::get_rega_w(b.x - c.x, c.r, args.rega);
+                c.bs.push_back(b);
+                c.ws.push_back(w);
+            }
+            for(int i = 0; i < c.rbs.size(); i++)
+            {
+                Body3& b = c.rbs[i];
+                real w = LaplaceKernel::get_rega_w(b.x - c.x, c.r, args.rega);
+                c.bs.push_back(b);
+                c.ws.push_back(w);
             }
         }
     }
@@ -71,15 +84,17 @@ rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
     tend(FMM_kernels);
 
     // merge
+    bs = sort_bodies_by_idx(bs);
     for(int j = 0; j < cs.size(); j++)
     {
         Cell3& c = cs[j];
         if(c.crange.number == 0)
         {
-            for(int i = 0; i < c.brange.number; i++)
+            for(int i = 0; i < c.bs.size(); i++)
             {
-                bs[c.brange.offset + i].p += c.bs[i].p;
-                bs[c.brange.offset + i].f += c.bs[i].f;
+                Body3& b = c.bs[i];
+                bs[b.idx].p += b.p;
+                bs[b.idx].f += b.f;
             }
         }
     }
@@ -89,7 +104,8 @@ rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
         
     if(args.divide_4pi)
         scale_bodies(bs);
-    return sort_bodies_by_idx(bs);
+    //return sort_bodies_by_idx(bs);
+    return bs;
 }
 
 void rtfmm::LaplaceFMM::P2M()

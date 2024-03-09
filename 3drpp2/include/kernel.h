@@ -133,6 +133,31 @@ public:
         return res;
     }
 
+    static real reg_w(double x)
+    {
+        return 0.25 * (2 + 3 * x - x * x * x);
+    }
+
+    static real get_w_single(real dx, real R, real rega)
+    {
+        real r = std::abs(dx) - R + rega;
+        real x;
+        if(r <= 0) x = 1;
+        else if(r > 2 * rega) x = -1;
+        else x = 1 - r / rega;
+        return reg_w(x);
+    }
+
+    static real get_rega_w(vec3r dx, real R, real rega)
+    {
+        real w = 1;
+        for(int d = 0; d < 3; d++)
+        {
+            w *= get_w_single(dx[d], R, rega);
+        }
+        return w;
+    }
+
 private:
     Matrix UT_p2m_precompute;
     Matrix V_p2m_precompute;

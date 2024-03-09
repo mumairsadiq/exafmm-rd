@@ -18,6 +18,9 @@ int main(int argc, char* argv[])
     /* prepare bodies */
     rtfmm::Bodies3 bs = rtfmm::generate_random_bodies(args.n, args.r, args.x, 5, args.zero_netcharge);
 
+    /* when i is zero, simply enlarge the fmm's radius */
+    if(args.images == 0) args.r += args.rega;
+
     /* solve by FMM */
     rtfmm::LaplaceFMM fmm(bs, args);
     TIME_BEGIN(FMM);

@@ -1,13 +1,14 @@
 #include "tree.h"
 #include "argument.h"
 #include <queue>
+#include "kernel.h"
 
 rtfmm::Tree::Tree()
 {
 
 }
 
-void rtfmm::Tree::build(Bodies3& bodies, vec3r x, real r, int m, TreeType type)
+void rtfmm::Tree::build(Bodies3& bodies, vec3r x, real r, int m, real rega, TreeType type)
 {
     if(type == TreeType::uniform)
     {
@@ -16,6 +17,10 @@ void rtfmm::Tree::build(Bodies3& bodies, vec3r x, real r, int m, TreeType type)
     else if(type == TreeType::nonuniform)
     {
         build_nonuniform_octree(bodies, x, r, m);
+    }
+    else if(type == TreeType::regnonuniform)
+    {
+        build_reg_nonuniform_octree(bodies, x, r, m, rega);
     }
 }
 
@@ -178,6 +183,130 @@ void rtfmm::Tree::build_nonuniform_octree(Bodies3& bodies, vec3r x, real r, int 
                     child_cell.crange = Range(0,0);
                     child_cell.brange = Range(begin + offset[i] - quad_num[i], quad_num[i]);
                     child_cell.x = get_child_cell_x(branch_cell.x, branch_cell.r, i, 0);
+                    this->cells.push_back(child_cell);
+                    big_cells.push(insert_offset + cnt);
+                    cnt++;
+                }
+            }
+        }
+    }
+}
+
+void rtfmm::Tree::build_reg_nonuniform_octree(Bodies3& bodies, vec3r x, real r, int max_n_per_cell, real rega)
+{
+    if(verbose) std::cout<<"build reg adaptive octree"<<std::endl;
+
+    std::queue<int> big_cells;
+    int num_body = bodies.size();
+    Cell3 root;
+    root.idx = 0;
+    root.octant = 13;
+    root.depth = 0;
+    root.r = r;
+    root.x = x;
+    root.crange = Range(0,0);
+    root.brange = Range(0, bodies.size());
+    this->cells.push_back(root);
+    big_cells.push(0);
+
+    while(!big_cells.empty())
+    {
+        int branch_cell_idx = big_cells.front();
+        Cell3 branch_cell = this->cells[branch_cell_idx];
+        big_cells.pop();
+
+        if(branch_cell.brange.number > max_n_per_cell)
+        {
+            int begin = branch_cell.brange.offset;
+            int num = branch_cell.brange.number;
+            int end = branch_cell.brange.offset + branch_cell.brange.number - 1;
+
+            //divide
+            int quad_num[8] = {0,0,0,0,0,0,0,0};
+            int offset[8] = {0,0,0,0,0,0,0,0};
+            int offset_sum = 0;
+            int num_child = 0;
+            for(int i = begin; i <= end; i++)
+            {
+                int idx = ((bodies[i].x[0] > branch_cell.x[0]) << 2) 
+                        + ((bodies[i].x[1] > branch_cell.x[1]) << 1) 
+                        + ((bodies[i].x[2] > branch_cell.x[2]) << 0);
+                quad_num[idx]++;
+            }
+            for(int i = 0; i < 8; i++)
+            {
+                offset[i] = offset_sum;
+                offset_sum += quad_num[i];
+                if(quad_num[i] > 0) num_child++;
+            }
+            //sort
+            std::vector<Body3> bodies_buffer;
+            bodies_buffer.resize(num);
+            for(int i = begin; i <= end; i++)
+            {
+                int idx = ((bodies[i].x[0] > branch_cell.x[0]) << 2) 
+                        + ((bodies[i].x[1] > branch_cell.x[1]) << 1) 
+                        + ((bodies[i].x[2] > branch_cell.x[2]) << 0);
+                bodies_buffer[offset[idx]] = bodies[i];
+                offset[idx]++;
+            }
+            //store
+            for(int i = 0; i < num; i++)
+            {
+                bodies[begin + i] = bodies_buffer[i];
+            }
+
+            // check reg
+            Bodies3 regs[8];
+            for(int octant = 0; octant < 8; octant++)
+            {
+                vec3r cx = get_child_cell_x(branch_cell.x, branch_cell.r, octant, 0);
+                for(int i = begin; i <= end; i++)
+                {
+                    Body3& b = bodies[i];
+                    int idx = ((b.x[0] > branch_cell.x[0]) << 2) 
+                            + ((b.x[1] > branch_cell.x[1]) << 1) 
+                            + ((b.x[2] > branch_cell.x[2]) << 0);
+                    if(idx != octant)
+                    {
+                        real w = LaplaceKernel::get_rega_w(b.x - cx, branch_cell.r / 2, rega);
+                        if(w > 0)
+                        {
+                            regs[octant].push_back(b);
+                        }
+                    }
+                }
+                for(int i = 0; i < branch_cell.rbs.size(); i++)
+                {
+                    Body3& b = branch_cell.rbs[i];
+                    int idx = ((b.x[0] > branch_cell.x[0]) << 2) 
+                            + ((b.x[1] > branch_cell.x[1]) << 1) 
+                            + ((b.x[2] > branch_cell.x[2]) << 0);
+                    real w = LaplaceKernel::get_rega_w(b.x - cx, branch_cell.r / 2, rega);
+                    if(w > 0)
+                    {
+                        regs[octant].push_back(b);
+                    }
+                }
+            }
+
+            //create leaves
+            int cnt = 0;
+            int insert_offset = this->cells.size();
+            this->cells[branch_cell_idx].crange = Range(insert_offset,num_child);
+            for(int octant = 0; octant < 8; octant++)
+            {
+                if(quad_num[octant] > 0 || regs[octant].size() > 0)
+                {
+                    Cell3 child_cell;
+                    child_cell.idx = this->cells.size();
+                    child_cell.octant = octant;
+                    child_cell.depth = branch_cell.depth + 1;
+                    child_cell.r = branch_cell.r / 2;
+                    child_cell.crange = Range(0,0);
+                    child_cell.brange = Range(begin + offset[octant] - quad_num[octant], quad_num[octant]);
+                    child_cell.x = get_child_cell_x(branch_cell.x, branch_cell.r, octant, 0);
+                    child_cell.rbs = regs[octant];
                     this->cells.push_back(child_cell);
                     big_cells.push(insert_offset + cnt);
                     cnt++;

@@ -58,7 +58,7 @@ rtfmm::EwaldSolver::EwaldSolver(const Bodies3& bs_, const Argument& args_)
 rtfmm::Bodies3 rtfmm::EwaldSolver::solve()
 {
     rtfmm::Tree tree;
-    tree.build(bs, args.x, args.r, args.ncrit, Tree::TreeType::nonuniform);
+    tree.build(bs, args.x, args.r, args.ncrit, args.rega, Tree::TreeType::nonuniform);
     //tree.build(bs, args.x, args.r, 3, Tree::TreeType::uniform);
     cells = tree.get_cells();
     TIME_BEGIN(real_part);

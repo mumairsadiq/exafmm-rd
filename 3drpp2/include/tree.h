@@ -25,6 +25,8 @@ struct Cell3
     Matrix p_check;
 
     Bodies3 bs;
+    Bodies3 rbs;
+    std::vector<real> ws;
 
     friend std::ostream &operator<<(std::ostream & os, const Cell3 & cell) 
     {
@@ -47,7 +49,8 @@ public:
     enum class TreeType
     {
         uniform,
-        nonuniform
+        nonuniform,
+        regnonuniform
     };
 
     Tree();
@@ -61,7 +64,7 @@ public:
      * @param m for uniform-tree it stands for max_depth; for nonuniform-tree it stands for max_n_per_cell
      * @param type type of tree (namely, uniform or nonuniform)
      */
-    void build(Bodies3& bodies, vec3r x, real r, int m, TreeType type);
+    void build(Bodies3& bodies, vec3r x, real r, int m, real rega, TreeType type);
     
     Cells3 get_cells();
 
@@ -72,6 +75,8 @@ private:
     void build_uniform_octree(Bodies3& bodies, vec3r x, real r, int max_depth);
 
     void build_nonuniform_octree(Bodies3& bodies, vec3r x, real r, int max_n_per_cell);
+
+    void build_reg_nonuniform_octree(Bodies3& bodies, vec3r x, real r, int max_n_per_cell, real rega);
 
 private:
 
