@@ -15,6 +15,8 @@ add_library(core
     tree.cpp
     argument.cpp
     traverser.cpp
+    mathfunc.cpp
+    surface.cpp
 )
 
 target_include_directories(

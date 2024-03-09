@@ -5,6 +5,7 @@ message("configure test")
 set(exec
     test_tree
     test_traverser
+    test_fft
 )
 
 foreach(filename IN LISTS exec)
