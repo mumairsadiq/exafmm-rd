@@ -17,6 +17,7 @@ add_library(core
     traverser.cpp
     mathfunc.cpp
     surface.cpp
+    kernel.cpp
 )
 
 target_include_directories(

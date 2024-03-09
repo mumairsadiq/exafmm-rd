@@ -1,6 +1,7 @@
 #include "traverser.h"
 #include <queue>
 #include <set>
+#include <omp.h>
 
 rtfmm::Traverser::Traverser()
 {
@@ -34,8 +35,6 @@ static std::vector<rtfmm::LogicCoord> get_legal_cousins(rtfmm::LogicCoord& xlogi
 
 void rtfmm::Traverser::traverse(Tree& tree)
 {
-    std::cout<<"traverse"<<std::endl;
-
     std::map<int, std::set<int>> m2l_set;
     std::map<int, std::set<int>> p2p_set;
     std::map<int, std::set<int>> m2p_set;

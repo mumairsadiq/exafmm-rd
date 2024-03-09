@@ -123,7 +123,12 @@ struct Cell
     int qidx;
 
     // check potential matrix index, -1 means unassigned, this often means its L is unnecessary
-    int pidx;    
+    int pidx;
+
+    Matrix q_equiv;
+    Matrix p_check;
+
+    Bodies bs; 
 
     friend std::ostream &operator<<(std::ostream & os, const Cell & cell) 
     {
@@ -195,6 +200,13 @@ public:
                 + ((bx[1] > cx[1]) << 1)  //y
                 + ((bx[2] > cx[2]) << 2); //z
         return idx;
+    }
+
+    static vec3r get_child_cell_x(vec3r x_par, real r_par, int octant)
+    {
+        // TODO : for 27
+        LogicCoord lc = LogicCoord(0,0,0,0).child(octant);
+        return logic2phys(lc, r_par, x_par);
     }
 
 public:

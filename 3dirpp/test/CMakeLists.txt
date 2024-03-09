@@ -6,6 +6,8 @@ set(exec
     test_tree
     test_traverser
     test_fft
+    test_kernel
+    test_p2p
 )
 
 foreach(filename IN LISTS exec)
