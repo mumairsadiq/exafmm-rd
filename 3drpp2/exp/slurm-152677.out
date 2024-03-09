@@ -1,0 +1,666 @@
+Sun Jan 28 22:40:42 2024       
++---------------------------------------------------------------------------------------+
+| NVIDIA-SMI 535.54.03              Driver Version: 535.54.03    CUDA Version: 12.2     |
+|-----------------------------------------+----------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |         Memory-Usage | GPU-Util  Compute M. |
+|                                         |                      |               MIG M. |
+|=========================================+======================+======================|
+|   0  NVIDIA RTX 6000 Ada Gene...    Off | 00000000:61:00.0 Off |                  Off |
+| 30%   34C    P8              28W / 300W |     16MiB / 49140MiB |      0%      Default |
+|                                         |                      |                  N/A |
++-----------------------------------------+----------------------+----------------------+
+                                                                                         
++---------------------------------------------------------------------------------------+
+| Processes:                                                                            |
+|  GPU   GI   CI        PID   Type   Process name                            GPU Memory |
+|        ID   ID                                                             Usage      |
+|=======================================================================================|
++---------------------------------------------------------------------------------------+
+<rtfmm_3dpp_test_pbc>
+
+input parameters=[
+  P                    = 6
+  n                    = 24000
+  ncrit                = 128
+  images               = 0
+  cycle                = 6.2832
+  ewald_ksize          = 11
+  (f,d,e)              = (1,0,1)
+  num_compare          = 24000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 1
+  zero_netcharge       = 1
+  print_body_number    = 3
+  divide_4pi           = 0
+  setting_t            = 0
+]
+
+[tree_traverse time measured : 0.01285 seconds.]
+[init_cell_matrix time measured : 0.00040 seconds.]
+[precompute_others time measured : 0.02219 seconds.]
+[precompute_m2l time measured : 0.01922 seconds.]
+[precompute time measured : 0.04144 seconds.]
+[P2M time measured : 0.00192 seconds.]
+[M2M time measured : 0.00080 seconds.]
+[setup time measured : 0.00036 seconds.]
+[prepare_memory time measured : 0.00051 seconds.]
+[up time measured : 0.00091 seconds.]
+[hadamard_8x8 time measured : 0.00253 seconds.]
+[down time measured : 0.00057 seconds.]
+[store time measured : 0.00004 seconds.]
+[M2L time measured : 0.00568 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.00082 seconds.]
+[L2P time measured : 0.00124 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.00431 seconds.]
+[FMM_kernels time measured : 0.01487 seconds.]
+[FMM time measured : 0.07108 seconds.]
+[real_part time measured : 23.25483 seconds.]
+[fourier_part time measured : 2.10717 seconds.]
+[self_correction time measured : 0.00021 seconds.]
+[EWALD time measured : 25.36538 seconds.]
+pnrm = 2973740.69023801
+------------------------------FMM vs Ewald------------------------------[24000]
+L2  (p)  : 4.48378e+01   L2  (f)  : 8.39721e-02   L2  (e)  : 1.01934e+01
+Rms (p)  : 4.99103e+02   Rms (f)  : 1.06265e+01
+p-energy1 : -2.549454756416e+02
+p-energy2 : 2.773120969004e+01
+
+<rtfmm_3dpp_test_pbc>
+
+input parameters=[
+  P                    = 6
+  n                    = 24000
+  ncrit                = 128
+  images               = 1
+  cycle                = 6.2832
+  ewald_ksize          = 11
+  (f,d,e)              = (1,0,1)
+  num_compare          = 24000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 1
+  zero_netcharge       = 1
+  print_body_number    = 3
+  divide_4pi           = 0
+  setting_t            = 0
+]
+
+[tree_traverse time measured : 0.03347 seconds.]
+[init_cell_matrix time measured : 0.00035 seconds.]
+[precompute_others time measured : 0.01643 seconds.]
+[precompute_m2l time measured : 0.01293 seconds.]
+[precompute time measured : 0.02938 seconds.]
+[P2M time measured : 0.00138 seconds.]
+[M2M time measured : 0.00070 seconds.]
+[setup time measured : 0.00067 seconds.]
+[prepare_memory time measured : 0.00051 seconds.]
+[up time measured : 0.00086 seconds.]
+[hadamard_8x8 time measured : 0.00371 seconds.]
+[down time measured : 0.00055 seconds.]
+[store time measured : 0.00004 seconds.]
+[M2L time measured : 0.00705 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.00080 seconds.]
+[L2P time measured : 0.00125 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.00559 seconds.]
+[FMM_kernels time measured : 0.01690 seconds.]
+[FMM time measured : 0.08192 seconds.]
+[real_part time measured : 23.25469 seconds.]
+[fourier_part time measured : 2.11424 seconds.]
+[self_correction time measured : 0.00009 seconds.]
+[EWALD time measured : 25.37205 seconds.]
+pnrm = 2973740.69023801
+------------------------------FMM vs Ewald------------------------------[24000]
+L2  (p)  : 4.48377e+01   L2  (f)  : 1.66203e-03   L2  (e)  : 4.50576e-01
+Rms (p)  : 4.99102e+02   Rms (f)  : 2.10327e-01
+p-energy1 : 1.523619723846e+01
+p-energy2 : 2.773120969004e+01
+
+<rtfmm_3dpp_test_pbc>
+
+input parameters=[
+  P                    = 6
+  n                    = 24000
+  ncrit                = 128
+  images               = 2
+  cycle                = 6.2832
+  ewald_ksize          = 11
+  (f,d,e)              = (1,0,1)
+  num_compare          = 24000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 1
+  zero_netcharge       = 1
+  print_body_number    = 3
+  divide_4pi           = 0
+  setting_t            = 0
+]
+
+[tree_traverse time measured : 0.03288 seconds.]
+[init_cell_matrix time measured : 0.00033 seconds.]
+[precompute_others time measured : 0.01938 seconds.]
+[precompute_m2l time measured : 0.01805 seconds.]
+[precompute time measured : 0.03745 seconds.]
+[P2M time measured : 0.00142 seconds.]
+[M2M time measured : 0.00113 seconds.]
+[setup time measured : 0.00065 seconds.]
+[prepare_memory time measured : 0.00049 seconds.]
+[up time measured : 0.00151 seconds.]
+[hadamard_8x8 time measured : 0.00592 seconds.]
+[hadamard_1x27 time measured : 0.00020 seconds.]
+[down time measured : 0.00059 seconds.]
+[store time measured : 0.00004 seconds.]
+[M2L time measured : 0.01010 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.00093 seconds.]
+[L2P time measured : 0.00124 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.00566 seconds.]
+[FMM_kernels time measured : 0.02060 seconds.]
+[FMM time measured : 0.09309 seconds.]
+[real_part time measured : 23.27829 seconds.]
+[fourier_part time measured : 2.12779 seconds.]
+[self_correction time measured : 0.00008 seconds.]
+[EWALD time measured : 25.40920 seconds.]
+pnrm = 2973740.69023801
+------------------------------FMM vs Ewald------------------------------[24000]
+L2  (p)  : 4.48377e+01   L2  (f)  : 1.83748e-04   L2  (e)  : 4.81843e-02
+Rms (p)  : 4.99102e+02   Rms (f)  : 2.32529e-02
+p-energy1 : 2.639499940725e+01
+p-energy2 : 2.773120969004e+01
+
+<rtfmm_3dpp_test_pbc>
+
+input parameters=[
+  P                    = 6
+  n                    = 24000
+  ncrit                = 128
+  images               = 3
+  cycle                = 6.2832
+  ewald_ksize          = 11
+  (f,d,e)              = (1,0,1)
+  num_compare          = 24000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 1
+  zero_netcharge       = 1
+  print_body_number    = 3
+  divide_4pi           = 0
+  setting_t            = 0
+]
+
+[tree_traverse time measured : 0.03221 seconds.]
+[init_cell_matrix time measured : 0.00036 seconds.]
+[precompute_others time measured : 0.02054 seconds.]
+[precompute_m2l time measured : 0.01887 seconds.]
+[precompute time measured : 0.03945 seconds.]
+[P2M time measured : 0.00145 seconds.]
+[M2M time measured : 0.00136 seconds.]
+[setup time measured : 0.00057 seconds.]
+[prepare_memory time measured : 0.00052 seconds.]
+[up time measured : 0.00089 seconds.]
+[hadamard_8x8 time measured : 0.00371 seconds.]
+[hadamard_1x27 time measured : 0.00016 seconds.]
+[down time measured : 0.00058 seconds.]
+[store time measured : 0.00002 seconds.]
+[M2L time measured : 0.00751 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.00092 seconds.]
+[L2P time measured : 0.00132 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.00563 seconds.]
+[FMM_kernels time measured : 0.01829 seconds.]
+[FMM time measured : 0.09206 seconds.]
+[real_part time measured : 23.29038 seconds.]
+[fourier_part time measured : 2.13397 seconds.]
+[self_correction time measured : 0.00026 seconds.]
+[EWALD time measured : 25.42755 seconds.]
+pnrm = 2973740.69023801
+------------------------------FMM vs Ewald------------------------------[24000]
+L2  (p)  : 4.48377e+01   L2  (f)  : 2.16405e-05   L2  (e)  : 5.27705e-03
+Rms (p)  : 4.99102e+02   Rms (f)  : 2.73856e-03
+p-energy1 : 2.758487072332e+01
+p-energy2 : 2.773120969004e+01
+
+<rtfmm_3dpp_test_pbc>
+
+input parameters=[
+  P                    = 6
+  n                    = 24000
+  ncrit                = 128
+  images               = 4
+  cycle                = 6.2832
+  ewald_ksize          = 11
+  (f,d,e)              = (1,0,1)
+  num_compare          = 24000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 1
+  zero_netcharge       = 1
+  print_body_number    = 3
+  divide_4pi           = 0
+  setting_t            = 0
+]
+
+[tree_traverse time measured : 0.03726 seconds.]
+[init_cell_matrix time measured : 0.00032 seconds.]
+[precompute_others time measured : 0.02025 seconds.]
+[precompute_m2l time measured : 0.01816 seconds.]
+[precompute time measured : 0.03843 seconds.]
+[P2M time measured : 0.00122 seconds.]
+[M2M time measured : 0.00141 seconds.]
+[setup time measured : 0.00054 seconds.]
+[prepare_memory time measured : 0.00050 seconds.]
+[up time measured : 0.00086 seconds.]
+[hadamard_8x8 time measured : 0.00370 seconds.]
+[hadamard_1x27 time measured : 0.00021 seconds.]
+[down time measured : 0.00082 seconds.]
+[store time measured : 0.00005 seconds.]
+[M2L time measured : 0.00768 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.00086 seconds.]
+[L2P time measured : 0.00156 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.00805 seconds.]
+[FMM_kernels time measured : 0.02091 seconds.]
+[FMM time measured : 0.09876 seconds.]
+[real_part time measured : 23.26106 seconds.]
+[fourier_part time measured : 2.11264 seconds.]
+[self_correction time measured : 0.00008 seconds.]
+[EWALD time measured : 25.37684 seconds.]
+pnrm = 2973740.69023801
+------------------------------FMM vs Ewald------------------------------[24000]
+L2  (p)  : 4.48378e+01   L2  (f)  : 6.91785e-06   L2  (e)  : 4.01343e-04
+Rms (p)  : 4.99103e+02   Rms (f)  : 8.75440e-04
+p-energy1 : 2.772007996355e+01
+p-energy2 : 2.773120969004e+01
+
+<rtfmm_3dpp_test_pbc>
+
+input parameters=[
+  P                    = 6
+  n                    = 24000
+  ncrit                = 128
+  images               = 5
+  cycle                = 6.2832
+  ewald_ksize          = 11
+  (f,d,e)              = (1,0,1)
+  num_compare          = 24000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 1
+  zero_netcharge       = 1
+  print_body_number    = 3
+  divide_4pi           = 0
+  setting_t            = 0
+]
+
+[tree_traverse time measured : 0.03274 seconds.]
+[init_cell_matrix time measured : 0.00033 seconds.]
+[precompute_others time measured : 0.01928 seconds.]
+[precompute_m2l time measured : 0.01807 seconds.]
+[precompute time measured : 0.03737 seconds.]
+[P2M time measured : 0.00128 seconds.]
+[M2M time measured : 0.00154 seconds.]
+[setup time measured : 0.00054 seconds.]
+[prepare_memory time measured : 0.00049 seconds.]
+[up time measured : 0.00086 seconds.]
+[hadamard_8x8 time measured : 0.00374 seconds.]
+[hadamard_1x27 time measured : 0.00021 seconds.]
+[down time measured : 0.00062 seconds.]
+[store time measured : 0.00003 seconds.]
+[M2L time measured : 0.00724 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.00085 seconds.]
+[L2P time measured : 0.00123 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.00559 seconds.]
+[FMM_kernels time measured : 0.01785 seconds.]
+[FMM time measured : 0.09011 seconds.]
+[real_part time measured : 23.27748 seconds.]
+[fourier_part time measured : 2.11509 seconds.]
+[self_correction time measured : 0.00010 seconds.]
+[EWALD time measured : 25.39572 seconds.]
+pnrm = 2973740.69023801
+------------------------------FMM vs Ewald------------------------------[24000]
+L2  (p)  : 4.48378e+01   L2  (f)  : 6.47026e-06   L2  (e)  : 2.50108e-04
+Rms (p)  : 4.99103e+02   Rms (f)  : 8.18799e-04
+p-energy1 : 2.773814549285e+01
+p-energy2 : 2.773120969004e+01
+
+<rtfmm_3dpp_test_pbc>
+
+input parameters=[
+  P                    = 6
+  n                    = 24000
+  ncrit                = 128
+  images               = 6
+  cycle                = 6.2832
+  ewald_ksize          = 11
+  (f,d,e)              = (1,0,1)
+  num_compare          = 24000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 1
+  zero_netcharge       = 1
+  print_body_number    = 3
+  divide_4pi           = 0
+  setting_t            = 0
+]
+
+[tree_traverse time measured : 0.03518 seconds.]
+[init_cell_matrix time measured : 0.00036 seconds.]
+[precompute_others time measured : 0.02032 seconds.]
+[precompute_m2l time measured : 0.01845 seconds.]
+[precompute time measured : 0.03880 seconds.]
+[P2M time measured : 0.00125 seconds.]
+[M2M time measured : 0.00165 seconds.]
+[setup time measured : 0.00056 seconds.]
+[prepare_memory time measured : 0.00050 seconds.]
+[up time measured : 0.00089 seconds.]
+[hadamard_8x8 time measured : 0.00372 seconds.]
+[hadamard_1x27 time measured : 0.00022 seconds.]
+[down time measured : 0.00060 seconds.]
+[store time measured : 0.00004 seconds.]
+[M2L time measured : 0.00729 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.00088 seconds.]
+[L2P time measured : 0.00127 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.00554 seconds.]
+[FMM_kernels time measured : 0.01800 seconds.]
+[FMM time measured : 0.09415 seconds.]
+[real_part time measured : 23.30572 seconds.]
+[fourier_part time measured : 2.11772 seconds.]
+[self_correction time measured : 0.00008 seconds.]
+[EWALD time measured : 25.42656 seconds.]
+pnrm = 2973740.69023801
+------------------------------FMM vs Ewald------------------------------[24000]
+L2  (p)  : 4.48383e+01   L2  (f)  : 6.46722e-06   L2  (e)  : 4.32718e-04
+Rms (p)  : 4.99108e+02   Rms (f)  : 8.18413e-04
+p-energy1 : 2.774320948538e+01
+p-energy2 : 2.773120969004e+01
+
+<rtfmm_3dpp_test_pbc>
+
+input parameters=[
+  P                    = 6
+  n                    = 24000
+  ncrit                = 128
+  images               = 7
+  cycle                = 6.2832
+  ewald_ksize          = 11
+  (f,d,e)              = (1,0,1)
+  num_compare          = 24000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 1
+  zero_netcharge       = 1
+  print_body_number    = 3
+  divide_4pi           = 0
+  setting_t            = 0
+]
+
+[tree_traverse time measured : 0.03586 seconds.]
+[init_cell_matrix time measured : 0.00036 seconds.]
+[precompute_others time measured : 0.01631 seconds.]
+[precompute_m2l time measured : 0.01854 seconds.]
+[precompute time measured : 0.03488 seconds.]
+[P2M time measured : 0.00121 seconds.]
+[M2M time measured : 0.00177 seconds.]
+[setup time measured : 0.00058 seconds.]
+[prepare_memory time measured : 0.00050 seconds.]
+[up time measured : 0.00086 seconds.]
+[hadamard_8x8 time measured : 0.00373 seconds.]
+[hadamard_1x27 time measured : 0.00024 seconds.]
+[down time measured : 0.00060 seconds.]
+[store time measured : 0.00004 seconds.]
+[M2L time measured : 0.00731 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.00087 seconds.]
+[L2P time measured : 0.00123 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.00559 seconds.]
+[FMM_kernels time measured : 0.01811 seconds.]
+[FMM time measured : 0.09106 seconds.]
+[real_part time measured : 23.27120 seconds.]
+[fourier_part time measured : 2.11516 seconds.]
+[self_correction time measured : 0.00010 seconds.]
+[EWALD time measured : 25.38951 seconds.]
+pnrm = 2973740.69023801
+------------------------------FMM vs Ewald------------------------------[24000]
+L2  (p)  : 4.48582e+01   L2  (f)  : 6.49009e-06   L2  (e)  : 5.66832e-04
+Rms (p)  : 4.99330e+02   Rms (f)  : 8.21308e-04
+p-energy1 : 2.774692864068e+01
+p-energy2 : 2.773120969004e+01
+
+<rtfmm_3dpp_test_pbc>
+
+input parameters=[
+  P                    = 6
+  n                    = 24000
+  ncrit                = 128
+  images               = 8
+  cycle                = 6.2832
+  ewald_ksize          = 11
+  (f,d,e)              = (1,0,1)
+  num_compare          = 24000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 1
+  zero_netcharge       = 1
+  print_body_number    = 3
+  divide_4pi           = 0
+  setting_t            = 0
+]
+
+[tree_traverse time measured : 0.03236 seconds.]
+[init_cell_matrix time measured : 0.00034 seconds.]
+[precompute_others time measured : 0.01951 seconds.]
+[precompute_m2l time measured : 0.01827 seconds.]
+[precompute time measured : 0.03783 seconds.]
+[P2M time measured : 0.00126 seconds.]
+[M2M time measured : 0.00189 seconds.]
+[setup time measured : 0.00056 seconds.]
+[prepare_memory time measured : 0.00052 seconds.]
+[up time measured : 0.00088 seconds.]
+[hadamard_8x8 time measured : 0.00373 seconds.]
+[hadamard_1x27 time measured : 0.00026 seconds.]
+[down time measured : 0.00060 seconds.]
+[store time measured : 0.00004 seconds.]
+[M2L time measured : 0.00735 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.00099 seconds.]
+[L2P time measured : 0.00132 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.00571 seconds.]
+[FMM_kernels time measured : 0.01866 seconds.]
+[FMM time measured : 0.09116 seconds.]
+[real_part time measured : 23.27316 seconds.]
+[fourier_part time measured : 2.11639 seconds.]
+[self_correction time measured : 0.00009 seconds.]
+[EWALD time measured : 25.39294 seconds.]
+pnrm = 2973740.69023801
+------------------------------FMM vs Ewald------------------------------[24000]
+L2  (p)  : 4.62757e+01   L2  (f)  : 7.08275e-06   L2  (e)  : 7.27803e-04
+Rms (p)  : 5.15108e+02   Rms (f)  : 8.96308e-04
+p-energy1 : 2.775139253826e+01
+p-energy2 : 2.773120969004e+01
+
+<rtfmm_3dpp_test_pbc>
+
+input parameters=[
+  P                    = 6
+  n                    = 24000
+  ncrit                = 128
+  images               = 9
+  cycle                = 6.2832
+  ewald_ksize          = 11
+  (f,d,e)              = (1,0,1)
+  num_compare          = 24000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 1
+  zero_netcharge       = 1
+  print_body_number    = 3
+  divide_4pi           = 0
+  setting_t            = 0
+]
+
+[tree_traverse time measured : 0.03679 seconds.]
+[init_cell_matrix time measured : 0.00035 seconds.]
+[precompute_others time measured : 0.02098 seconds.]
+[precompute_m2l time measured : 0.01852 seconds.]
+[precompute time measured : 0.03953 seconds.]
+[P2M time measured : 0.00125 seconds.]
+[M2M time measured : 0.00198 seconds.]
+[setup time measured : 0.00057 seconds.]
+[prepare_memory time measured : 0.00053 seconds.]
+[up time measured : 0.00087 seconds.]
+[hadamard_8x8 time measured : 0.00371 seconds.]
+[hadamard_1x27 time measured : 0.00028 seconds.]
+[down time measured : 0.00061 seconds.]
+[store time measured : 0.00004 seconds.]
+[M2L time measured : 0.00741 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.00092 seconds.]
+[L2P time measured : 0.00127 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.00552 seconds.]
+[FMM_kernels time measured : 0.01846 seconds.]
+[FMM time measured : 0.09696 seconds.]
+[real_part time measured : 23.28949 seconds.]
+[fourier_part time measured : 2.13022 seconds.]
+[self_correction time measured : 0.00011 seconds.]
+[EWALD time measured : 25.42290 seconds.]
+pnrm = 2973740.69023801
+------------------------------FMM vs Ewald------------------------------[24000]
+L2  (p)  : 1.11641e+02   L2  (f)  : 2.54094e-05   L2  (e)  : 1.18194e-03
+Rms (p)  : 1.24271e+03   Rms (f)  : 3.21551e-03
+p-energy1 : 2.776398630409e+01
+p-energy2 : 2.773120969004e+01
+
+<rtfmm_3dpp_test_pbc>
+
+input parameters=[
+  P                    = 6
+  n                    = 24000
+  ncrit                = 128
+  images               = 10
+  cycle                = 6.2832
+  ewald_ksize          = 11
+  (f,d,e)              = (1,0,1)
+  num_compare          = 24000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 1
+  zero_netcharge       = 1
+  print_body_number    = 3
+  divide_4pi           = 0
+  setting_t            = 0
+]
+
+[tree_traverse time measured : 0.03514 seconds.]
+[init_cell_matrix time measured : 0.00032 seconds.]
+[precompute_others time measured : 0.02027 seconds.]
+[precompute_m2l time measured : 0.01841 seconds.]
+[precompute time measured : 0.03871 seconds.]
+[P2M time measured : 0.00124 seconds.]
+[M2M time measured : 0.00214 seconds.]
+[setup time measured : 0.00059 seconds.]
+[prepare_memory time measured : 0.00055 seconds.]
+[up time measured : 0.00093 seconds.]
+[hadamard_8x8 time measured : 0.00375 seconds.]
+[hadamard_1x27 time measured : 0.00031 seconds.]
+[down time measured : 0.00065 seconds.]
+[store time measured : 0.00004 seconds.]
+[M2L time measured : 0.00760 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.00105 seconds.]
+[L2P time measured : 0.00124 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.00559 seconds.]
+[FMM_kernels time measured : 0.01899 seconds.]
+[FMM time measured : 0.09500 seconds.]
+[real_part time measured : 23.28755 seconds.]
+[fourier_part time measured : 2.11438 seconds.]
+[self_correction time measured : 0.00008 seconds.]
+[EWALD time measured : 25.40506 seconds.]
+pnrm = 2973740.69023801
+------------------------------FMM vs Ewald------------------------------[24000]
+L2  (p)  : 9.20486e+02   L2  (f)  : 2.20219e-04   L2  (e)  : 4.28030e-03
+Rms (p)  : 1.02462e+04   Rms (f)  : 2.78683e-02
+p-energy1 : 2.784990744836e+01
+p-energy2 : 2.773120969004e+01
+
