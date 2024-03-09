@@ -22,6 +22,7 @@ set(exec
     #test_fft2
     #test_simd
     #test_up
+    test_reg
 )
 
 foreach(filename IN LISTS exec)

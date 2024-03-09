@@ -27,6 +27,7 @@ public:
     int num_compare;
     int ewald_ksize;
     int th_num;
+    real rega;
 
     int dipole_correction;
     int zero_netcharge;

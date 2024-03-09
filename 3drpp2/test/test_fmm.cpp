@@ -27,26 +27,17 @@ int main(int argc, char* argv[])
     /* solve directly */
     rtfmm::Bodies3 res_direct = bs;
     rtfmm::LaplaceKernel kernel;
-    rtfmm::Cell3 cell;
-    cell.brange = {0, args.n};
-    TIME_BEGIN(direct);
-    kernel.p2p(bs, res_direct, cell, cell, rtfmm::vec3r(0,0,0), args.use_simd);
-    /*std::vector<rtfmm::vec3r> xs = rtfmm::get_bodies_x(res_direct, cell.brange);
-    std::vector<rtfmm::real> qs = rtfmm::get_bodies_q(res_direct, cell.brange).d;
-    std::vector<rtfmm::real> ps(args.n);
-    std::vector<rtfmm::vec3r> fs(args.n);
-    rtfmm::LaplaceKernel::p2p_pf(xs,qs,xs,ps,fs);
-    rtfmm::Matrix psmat(args.n, 1);
-    psmat.d = ps;
-    rtfmm::Matriv fsmat(args.n, 1);
-    fsmat.d = fs;
-    rtfmm::add_boides_p(res_direct,psmat,cell.brange);
-    rtfmm::add_boides_f(res_direct,fsmat,cell.brange);*/
-    if(args.divide_4pi)
-        rtfmm::scale_bodies(res_direct);
+    rtfmm::Cell3 cell_src;
+    cell_src.brange = {0, args.n};
+    rtfmm::Cell3 cell_tar;
+    cell_tar.brange = {0, args.num_compare};
+    TIME_BEGIN(DIRECT);
+    kernel.direct(res_direct, res_direct, args.images, args.cycle);
     if(args.dipole_correction)
         rtfmm::dipole_correction(res_direct, args.cycle);
-    if(args.timing) {TIME_END(direct);}
+    if(args.divide_4pi)
+        rtfmm::scale_bodies(res_direct);
+    if(args.timing) {TIME_END(DIRECT);}
 
     /* compare */
     if(rtfmm::verbose)

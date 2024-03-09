@@ -24,14 +24,7 @@ struct Cell3
     Matrix q_equiv;
     Matrix p_check;
 
-    int M;
-    int L;
-
-    Cell3()
-    {
-        M = 0;
-        L = 0;
-    }
+    Bodies3 bs;
 
     friend std::ostream &operator<<(std::ostream & os, const Cell3 & cell) 
     {

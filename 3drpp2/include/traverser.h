@@ -43,7 +43,7 @@ class Traverser
 public:
     Traverser();
 
-    void traverse(Tree& tree, real cycle = 2 * M_PI, int images = 0);
+    void traverse(Tree& tree, real cycle = 2 * M_PI, int images = 0, int P = 4);
 
     PeriodicInteractionPairs get_pairs(OperatorType type);
 
@@ -87,6 +87,8 @@ private:
     void make_M2L_parent_map_i1(real cycle);
 
     Cells3 cells;
+
+    int P;
 
 public:
     PeriodicInteractionPairs P2P_pairs;

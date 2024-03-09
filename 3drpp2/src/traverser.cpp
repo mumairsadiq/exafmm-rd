@@ -1,5 +1,6 @@
 #include "traverser.h"
 #include "argument.h"
+#include "surface.h"
 
 rtfmm::InteractionPair rtfmm::make_pair(int tar, int src)
 {
@@ -16,8 +17,9 @@ rtfmm::Traverser::Traverser()
     
 }
 
-void rtfmm::Traverser::traverse(Tree& tree, real cycle, int images)
+void rtfmm::Traverser::traverse(Tree& tree, real cycle, int images, int P)
 {
+    this->P = P;
     cells = tree.get_cells();
     if(images == 0)
     {
@@ -74,19 +76,29 @@ void rtfmm::Traverser::horizontal_origin(int tc, int sc, int tcp, int scp, vec3r
     {
         if(adjacent(tc, scp, offset) && is_leaf(tc) && cells[scp].depth >= cells[tc].depth)
         {
-            //M2P_pairs.push_back(make_pair(tc, sc, offset));
-            P2P_pairs.push_back(make_pair(tc, sc, offset));
-            P2P_map[tc].push_back(std::make_pair(sc, offset));
+            if(is_leaf(sc) && cells[sc].brange.number <= get_surface_point_num(P))
+            {
+                P2P_map[tc].push_back(std::make_pair(sc, offset));
+            }
+            else
+            {
+                M2P_pairs.push_back(make_pair(tc, sc, offset));
+                std::cout<<"M2P"<<std::endl;
+            }
         }
         else if(adjacent(tcp, sc, offset) && is_leaf(sc) && cells[tcp].depth >= cells[sc].depth)
         {
-            //P2L_pairs.push_back(make_pair(tc, sc, offset));
-            P2P_pairs.push_back(make_pair(tc, sc, offset));
-            P2P_map[tc].push_back(std::make_pair(sc, offset));
+            if(is_leaf(tc) && cells[tc].brange.number <= get_surface_point_num(P))
+            {
+                P2P_map[tc].push_back(std::make_pair(sc, offset));
+            }
+            else
+            {
+                P2L_pairs.push_back(make_pair(tc, sc, offset));
+            }
         }
         else if(neighbour(tcp, scp, offset))
         {
-            M2L_pairs.push_back(make_pair(tc, sc, offset));
             M2L_map[tc].push_back(std::make_pair(sc, offset));
         }
         else
@@ -113,7 +125,6 @@ void rtfmm::Traverser::horizontal_origin(int tc, int sc, int tcp, int scp, vec3r
     {
         if(is_leaf(tc) && is_leaf(sc))
         {
-            P2P_pairs.push_back(make_pair(tc, sc, offset));
             P2P_map[tc].push_back(std::make_pair(sc, offset));
         }
         else if(!is_leaf(tc) && is_leaf(sc))

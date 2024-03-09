@@ -15,6 +15,7 @@ rtfmm::Argument::Argument(int argc, char* argv[])
     cmd.add<int>("images", 'i', "periodic images depth", false, 0, cmdline::range(0, 20));
     cmd.add<int>("verbose", 'v', "is verbose", false, 0);
     cmd.add<real>("cycle", 'c', "cycle of images(or box_r)", false, 2 * M_PI);
+    cmd.add<real>("rega", 'r', "rega", false, 0);
     cmd.add<int>("num_compare", 0, "compare number of target body(also direct calculation number)", false, -1);
     cmd.add<int>("ewald_ksize", 0, "ksize of ewald DFT", false, 11);
     cmd.add<int>("th_num", 0, "number of omp threads", false, 8);
@@ -45,6 +46,7 @@ rtfmm::Argument::Argument(int argc, char* argv[])
     divide_4pi = cmd.get<int>("divide_4pi");
     use_simd = cmd.get<int>("use_simd");
     setting_t = cmd.get<int>("setting_t");
+    rega = cmd.get<real>("rega");
 
     num_compare = cmd.get<int>("num_compare");
     if(num_compare == -1) num_compare = n;
@@ -80,6 +82,7 @@ void rtfmm::Argument::show()
     printf("  %-20s = %d\n","ncrit",ncrit);
     printf("  %-20s = %d\n","images",images);
     printf("  %-20s = %.4f\n","cycle",cycle);
+    printf("  %-20s = %.6f\n","rega",rega);
     printf("  %-20s = %d\n","ewald_ksize",ewald_ksize);
     printf("  %-20s = (%d,%d,%d)\n","(f,d,e)",enable_fmm,enable_direct,enable_ewald);
     printf("  %-20s = %d\n","num_compare",num_compare);
