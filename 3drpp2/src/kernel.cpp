@@ -76,7 +76,7 @@ void rtfmm::LaplaceKernel::direct(Bodies3& bs_src, Bodies3& bs_tar, int images, 
     }
 }
 
-void rtfmm::LaplaceKernel::p2p_1toN_256(Cells3& cs, std::vector<std::pair<int, vec3r>>& p2ps, Cell3& cell_tar)
+void rtfmm::LaplaceKernel::p2p_1toN_256(Cells3& srcs, std::vector<std::pair<int, vec3r>>& p2ps, Cell3& cell_tar)
 {
     vec4d zero(0);
     vec4d one(1);
@@ -98,7 +98,7 @@ void rtfmm::LaplaceKernel::p2p_1toN_256(Cells3& cs, std::vector<std::pair<int, v
         vec4d pj(0),fxj(0),fyj(0),fzj(0);
         for(int si = 0; si < p2ps.size(); si++)
         {
-            Cell3& cell_src = cs[p2ps[si].first];
+            Cell3& cell_src = srcs[p2ps[si].first];
             vec3r& offset = p2ps[si].second;
             for(int i = 0; i < cell_src.bs.size(); i++)
             {
@@ -330,14 +330,15 @@ void rtfmm::LaplaceKernel::hadamard_1x27(
     }
 }
 
-void rtfmm::LaplaceKernel::m2l_fft_precompute_t(int P, Cells3& cs, PeriodicM2LMap& m2l_parent_map)
+void rtfmm::LaplaceKernel::m2l_fft_precompute_t(int P, Cells3& tartree, Cells3& srctree, PeriodicM2LMap& m2l_parent_map)
 {
     // setup
     tbegin(setup);
     const int MAX_CHILD_NUM = 8;
-    int num_cell = cs.size();
+    int tartree_size = tartree.size();
+    int srctree_size = srctree.size();
     int num_surf = get_surface_point_num(P);
-    conv_grid_setting cgrid(P, cs[0].r);
+    conv_grid_setting cgrid(P, 0);
     int dim[3] = {cgrid.N, cgrid.N, cgrid.N};
     std::map<int,rtfmm::vec3i> surf_conv_map = get_surface_conv_map(P);
     size_t fft_size = 2 * MAX_CHILD_NUM * cgrid.N_freq;
@@ -372,11 +373,11 @@ void rtfmm::LaplaceKernel::m2l_fft_precompute_t(int P, Cells3& cs, PeriodicM2LMa
     std::vector<size_t> ifft_offset(num_tar_cell);
     for(int i = 0; i < num_src_cell; i++)
     {
-        fft_offset[i] = cs[src_cell_idxs[i]].crange.offset * num_surf;
+        fft_offset[i] = srctree[src_cell_idxs[i]].crange.offset * num_surf;
     }
     for(int i = 0; i < num_tar_cell; i++)
     {
-        ifft_offset[i] = cs[tar_cell_idxs[i]].crange.offset * num_surf;
+        ifft_offset[i] = tartree[tar_cell_idxs[i]].crange.offset * num_surf;
     }
 
     std::map<int, int> rel2idx_map = get_relx_idx_map(1,1);
@@ -384,7 +385,7 @@ void rtfmm::LaplaceKernel::m2l_fft_precompute_t(int P, Cells3& cs, PeriodicM2LMa
     for(int i = 0; i < tar_cell_idxs.size(); i++)
     {
         int tar_idx = tar_cell_idxs[i];
-        Cell3& tar_cell = cs[tar_idx];
+        Cell3& tar_cell = tartree[tar_idx];
         std::vector<PeriodicParentSource> m2l_list = m2l_parent_map[tar_idx];
         for(int d = 0; d < 26; d++)
         {
@@ -395,7 +396,7 @@ void rtfmm::LaplaceKernel::m2l_fft_precompute_t(int P, Cells3& cs, PeriodicM2LMa
             int src_idx = m2l_list[j].idx;
             vec3r src_offset = m2l_list[j].offset;
             int is_image = m2l_list[j].is_single_parent;
-            Cell3& src_cell = cs[src_idx];
+            Cell3& src_cell = srctree[src_idx];
             vec3r rv = (src_cell.x + src_offset - tar_cell.x) / (tar_cell.r * 2);
             vec3i rvi(std::round(rv[0]), std::round(rv[1]), std::round(rv[2]));
             int octant = rel2idx_map[hash(rvi)];
@@ -455,17 +456,24 @@ void rtfmm::LaplaceKernel::m2l_fft_precompute_t(int P, Cells3& cs, PeriodicM2LMa
     tbegin(prepare_memory);
     std::vector<real> Q_all, P_all;
     AlignedVec Qk_all, Pk_all;
-    Q_all.reserve(num_cell * num_surf);
-    P_all.reserve(num_cell * num_surf);
+    Q_all.reserve(srctree_size * num_surf);
+    P_all.reserve(tartree_size * num_surf);
     Qk_all.reserve(num_src_cell * fft_size);
     Pk_all.reserve(num_tar_cell * fft_size);
     #pragma omp parallel for collapse(2)
-    for (int i = 0; i < num_cell; i++) 
+    for (int i = 0; i < srctree_size; i++) 
     {
         for (int k = 0; k < num_surf; k++) 
         {
-            Q_all[i * num_surf + k] = cs[i].q_equiv[k];
-            P_all[i * num_surf + k] = cs[i].p_check[k];
+            Q_all[i * num_surf + k] = srctree[i].q_equiv[k];
+        }
+    }
+    #pragma omp parallel for collapse(2)
+    for (int i = 0; i < tartree_size; i++) 
+    {
+        for (int k = 0; k < num_surf; k++) 
+        {
+            P_all[i * num_surf + k] = tartree[i].p_check[k];
         }
     }
     /* According to Fourier transformation addition theorem, interaction from different srcs are added up in Fourier space, so we need set Pk to zero in advance. */
@@ -498,10 +506,10 @@ void rtfmm::LaplaceKernel::m2l_fft_precompute_t(int P, Cells3& cs, PeriodicM2LMa
         {
             int idx = surf_conv_idx_map_up[k];
             int cpidx = src_cell_idxs[isrc];
-            Cell3& cp = cs[cpidx];
+            Cell3& cp = srctree[cpidx];
             for (int i = 0; i < cp.crange.number; i++)
             {
-                int octant = cs[cp.crange.offset + i].octant;
+                int octant = srctree[cp.crange.offset + i].octant;
                 octant = (octant == 13 ? 0 : octant); // for an image cell, it has only one child, so we store it in position 0
                 Qk_children[octant * cgrid.N3 + idx] = Q_children[i * num_surf + k]; // insert Q into conv grid
             }
@@ -561,14 +569,14 @@ void rtfmm::LaplaceKernel::m2l_fft_precompute_t(int P, Cells3& cs, PeriodicM2LMa
         }
         fftw_execute_dft_c2r(plan_down, (fftw_complex*)&buffer0[0], (real*)&buffer1[0]);
         int tar_idx = tar_cell_idxs[i];
-        Cell3& ctar = cs[tar_idx];
+        Cell3& ctar = tartree[tar_idx];
         real scale = std::pow(ctar.depth >= -1 ? 2 : 3, ctar.depth + 1); // since we store children's P, the depth should + 1
         for(int k = 0; k < num_surf; k++)
         {
             int idx = surf_conv_idx_map_down[k];
             for(int j = 0; j < ctar.crange.number; j++)
             {
-                int octant = cs[ctar.crange.offset + j].octant;
+                int octant = tartree[ctar.crange.offset + j].octant;
                 octant = (octant == 13 ? 0 : octant); // for an image cell, it has only one child, so we extract it from position 0
                 P_children[j * num_surf + k] += buffer1[cgrid.N3 * octant + idx] / cgrid.N3 * scale;
             }
@@ -579,11 +587,11 @@ void rtfmm::LaplaceKernel::m2l_fft_precompute_t(int P, Cells3& cs, PeriodicM2LMa
 
     tbegin(store);
     #pragma omp parallel for
-    for(int i = 0; i < num_cell; i++)
+    for(int i = 0; i < tartree_size; i++)
     {
         for(int k = 0; k < num_surf; k++)
         {
-            cs[i].p_check[k] += P_all[i * num_surf + k];
+            tartree[i].p_check[k] += P_all[i * num_surf + k];
         }
     }
     tend(store);
@@ -860,7 +868,7 @@ void rtfmm::LaplaceKernel::precompute(int P, real r0, int images)
     VSinvUT_l2p_precompute = mat_mat_mul(VSinv_l2p_precompute, UT_l2p_precompute);
 }
 
-void rtfmm::LaplaceKernel::precompute_m2l(int P, real r0, Cells3 cs, PeriodicInteractionMap m2l_map, int images)
+void rtfmm::LaplaceKernel::precompute_m2l(int P, real r0, PeriodicInteractionMap m2l_map, int images)
 {
     // for advanced2 and 3
     std::set<int> m2l_tar_set, m2l_src_set;

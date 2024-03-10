@@ -18,46 +18,33 @@ rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
     Tree tree;
     //tree.build(bs, args.x, args.r, args.ncrit, args.rega, Tree::TreeType::nonuniform);
     tree.build(bs, args.x, args.r, args.ncrit, args.rega, args.images, args.cycle, Tree::TreeType::regnonuniform);
-    cs = tree.get_cells();
+    //cs = tree.get_cells();
     tend(build_tree);
 
     /* traverse to get interaction list */
     tbegin(traverse);
     traverser.traverse(tree, args.cycle, args.images, args.P);
-    cs = traverser.get_cells();
-    tree_depth_range = get_min_max_depth(cs);
-    if(verbose) std::cout<<"tree_depth_range = "<<tree_depth_range<<std::endl;
+    //cs = traverser.get_cells();
+    tartree = traverser.get_cells();
+    srctree = tartree;
+    tartree_depth_range = get_min_max_depth(tartree);
+    srctree_depth_range = get_min_max_depth(srctree);
+    if(verbose) std::cout<<"tartree_depth_range = "<<tartree_depth_range<<std::endl;
+    if(verbose) std::cout<<"srctree_depth_range = "<<srctree_depth_range<<std::endl;
     tend(traverse);
     tend(build_and_traverse);
 
     tbegin(init_cell_matrix);
-    init_cell_matrix(cs);
+    init_cell_matrix(tartree);
+    init_cell_matrix(srctree);
     tend(init_cell_matrix);
 
-    std::cout<<"cell number = "<<cs.size()<<std::endl;
+    std::cout<<"tartree cell number = "<<tartree.size()<<std::endl;
+    std::cout<<"srctree cell number = "<<srctree.size()<<std::endl;
 
     tbegin(load_leaf_body);
-    for(int j = 0; j < cs.size(); j++)
-    {
-        Cell3& c = cs[j];
-        if(c.crange.number == 0)
-        {
-            for(int i = 0; i < c.brange.number; i++)
-            {
-                Body3& b = bs[c.brange.offset + i];
-                real w = LaplaceKernel::get_rega_w(b.x - c.x, c.r, args.rega);
-                c.bs.push_back(b);
-                c.ws.push_back(w);
-            }
-            for(int i = 0; i < c.rbs.size(); i++)
-            {
-                Body3& b = c.rbs[i];
-                real w = LaplaceKernel::get_rega_w(b.x - c.x, c.r, args.rega);
-                c.bs.push_back(b);
-                c.ws.push_back(w);
-            }
-        }
-    }
+    load_bodies(srctree);
+    load_bodies(tartree);
     tend(load_leaf_body);
 
     if(args.use_precompute)
@@ -67,7 +54,7 @@ rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
         kernel.precompute(args.P, args.r, args.images);
         TIME_END(precompute_others);
         TIME_BEGIN(precompute_m2l);
-        kernel.precompute_m2l(args.P, args.r, cs, traverser.get_map(OperatorType::M2L), args.images);
+        kernel.precompute_m2l(args.P, args.r, traverser.get_map(OperatorType::M2L), args.images);
         TIME_END(precompute_m2l);
         if(args.timing) {TIME_END(precompute);}
     }
@@ -85,9 +72,9 @@ rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
 
     // merge
     bs = sort_bodies_by_idx(bs);
-    for(int j = 0; j < cs.size(); j++)
+    for(int j = 0; j < tartree.size(); j++)
     {
-        Cell3& c = cs[j];
+        Cell3& c = tartree[j];
         if(c.crange.number == 0)
         {
             for(int i = 0; i < c.bs.size(); i++)
@@ -113,14 +100,14 @@ rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
 
 void rtfmm::LaplaceFMM::P2M()
 {
-    Indices lcidx = get_leaf_cell_indices(cs);
+    Indices lcidx = get_leaf_cell_indices(srctree);
     int leaf_number = lcidx.size();
     if(verbose) std::cout<<"P2M leaf_number = "<<leaf_number<<std::endl;
     TIME_BEGIN(P2M);
     #pragma omp parallel for
     for(int i = 0; i < leaf_number; i++)
     {
-        Cell3& c = cs[lcidx[i]];
+        Cell3& c = srctree[lcidx[i]];
         kernel.p2m_precompute(args.P, c);
     }
     if(args.timing)
@@ -132,21 +119,21 @@ void rtfmm::LaplaceFMM::P2M()
 void rtfmm::LaplaceFMM::M2M()
 {
     TIME_BEGIN(M2M);
-    for(int depth = tree_depth_range[1]; depth > tree_depth_range[0]; depth--)
+    for(int depth = srctree_depth_range[1]; depth > srctree_depth_range[0]; depth--)
     {
-        Indices nlcidx = get_nonleaf_cell_indices(cs, depth);
+        Indices nlcidx = get_nonleaf_cell_indices(srctree, depth);
         int num = nlcidx.size();
         #pragma omp parallel for
         for(int i = 0; i < num; i++)
         {
-            Cell3& ci = cs[nlcidx[i]];
+            Cell3& ci = srctree[nlcidx[i]];
             if(depth >= 0)
             {
-                kernel.m2m_precompute(args.P, ci, cs);
+                kernel.m2m_precompute(args.P, ci, srctree);
             }
             else
             {
-                kernel.m2m_img_precompute(args.P, ci, cs, args.cycle * std::pow(3, -depth - 1));
+                kernel.m2m_img_precompute(args.P, ci, srctree, args.cycle * std::pow(3, -depth - 1));
             }
         }
     }
@@ -166,7 +153,7 @@ void rtfmm::LaplaceFMM::M2L()
     //kernel.m2l_fft_precompute_advanced2(args.P, cs, m2l_map2);
     //kernel.m2l_fft_precompute_advanced2(args.P, cs, m2l_map);
     //kernel.m2l_fft_precompute_advanced3(args.P, cs, m2l_map, m2l_pairs);
-    kernel.m2l_fft_precompute_t(args.P, cs, m2l_parent_map);
+    kernel.m2l_fft_precompute_t(args.P, tartree, srctree, m2l_parent_map);
     if(args.timing)
     {
         TIME_END(M2L);
@@ -176,18 +163,18 @@ void rtfmm::LaplaceFMM::M2L()
 void rtfmm::LaplaceFMM::L2L()
 {
     TIME_BEGIN(L2L);
-    for(int depth = tree_depth_range[0]; depth < tree_depth_range[1]; depth++)
+    for(int depth = tartree_depth_range[0]; depth < tartree_depth_range[1]; depth++)
     {
-        Indices nlcidx = get_nonleaf_cell_indices(cs, depth);
+        Indices nlcidx = get_nonleaf_cell_indices(tartree, depth);
         int num = nlcidx.size();
         #pragma omp parallel for
         for(int i = 0; i < num; i++)
         {
-            Cell3& ci = cs[nlcidx[i]];
+            Cell3& ci = tartree[nlcidx[i]];
             if(depth >= 0)
-                kernel.l2l_precompute(args.P, ci, cs);
+                kernel.l2l_precompute(args.P, ci, tartree);
             else
-                kernel.l2l_img_precompute(args.P, ci, cs);
+                kernel.l2l_img_precompute(args.P, ci, tartree);
         }
     }
     if(args.timing)
@@ -199,13 +186,13 @@ void rtfmm::LaplaceFMM::L2L()
 void rtfmm::LaplaceFMM::L2P()
 {
     TIME_BEGIN(L2P);
-    Indices lcidx = get_leaf_cell_indices(cs);
+    Indices lcidx = get_leaf_cell_indices(tartree);
     int leaf_number = lcidx.size();
     if(verbose) std::cout<<"L2P leaf_number = "<<leaf_number<<std::endl;
     #pragma omp parallel for
     for(int i = 0; i < leaf_number; i++)
     {
-        Cell3& c = cs[lcidx[i]];
+        Cell3& c = tartree[lcidx[i]];
         kernel.l2p_precompute(args.P, c);
     }
     if(args.timing)
@@ -224,8 +211,8 @@ void rtfmm::LaplaceFMM::P2P()
     {
         auto p2p = p2p_map.begin();
         std::advance(p2p, i);
-        Cell3& ctar = cs[p2p->first];
-        kernel.p2p_1toN_256(cs,p2p->second,ctar);
+        Cell3& ctar = tartree[p2p->first];
+        kernel.p2p_1toN_256(srctree,p2p->second,ctar);
     }
     if(args.timing)
     {
@@ -239,8 +226,8 @@ void rtfmm::LaplaceFMM::M2P()
     PeriodicInteractionPairs m2p_pairs = traverser.get_pairs(OperatorType::M2P);
     for(auto m2p : m2p_pairs)
     {
-        Cell3& ctar = cs[m2p.first];
-        Cell3& csrc = cs[m2p.second.first];
+        Cell3& ctar = tartree[m2p.first];
+        Cell3& csrc = srctree[m2p.second.first];
         kernel.m2p(args.P, bs, csrc, ctar, m2p.second.second);
     }
     if(args.timing)
@@ -255,8 +242,8 @@ void rtfmm::LaplaceFMM::P2L()
     PeriodicInteractionPairs p2l_pairs = traverser.get_pairs(OperatorType::P2L);
     for(auto p2l : p2l_pairs)
     {
-        Cell3& ctar = cs[p2l.first];
-        Cell3& csrc = cs[p2l.second.first];
+        Cell3& ctar = tartree[p2l.first];
+        Cell3& csrc = srctree[p2l.second.first];
         kernel.p2l(args.P, bs, csrc, ctar, p2l.second.second);
     }
     if(args.timing)
@@ -312,3 +299,27 @@ rtfmm::Indices rtfmm::LaplaceFMM::get_nonleaf_cell_indices(const Cells3& cells, 
     return res;
 }
 
+void rtfmm::LaplaceFMM::load_bodies(Cells3& cells)
+{
+    for(int j = 0; j < srctree.size(); j++)
+    {
+        Cell3& c = cells[j];
+        if(c.crange.number == 0)
+        {
+            for(int i = 0; i < c.brange.number; i++)
+            {
+                Body3& b = bs[c.brange.offset + i];
+                real w = LaplaceKernel::get_rega_w(b.x - c.x, c.r, args.rega);
+                c.bs.push_back(b);
+                c.ws.push_back(w);
+            }
+            for(int i = 0; i < c.rbs.size(); i++)
+            {
+                Body3& b = c.rbs[i];
+                real w = LaplaceKernel::get_rega_w(b.x - c.x, c.r, args.rega);
+                c.bs.push_back(b);
+                c.ws.push_back(w);
+            }
+        }
+    }
+}

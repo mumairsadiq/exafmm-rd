@@ -19,10 +19,13 @@ public:
 private:
     Argument args;
     Bodies3 bs;
-    Cells3 cs;
+    //Cells3 cs;
+    Cells3 tartree;
+    Cells3 srctree;
     Traverser traverser;
     LaplaceKernel kernel;
-    vec2i tree_depth_range; //[min_depth,max_depth]
+    vec2i tartree_depth_range; //[min_depth,max_depth]
+    vec2i srctree_depth_range; //[min_depth,max_depth]
 
 private:
     void P2M();
@@ -39,6 +42,8 @@ private:
     vec2i get_min_max_depth(const Cells3& cells);
     Indices get_leaf_cell_indices(const Cells3& cells);
     Indices get_nonleaf_cell_indices(const Cells3& cells, int depth);
+
+    void load_bodies(Cells3& cells);
 };
 
 }

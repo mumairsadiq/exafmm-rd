@@ -24,7 +24,7 @@ public:
     /**
      * @brief (cells in p2ps) -> cell_tar P2P use AVX
     */
-    void p2p_1toN_256(Cells3& cs, std::vector<std::pair<int, vec3r>>& p2ps, Cell3& cell_tar);
+    void p2p_1toN_256(Cells3& srcs, std::vector<std::pair<int, vec3r>>& p2ps, Cell3& cell_tar);
 
     void p2m_precompute(int P, Cell3& cell_src);
 
@@ -38,7 +38,7 @@ public:
      * namely, 8x8 child-to-child M2L interaction for non-periodic cells, 1x27 for periodic cells.
      * @note 1st fast
     */
-    void m2l_fft_precompute_t(int P, Cells3& cs, PeriodicM2LMap& m2l_parent_map);
+    void m2l_fft_precompute_t(int P, Cells3& tartree, Cells3& srctree, PeriodicM2LMap& m2l_parent_map);
 
     void l2l_precompute(int P, Cell3& cell_parent, Cells3& cs);
 
@@ -52,7 +52,7 @@ public:
 
     void precompute(int P, real r0, int images);
 
-    void precompute_m2l(int P, real r0, Cells3 cs, PeriodicInteractionMap m2l_map, int images);
+    void precompute_m2l(int P, real r0, PeriodicInteractionMap m2l_map, int images);
 
     Matrix get_p2p_matrix(
         std::vector<vec3r>& x_src, 
