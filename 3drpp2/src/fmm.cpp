@@ -18,15 +18,13 @@ rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
     Tree tree;
     //tree.build(bs, args.x, args.r, args.ncrit, args.rega, Tree::TreeType::nonuniform);
     tree.build(bs, args.x, args.r, args.ncrit, args.rega, args.images, args.cycle, Tree::TreeType::regnonuniform);
-    //cs = tree.get_cells();
     tend(build_tree);
 
     /* traverse to get interaction list */
     tbegin(traverse);
     traverser.traverse(tree, args.cycle, args.images, args.P);
-    //cs = traverser.get_cells();
-    tartree = traverser.get_cells();
-    srctree = tartree;
+    tartree = traverser.tartree;
+    srctree = traverser.srctree;
     tartree_depth_range = get_min_max_depth(tartree);
     srctree_depth_range = get_min_max_depth(srctree);
     if(verbose) std::cout<<"tartree_depth_range = "<<tartree_depth_range<<std::endl;
@@ -146,13 +144,7 @@ void rtfmm::LaplaceFMM::M2M()
 void rtfmm::LaplaceFMM::M2L()
 {
     TIME_BEGIN(M2L);
-    //PeriodicInteractionPairs m2l_pairs = traverser.get_pairs(OperatorType::M2L);
-    //PeriodicInteractionMap m2l_map = traverser.get_map(OperatorType::M2L);
     PeriodicM2LMap m2l_parent_map = traverser.get_M2L_parent_map();
-    //PeriodicInteractionMap m2l_map2 = traverser.get_m2l_map_from_m2l_parent_map();
-    //kernel.m2l_fft_precompute_advanced2(args.P, cs, m2l_map2);
-    //kernel.m2l_fft_precompute_advanced2(args.P, cs, m2l_map);
-    //kernel.m2l_fft_precompute_advanced3(args.P, cs, m2l_map, m2l_pairs);
     kernel.m2l_fft_precompute_t(args.P, tartree, srctree, m2l_parent_map);
     if(args.timing)
     {

@@ -51,10 +51,6 @@ public:
 
     PeriodicM2LMap get_M2L_parent_map();
 
-    Cells3 get_cells() {return cells;}
-
-    PeriodicInteractionMap get_m2l_map_from_m2l_parent_map();
-
 private:
     
     /**
@@ -66,9 +62,7 @@ private:
     */
     void horizontal_origin(int tc, int sc, int tcp, int scp, vec3r offset = vec3r(0,0,0));
 
-    void horizontal_periodic_near(real cycle, Cells3& srcs, Cells3& tars);
-
-    void horizontal_periodic_far(real cycle, int image);
+    void horizontal_periodic_near(real cycle);
 
     /**
      * @brief if b+offset adjacent with a
@@ -86,7 +80,9 @@ private:
 
     void make_M2L_parent_map_i1(real cycle);
 
-    Cells3 cells;
+    void add_i2_cells(Cells3& cells, int images);
+
+    //Cells3 cells;
 
     int P;
 
@@ -102,8 +98,8 @@ public:
     //PeriodicInteractionMap M2L_parent_map;
     PeriodicM2LMap M2L_parent_map;
 
-    Cells3 srcs;
-    Cells3 tars;
+    Cells3 tartree;
+    Cells3 srctree;
 };
 
 }
