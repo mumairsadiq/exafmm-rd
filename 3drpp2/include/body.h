@@ -1,6 +1,7 @@
 #pragma once
 #include "type.h"
 #include <vector>
+#include <ostream>
 
 namespace rtfmm
 {
@@ -12,6 +13,16 @@ struct Body3
     real p;
     vec3r x;
     vec3r f;
+    friend std::ostream& operator<< (std::ostream& os, const Body3& b)
+    {
+        os << "<Body> "
+        << "idx=" << b.idx
+        << ", q=" << b.q
+        << ", x=" << b.x
+        << ", p=" << b.p
+        << ", f=" << b.f;
+        return os;
+    }
 };
 
 struct ManyBody

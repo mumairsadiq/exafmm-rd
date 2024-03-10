@@ -17,7 +17,7 @@ rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
     tbegin(build_tree);
     Tree tree;
     //tree.build(bs, args.x, args.r, args.ncrit, args.rega, Tree::TreeType::nonuniform);
-    tree.build(bs, args.x, args.r, args.ncrit, args.rega, Tree::TreeType::regnonuniform);
+    tree.build(bs, args.x, args.r, args.ncrit, args.rega, args.images, args.cycle, Tree::TreeType::regnonuniform);
     cs = tree.get_cells();
     tend(build_tree);
 
@@ -93,8 +93,11 @@ rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
             for(int i = 0; i < c.bs.size(); i++)
             {
                 Body3& b = c.bs[i];
-                bs[b.idx].p += b.p;
-                bs[b.idx].f += b.f;
+                if(b.idx != -1) // -1 means a dumy body
+                {
+                    bs[b.idx].p += b.p;
+                    bs[b.idx].f += b.f;
+                }
             }
         }
     }
