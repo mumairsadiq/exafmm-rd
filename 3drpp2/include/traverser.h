@@ -66,21 +66,21 @@ private:
     */
     void horizontal_origin(int tc, int sc, int tcp, int scp, vec3r offset = vec3r(0,0,0));
 
-    void horizontal_periodic_near(real cycle);
+    void horizontal_periodic_near(real cycle, Cells3& srcs, Cells3& tars);
 
     void horizontal_periodic_far(real cycle, int image);
 
     /**
      * @brief if b+offset adjacent with a
     */
-    int adjacent(int a, int b, vec3r offset = vec3r(0,0,0));
+    int adjacent(Cell3& ca, Cell3& cb, vec3r offset = vec3r(0,0,0));
 
     /**
      * @brief if b+offset neighbour with a
     */
-    int neighbour(int a, int b, vec3r offset = vec3r(0,0,0));
+    int neighbour(Cell3& ca, Cell3& cb, vec3r offset = vec3r(0,0,0));
 
-    int is_leaf(int c);
+    int is_leaf(Cell3& c);
 
     void make_M2L_parent_map();
 
@@ -101,6 +101,9 @@ public:
 
     //PeriodicInteractionMap M2L_parent_map;
     PeriodicM2LMap M2L_parent_map;
+
+    Cells3 srcs;
+    Cells3 tars;
 };
 
 }

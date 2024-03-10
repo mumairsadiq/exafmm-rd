@@ -85,7 +85,7 @@ private:
 
     Bodies3 init_rc0_reg(Bodies3& bodies, vec3r x0, real r0, real cycle, real rega);
 
-private:
+public:
 
     std::vector<Cell3> all_cells;
     Cells3 reg_cells[26];
