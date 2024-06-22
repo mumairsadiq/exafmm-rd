@@ -1,0 +1,4 @@
+#exp on PBC
+#machine = rtx6000-ada_1
+
+slurm-152683.out
