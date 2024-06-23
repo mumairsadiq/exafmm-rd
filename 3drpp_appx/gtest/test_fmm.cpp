@@ -13,11 +13,17 @@
 TEST(FmmTest, basic) 
 {
     rtfmm::Argument args;
+
+    args.n = 1000;
+    args.P = 4;
+    args.images = 0;
+    args.rega = 0;
+
     args.show();
 
     omp_set_dynamic(0);
     omp_set_num_threads(args.th_num);
-    if(rtfmm::verbose) printf("# of threads = %d\n", omp_get_max_threads());
+    RTLOG("# of threads = %d\n", omp_get_max_threads());
 
     /* prepare bodies */
     rtfmm::Bodies3 bs = rtfmm::generate_random_bodies(args.n, args.r, args.x, args.seed, args.zero_netcharge);
@@ -29,7 +35,7 @@ TEST(FmmTest, basic)
         rtfmm::LaplaceFMM fmm(bs, args);
         TIME_BEGIN(FMM);
         res_fmm = fmm.solve();
-        if(args.timing) {TIME_END(FMM);}
+        if(args.timing) {TIME_END_stdout(FMM);}
     }
 
     /* solve by ewald */
@@ -41,7 +47,7 @@ TEST(FmmTest, basic)
         res_ewald = ewald.solve();
         if(args.divide_4pi)
             rtfmm::scale_bodies(res_ewald);
-        if(args.timing) {TIME_END(EWALD);}
+        if(args.timing) {TIME_END_stdout(EWALD);}
     }
 
     /* solve directly */
@@ -59,7 +65,7 @@ TEST(FmmTest, basic)
             rtfmm::dipole_correction(res_direct, args.cycle);
         if(args.divide_4pi)
             rtfmm::scale_bodies(res_direct);
-        if(args.timing) {TIME_END(DIRECT);}
+        if(args.timing) {TIME_END_stdout(DIRECT);}
     }
 
     /* compare */
@@ -72,7 +78,7 @@ TEST(FmmTest, basic)
     if(args.enable_fmm && args.enable_direct)
     {
         rtfmm::BodyCompareResult res = rtfmm::compare(res_fmm, res_direct, "FMM", "Direct", args.num_compare);
-        //res.show();
+        res.show();
         EXPECT_LE(res.l2f, 1.1e-4);
         EXPECT_LE(res.l2e, 2.9e-4);
     }

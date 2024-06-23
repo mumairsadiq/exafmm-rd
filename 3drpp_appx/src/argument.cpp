@@ -138,32 +138,28 @@ rtfmm::Argument::Argument(int argc, char* argv[])
 
 void rtfmm::Argument::show()
 {
-    //printf("[P=%d, n=%d, ncrit=%d, images=%d, cycle=%.4f, ewald_ksize=%d]\n", P, n, ncrit, images, cycle, ewald_ksize);
-    //printf("[(f,d,e)=(%d,%d,%d), num_compare=%d , th_num=%d, seed=%d, check_tree=%d]\n\n", enable_fmm, enable_direct, enable_ewald, num_compare, th_num, seed, check_tree);
-    //printf("[timing=%d, verbose=%d, use_fft=%d, use_precompute=%d]\n", timing, verbose, use_fft, use_precompute);
-    printf("input parameters=[\n");
-    printf("  %-20s = %d\n","P",P);
-    printf("  %-20s = %d\n","n",n);
-    printf("  %-20s = %d\n","ncrit",ncrit);
-    printf("  %-20s = %d\n","images",images);
-    printf("  %-20s = %.4f\n","cycle",cycle);
-    printf("  %-20s = %.4f\n","rega",rega);
-    printf("  %-20s = %d\n","ewald_ksize",ewald_ksize);
-    printf("  %-20s = (%d,%d,%d)\n","(f,d,e)",enable_fmm,enable_direct,enable_ewald);
-    printf("  %-20s = %d\n","num_compare",num_compare);
-    printf("  %-20s = %d\n","th_num",th_num);
-    printf("  %-20s = %d\n","seed",seed);
-    printf("  %-20s = %d\n","check_tree",check_tree);
-    printf("  %-20s = %d\n","timing",timing);
-    printf("  %-20s = %d\n","verbose",verbose);
-    printf("  %-20s = %d\n","use_fft",use_fft);
-    printf("  %-20s = %d\n","use_precompute",use_precompute);
-    printf("  %-20s = %d\n","use_simd",use_simd);
-    printf("  %-20s = %d\n","dipole_correction",dipole_correction);
-    printf("  %-20s = %d\n","zero_netcharge",zero_netcharge);
-    printf("  %-20s = %d\n","print_body_number",print_body_number);
-    printf("  %-20s = %d\n","divide_4pi",divide_4pi);
-    printf("  %-20s = %d\n","setting_t",setting_t);
-    printf("]\n\n");
-
+    RTLOG("input parameters=[\n");
+    RTLOG("  %-20s = %d\n","P",P);
+    RTLOG("  %-20s = %d\n","n",n);
+    RTLOG("  %-20s = %d\n","ncrit",ncrit);
+    RTLOG("  %-20s = %d\n","images",images);
+    RTLOG("  %-20s = %.4f\n","cycle",cycle);
+    RTLOG("  %-20s = %.4f\n","rega",rega);
+    RTLOG("  %-20s = %d\n","ewald_ksize",ewald_ksize);
+    RTLOG("  %-20s = (%d,%d,%d)\n","(f,d,e)",enable_fmm,enable_direct,enable_ewald);
+    RTLOG("  %-20s = %d\n","num_compare",num_compare);
+    RTLOG("  %-20s = %d\n","th_num",th_num);
+    RTLOG("  %-20s = %d\n","seed",seed);
+    RTLOG("  %-20s = %d\n","check_tree",check_tree);
+    RTLOG("  %-20s = %d\n","timing",timing);
+    RTLOG("  %-20s = %d\n","verbose",verbose);
+    RTLOG("  %-20s = %d\n","use_fft",use_fft);
+    RTLOG("  %-20s = %d\n","use_precompute",use_precompute);
+    RTLOG("  %-20s = %d\n","use_simd",use_simd);
+    RTLOG("  %-20s = %d\n","dipole_correction",dipole_correction);
+    RTLOG("  %-20s = %d\n","zero_netcharge",zero_netcharge);
+    RTLOG("  %-20s = %d\n","print_body_number",print_body_number);
+    RTLOG("  %-20s = %d\n","divide_4pi",divide_4pi);
+    RTLOG("  %-20s = %d\n","setting_t",setting_t);
+    RTLOG("]\n\n");
 }

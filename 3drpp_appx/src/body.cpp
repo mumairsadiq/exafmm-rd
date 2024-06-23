@@ -4,7 +4,7 @@
 
 void rtfmm::print_body(const Body3& b)
 {
-    printf("[%d],(%.4f,%.4f,%.4f),%.4f,%.12f,(%.8f,%.8f,%.8f)\n", 
+    RTLOG("[%d],(%.4f,%.4f,%.4f),%.4f,%.12f,(%.8f,%.8f,%.8f)\n", 
         b.idx,
         b.x[0],b.x[1],b.x[2],
         b.q,
@@ -15,14 +15,14 @@ void rtfmm::print_body(const Body3& b)
 
 void rtfmm::print_bodies(const rtfmm::Bodies3& bs, int num, int offset, std::string name)
 {
-    std::cout<<name<<":"<<std::endl;
+    std::cerr<<name<<":"<<std::endl;
     if(num == -1) num = bs.size();
     int s = std::min(num, (int)bs.size());
     for(int i = offset; i < offset + s; i++)
     {
         print_body(bs[i]);
     }
-    printf("\n");
+    RTLOG("\n");
 }
 
 std::vector<rtfmm::vec3r> rtfmm::get_bodies_x(rtfmm::Bodies3& bs, Range range, vec3r offset)
@@ -157,15 +157,15 @@ rtfmm::BodyCompareResult rtfmm::compare(const Bodies3& bs1, const Bodies3& bs2, 
         int flag = diff.r() > 1e-4 ? 1 : 0;
         diff_r_max = std::max(diff_r_max, diff.r());
         //if(flag)
-        /*printf("[%d]  %d  %.4f  %.4f(%.4f,%.4f,%.4f)      %.8f (%.8f,%.8f,%.8f)   %.8f (%.8f,%.8f,%.8f)   %.8f (%.8f,%.8f,%.8f)\n", 
+        /*RTLOG("[%d]  %d  %.4f  %.4f(%.4f,%.4f,%.4f)      %.8f (%.8f,%.8f,%.8f)   %.8f (%.8f,%.8f,%.8f)   %.8f (%.8f,%.8f,%.8f)\n", 
             i, flag, diff.r(),
             b1.q, b1.x[0], b1.x[1], b1.x[2],
             b1.p, b1.f[0], b1.f[1], b1.f[2],
             b2.p, b2.f[0], b2.f[1], b2.f[2],
             std::abs(b1.p - b2.p), diff[0], diff[1], diff[2]);*/
     }
-    //printf("diff_r_max = %.4f\n", diff_r_max);
-    //printf("pnrm = %.8f\n", pnrm);
+    //RTLOG("diff_r_max = %.4f\n", diff_r_max);
+    //RTLOG("pnrm = %.8f\n", pnrm);
     res.rmsp = std::sqrt(pdif / num);
     res.rmsf = std::sqrt(fdif / num);
     res.l2p = std::sqrt(pdif / pnrm);
@@ -196,15 +196,15 @@ void rtfmm::BodyCompareResult::show()
 {
     int bar_num = 72 - name1.size() - name2.size() - 4;
     int bar_num_left = bar_num / 2;
-    for(int i = 0; i < bar_num_left; i++) printf("-");
-    std::cout<<name1<<" vs "<<name2;
-    for(int i = 0; i < bar_num - bar_num_left; i++) printf("-");
-    printf("[%d]\n", num_compared);
-    printf("%-8s : %8.5e   %-8s : %8.5e   %-8s : %8.5e\n", "L2  (p)", l2p , "L2  (f)", l2f, "L2  (e)", l2e); 
-    printf("%-8s : %8.5e   %-8s : %8.5e\n", "Rms (p)", rmsp, "Rms (f)", rmsf);
-    printf("p-energy1 : %8.12e\n", epot1);
-    printf("p-energy2 : %8.12e\n", epot2);
-    printf("\n");
+    for(int i = 0; i < bar_num_left; i++) RTLOG("-");
+    std::cerr<<name1<<" vs "<<name2;
+    for(int i = 0; i < bar_num - bar_num_left; i++) RTLOG("-");
+    RTLOG("[%d]\n", num_compared);
+    RTLOG("%-8s : %8.5e   %-8s : %8.5e   %-8s : %8.5e\n", "L2  (p)", l2p , "L2  (f)", l2f, "L2  (e)", l2e); 
+    RTLOG("%-8s : %8.5e   %-8s : %8.5e\n", "Rms (p)", rmsp, "Rms (f)", rmsf);
+    RTLOG("p-energy1 : %8.12e\n", epot1);
+    RTLOG("p-energy2 : %8.12e\n", epot2);
+    RTLOG("\n");
 }
 
 rtfmm::ManyBody rtfmm::Bodies2Manybody(const Bodies3& bs)

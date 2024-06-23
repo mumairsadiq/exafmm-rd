@@ -13,10 +13,16 @@
 
 #define TIME_END(a)   auto time_end_##a = std::chrono::high_resolution_clock::now();\
 					  auto elapse_##a = std::chrono::duration_cast<std::chrono::nanoseconds>(time_end_##a - time_begin_##a);\
+                      RTLOG("[%s time measured : %.5f seconds.]\n", #a, elapse_##a.count() * 1e-9)
+
+#define TIME_END_stdout(a)   auto time_end_##a = std::chrono::high_resolution_clock::now();\
+					  auto elapse_##a = std::chrono::duration_cast<std::chrono::nanoseconds>(time_end_##a - time_begin_##a);\
                       printf("[%s time measured : %.5f seconds.]\n", #a, elapse_##a.count() * 1e-9)
 
 #define tbegin(a) TIME_BEGIN(a)
 #define tend(a) TIME_END(a)
+
+#define RTLOG(...) fprintf (stderr, __VA_ARGS__)
 
 namespace rtfmm
 {
