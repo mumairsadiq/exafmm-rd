@@ -11,6 +11,7 @@ extern int verbose;
 class Argument
 {
 public:
+    Argument();
     Argument(int argc, char* argv[]);
     void show();
 

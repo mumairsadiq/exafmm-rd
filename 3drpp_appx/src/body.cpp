@@ -164,8 +164,8 @@ rtfmm::BodyCompareResult rtfmm::compare(const Bodies3& bs1, const Bodies3& bs2, 
             b2.p, b2.f[0], b2.f[1], b2.f[2],
             std::abs(b1.p - b2.p), diff[0], diff[1], diff[2]);*/
     }
-    printf("diff_r_max = %.4f\n", diff_r_max);
-    printf("pnrm = %.8f\n", pnrm);
+    //printf("diff_r_max = %.4f\n", diff_r_max);
+    //printf("pnrm = %.8f\n", pnrm);
     res.rmsp = std::sqrt(pdif / num);
     res.rmsf = std::sqrt(fdif / num);
     res.l2p = std::sqrt(pdif / pnrm);
