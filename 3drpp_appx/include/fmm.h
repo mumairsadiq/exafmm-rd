@@ -47,6 +47,7 @@ private:
     real reg_w(real x);
     real get_w_single(real dx, real R, real rega);
     rtfmm::real get_w(vec3r dx, real R, real rega);
+    rtfmm::vec3r get_w_xyz(vec3r dx, real R, real rega);
 };
 
 }

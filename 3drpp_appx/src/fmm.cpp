@@ -301,76 +301,75 @@ void rtfmm::LaplaceFMM::init_cell_matrix(Cells3& cells)
 
 void rtfmm::LaplaceFMM::init_reg_body(Cells3& cells)
 {
-    int range = 0;
-    for(int pz = -range; pz <= range; pz++)
+    std::vector<int> leaves = traverser.leaf_cell_idx;
+
+    for(int i = 0; i < bs.size(); i++)
     {
-        for(int py = -range; py <= range; py++)
+        vec3r ploc = bs[i].x;
+        for(int leaf_idx = 0; leaf_idx < leaves.size(); leaf_idx++)
         {
-            for(int px = -range; px <= range; px++)
+            Cell3& cell = cells[leaves[leaf_idx]];
+            if(!(i >= cell.brange.offset && i < cell.brange.offset + cell.brange.number))
             {
-                for(int i = 0; i < bs.size(); i++)
+                vec3r dx = ploc - cell.x;
+                real w = get_w_xyz(dx, cell.r, args.rega).mul();
+                if(w > 0)
                 {
-                    vec3r per = args.cycle * vec3r(px, py, pz);
-                    vec3r ploc = bs[i].x + per;
-                    for(int c = 0; c < cells.size(); c++)
-                    {
-                        Cell3& cell = cells[c];
-                        if(cell.crange.number == 0 && !(i >= cell.brange.offset && i < cell.brange.offset + cell.brange.number))
-                        {
-                            vec3r dx = ploc - cell.x;
-                            real w = get_w(dx, cell.r, args.rega);
-                            if(w > 0)
-                            {
-                                cell.reg_body_idx.push_back(std::make_pair(i, per));
-                            }
-                        }
-                    }
+                    cell.reg_body_idx.push_back(std::make_pair(i, vec3r(0,0,0)));
                 }
             }
         }
     }
 
-    //for(int c = 0; c < cells.size(); c++)
-    std::vector<int> leaves = traverser.leaf_cell_idx;
     for(int leaf_idx = 0; leaf_idx < leaves.size(); leaf_idx++)
     {
-        int c = leaves[leaf_idx];
-        Cell3& cell = cells[c];
+        Cell3& cell = cells[leaves[leaf_idx]];
         for(int i = cell.brange.offset; i < cell.brange.offset + cell.brange.number; i++)
         {
             Body3 body = bs[i];
             vec3r dx = body.x - cell.x;
-            real w = get_w(dx, cell.r, args.rega);
+
+            vec3r dx_simcenter = (body.x - args.x).abs() + args.rega;
+            vec3r ws = get_w_xyz(dx, cell.r, args.rega);
+            for(int d = 0; d <= 2; d++)
+            {
+                if(dx_simcenter[d] >= args.r)
+                {
+                    ws[d] = 1;
+                }
+            }
+            real w = ws.mul();
             if(w > 0)
             {
-                vec3r temp = (body.x - args.x).abs() + vec3r(1,1,1) * args.rega;
-                if(temp[0] >= args.r || temp[1] >= args.r || temp[2] >= args.r)
+                if(w != 1)
                 {
-                    printf("body %d %d\n", body.idx, i);
-                    w = 1;
+                    //RTLOG("inside  %d, %.2f    %.4f,%.4f,%.4f\n", i, w,body.x[0],body.x[1],body.x[2]);
                 }
                 cell.bodies.push_back(body);
                 cell.weights.push_back(w);
-                if(w != 1)
-                {
-                    printf("inside body%d,%d w = %.4f c=%d,%d\n", body.idx,i, w, c, cell.crange.number);
-                }
             }
         }
         for(int i = 0; i < cell.reg_body_idx.size(); i++)
         {
-            Body3 body = bs[cell.reg_body_idx[i].first];
-            body.x += cell.reg_body_idx[i].second; // move to image position
+            int bidx = cell.reg_body_idx[i].first;
+            Body3 body = bs[bidx];
+            body.x += cell.reg_body_idx[i].second;
             vec3r dx = body.x - cell.x;
-            real w = get_w(dx, cell.r, args.rega);
+            vec3r dx_simcenter = (body.x - args.x).abs() + args.rega;
+            vec3r ws = get_w_xyz(dx, cell.r, args.rega);
+            for(int d = 0; d <= 2; d++)
+            {
+                if(dx_simcenter[d] >= args.r)
+                {
+                    ws[d] = 1;
+                }
+            }
+            real w = ws.mul();
             if(w > 0)
             {
+                //RTLOG("outside %d, %.2f    %.4f,%.4f,%.4f\n", bidx, w,body.x[0],body.x[1],body.x[2]);
                 cell.bodies.push_back(body);
                 cell.weights.push_back(w);
-                if(w != 1)
-                {
-                    printf("outside body%d,%d w = %.4f c=%d\n", body.idx,i, w, c);
-                }
             }
         }
     }
@@ -546,4 +545,14 @@ rtfmm::real rtfmm::LaplaceFMM::get_w(vec3r dx, real R, real rega)
         w *= get_w_single(dx[d], R, rega);
     }
     return w;
+}
+
+rtfmm::vec3r rtfmm::LaplaceFMM::get_w_xyz(vec3r dx, real R, real rega)
+{
+    rtfmm::vec3r res;
+    for(int d = 0; d < 3; d++)
+    {
+        res[d] = get_w_single(dx[d], R, rega);
+    }
+    return res;
 }

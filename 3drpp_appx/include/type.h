@@ -295,6 +295,15 @@ public:
         }
         return res;
     }
+    real mul()
+    {
+        real res = 1;
+        for(int i = 0; i < N; i++)
+        {
+            res *= this->data[i];
+        }
+        return res;
+    }
     vec<N, int> round()
     {
         vec<N,int> res;
