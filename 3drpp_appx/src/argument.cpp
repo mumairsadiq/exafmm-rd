@@ -29,6 +29,7 @@ rtfmm::Argument::Argument()
     cmd.add<int>("divide_4pi", 0, "if divide 4pi", false, 0);
     cmd.add<int>("setting_t", 0, "set some parameters to match the result with exafmm-t", false, 0);
     cmd.add<real>("rega", 'r', "regularization alpha", false, 0);
+    cmd.add<int>("override", 0, "override gtest setting", false, 0);
     
     P = cmd.get<int>("P");
     n = cmd.get<int>("nbody");
@@ -58,6 +59,8 @@ rtfmm::Argument::Argument()
     enable_direct = CONTAINS(algo, "d") ? 1 : 0;
     enable_ewald = CONTAINS(algo, "e") ? 1 : 0;
     check_tree = cmd.get<int>("check_tree");
+
+    override_gtest_setting = cmd.get<int>("override");
 
     x = vec3r(0,0,0);
     r = cycle / 2;
@@ -95,6 +98,7 @@ rtfmm::Argument::Argument(int argc, char* argv[])
     cmd.add<int>("divide_4pi", 0, "if divide 4pi", false, 0);
     cmd.add<int>("setting_t", 0, "set some parameters to match the result with exafmm-t", false, 0);
     cmd.add<real>("rega", 'r', "regularization alpha", false, 0);
+    cmd.add<int>("override", 0, "override gtest setting", false, 0);
     cmd.parse_check(argc, argv);
     P = cmd.get<int>("P");
     n = cmd.get<int>("nbody");
@@ -124,6 +128,7 @@ rtfmm::Argument::Argument(int argc, char* argv[])
     enable_direct = CONTAINS(algo, "d") ? 1 : 0;
     enable_ewald = CONTAINS(algo, "e") ? 1 : 0;
     check_tree = cmd.get<int>("check_tree");
+    override_gtest_setting = cmd.get<int>("override");
 
     x = vec3r(0,0,0);
     r = cycle / 2;
@@ -139,6 +144,7 @@ rtfmm::Argument::Argument(int argc, char* argv[])
 void rtfmm::Argument::show()
 {
     RTLOG("input parameters=[\n");
+    RTLOG("  %-20s = %d\n","override",override_gtest_setting);
     RTLOG("  %-20s = %d\n","P",P);
     RTLOG("  %-20s = %d\n","n",n);
     RTLOG("  %-20s = %d\n","ncrit",ncrit);

@@ -16,6 +16,7 @@ public:
     void show();
 
 public:
+    int override_gtest_setting;
     vec3r x;
     real r;
     int n;
