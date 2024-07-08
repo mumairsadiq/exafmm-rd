@@ -1,0 +1,578 @@
+Note: Google Test filter = *n24000_p8*
+[==========] Running 8 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 8 tests from FmmTest
+[ RUN      ] FmmTest.n24000_p8_noreg
+input parameters=[
+  P                    = 8
+  n                    = 24000
+  ncrit                = 128
+  images               = 0
+  cycle                = 6.2832
+  rega                 = 0.0000
+  ewald_ksize          = 11
+  (f,d,e)              = (1,1,1)
+  num_compare          = 24000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 0
+  zero_netcharge       = 0
+  print_body_number    = 3
+  divide_4pi           = 1
+  setting_t            = 1
+]
+
+# of threads = 8
+[build_tree time measured : 0.00759 seconds.]
+[traverse time measured : 0.29464 seconds.]
+[build_and_traverse time measured : 0.30224 seconds.]
+[init_cell_matrix time measured : 1.24500 seconds.]
+[precompute_others time measured : 0.07465 seconds.]
+[precompute_m2l time measured : 0.15570 seconds.]
+[precompute time measured : 0.23040 seconds.]
+[P2M time measured : 0.05991 seconds.]
+[M2M time measured : 0.00226 seconds.]
+[setup time measured : 0.00330 seconds.]
+[prepare_memory time measured : 0.00120 seconds.]
+[up time measured : 0.00255 seconds.]
+[hadamard_8x8 time measured : 0.05628 seconds.]
+[down time measured : 0.00279 seconds.]
+[store time measured : 0.00021 seconds.]
+[M2L time measured : 0.06898 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.00273 seconds.]
+[L2P time measured : 0.07326 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.28372 seconds.]
+[FMM_kernels time measured : 0.50645 seconds.]
+-----------------------------[FMM time measured : 2.28541 seconds.]
+[DIRECT time measured : 6.15977 seconds.]
+FMM vs Direct------------------------------[24000]
+L2  (p)  : 4.02287e-08   L2  (f)  : 1.23363e-07   L2  (e)  : 1.23690e-07
+Rms (p)  : 4.51248e-08   Rms (f)  : 1.23716e-06
+p-energy1 : 4.020911998767e+01
+p-energy2 : 4.020911501419e+01
+
+[       OK ] FmmTest.n24000_p8_noreg (8495 ms)
+[ RUN      ] FmmTest.n24000_p8_reg0001
+input parameters=[
+  P                    = 8
+  n                    = 24000
+  ncrit                = 128
+  images               = 0
+  cycle                = 6.2832
+  rega                 = 0.0010
+  ewald_ksize          = 11
+  (f,d,e)              = (1,1,1)
+  num_compare          = 24000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 0
+  zero_netcharge       = 0
+  print_body_number    = 3
+  divide_4pi           = 1
+  setting_t            = 1
+]
+
+# of threads = 8
+[build_tree time measured : 0.00800 seconds.]
+[traverse time measured : 0.29568 seconds.]
+[build_and_traverse time measured : 0.30369 seconds.]
+[init_cell_matrix time measured : 1.24173 seconds.]
+[precompute_others time measured : 0.06398 seconds.]
+[precompute_m2l time measured : 0.15749 seconds.]
+[precompute time measured : 0.22151 seconds.]
+[P2M time measured : 0.06043 seconds.]
+[M2M time measured : 0.00236 seconds.]
+[setup time measured : 0.00330 seconds.]
+[prepare_memory time measured : 0.00128 seconds.]
+[up time measured : 0.00238 seconds.]
+[hadamard_8x8 time measured : 0.05598 seconds.]
+[down time measured : 0.00268 seconds.]
+[store time measured : 0.00020 seconds.]
+[M2L time measured : 0.06668 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.00290 seconds.]
+[L2P time measured : 0.07375 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.28751 seconds.]
+[FMM_kernels time measured : 0.50657 seconds.]
+-----------------------------[FMM time measured : 2.27452 seconds.]
+[DIRECT time measured : 6.16241 seconds.]
+FMM vs Direct------------------------------[24000]
+L2  (p)  : 3.97358e-08   L2  (f)  : 1.21935e-07   L2  (e)  : 1.18409e-07
+Rms (p)  : 4.45719e-08   Rms (f)  : 1.22283e-06
+p-energy1 : 4.020911977530e+01
+p-energy2 : 4.020911501419e+01
+
+[       OK ] FmmTest.n24000_p8_reg0001 (8483 ms)
+[ RUN      ] FmmTest.n24000_p8_reg001
+input parameters=[
+  P                    = 8
+  n                    = 24000
+  ncrit                = 128
+  images               = 0
+  cycle                = 6.2832
+  rega                 = 0.0100
+  ewald_ksize          = 11
+  (f,d,e)              = (1,1,1)
+  num_compare          = 24000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 1
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 0
+  zero_netcharge       = 0
+  print_body_number    = 3
+  divide_4pi           = 1
+  setting_t            = 1
+]
+
+# of threads = 8
+build adaptive octree
+[build_tree time measured : 0.00776 seconds.]
+horizontal_origin
+tree_depth_range = [0,3]
+[traverse time measured : 0.29503 seconds.]
+[build_and_traverse time measured : 0.30279 seconds.]
+[init_cell_matrix time measured : 1.24645 seconds.]
+[precompute_others time measured : 0.06736 seconds.]
+precompute
+precompute M2L, conv_grid(N = 15, N3 = 3375, N_freq = 1800, delta = 0.942478, gsize = 6.59734)
+M2L precompute range=3
+[precompute_m2l time measured : 0.15934 seconds.]
+[precompute time measured : 0.22673 seconds.]
+P2M leaf_number = 512
+[P2M time measured : 0.06468 seconds.]
+[M2M time measured : 0.00225 seconds.]
+M2L conv_grid(N = 15, N3 = 3375, N_freq = 1800, delta = 0.942478, gsize = 6.59734)
+[setup time measured : 0.00331 seconds.]
+[prepare_memory time measured : 0.00124 seconds.]
+[up time measured : 0.00220 seconds.]
+[hadamard_8x8 time measured : 0.05604 seconds.]
+[down time measured : 0.00265 seconds.]
+[store time measured : 0.00021 seconds.]
+[M2L time measured : 0.06652 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.00284 seconds.]
+num_src_cell = 72, num_tar_cell = 72
+L2P leaf_number = 512
+[L2P time measured : 0.07866 seconds.]
+[M2P time measured : 0.00000 seconds.]
+p2p_pair.size() = 0
+[P2P time measured : 0.32484 seconds.]
+[FMM_kernels time measured : 0.55475 seconds.]
+[FMM time measured : 2.33173 seconds.]
+[DIRECT time measured : 6.16460 seconds.]
+fmm:
+[0],(0.1561,-1.4272,1.8133),-0.3019,2.036860528556,(-0.29002688,2.16263357,-3.90932459)
+[1],(0.1146,2.2974,-2.0787),-0.0229,-0.537042291362,(2.26305429,-1.03517340,2.47206287)
+[2],(-1.5276,2.2053,2.9648),-0.0482,0.015854077215,(-1.57406926,-5.68742956,0.19263203)
+
+direct:
+[0],(0.1561,-1.4272,1.8133),-0.3019,2.036860533823,(-0.29002682,2.16263353,-3.90932462)
+[1],(0.1146,2.2974,-2.0787),-0.0229,-0.537042410067,(2.26305487,-1.03517345,2.47206348)
+[2],(-1.5276,2.2053,2.9648),-0.0482,0.015854044938,(-1.57406858,-5.68742928,0.19263187)
+
+-----------------------------FMM vs Direct------------------------------[24000]
+L2  (p)  : 3.71306e-08   L2  (f)  : 1.11479e-07   L2  (e)  : 7.49034e-08
+Rms (p)  : 4.16496e-08   Rms (f)  : 1.11797e-06
+p-energy1 : 4.020911802599e+01
+p-energy2 : 4.020911501419e+01
+
+[       OK ] FmmTest.n24000_p8_reg001 (8541 ms)
+[ RUN      ] FmmTest.n24000_p8_reg0025
+input parameters=[
+  P                    = 8
+  n                    = 24000
+  ncrit                = 128
+  images               = 0
+  cycle                = 6.2832
+  rega                 = 0.0250
+  ewald_ksize          = 11
+  (f,d,e)              = (1,1,1)
+  num_compare          = 24000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 1
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 0
+  zero_netcharge       = 0
+  print_body_number    = 3
+  divide_4pi           = 1
+  setting_t            = 1
+]
+
+# of threads = 8
+build adaptive octree
+[build_tree time measured : 0.00735 seconds.]
+horizontal_origin
+tree_depth_range = [0,3]
+[traverse time measured : 0.29526 seconds.]
+[build_and_traverse time measured : 0.30262 seconds.]
+[init_cell_matrix time measured : 1.25185 seconds.]
+[precompute_others time measured : 0.06706 seconds.]
+precompute
+precompute M2L, conv_grid(N = 15, N3 = 3375, N_freq = 1800, delta = 0.942478, gsize = 6.59734)
+M2L precompute range=3
+[precompute_m2l time measured : 0.15766 seconds.]
+[precompute time measured : 0.22478 seconds.]
+P2M leaf_number = 512
+[P2M time measured : 0.06990 seconds.]
+[M2M time measured : 0.00223 seconds.]
+M2L conv_grid(N = 15, N3 = 3375, N_freq = 1800, delta = 0.942478, gsize = 6.59734)
+[setup time measured : 0.00330 seconds.]
+[prepare_memory time measured : 0.00124 seconds.]
+[up time measured : 0.00224 seconds.]
+[hadamard_8x8 time measured : 0.05607 seconds.]
+[down time measured : 0.00263 seconds.]
+[store time measured : 0.00020 seconds.]
+[M2L time measured : 0.06654 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.00288 seconds.]
+num_src_cell = 72, num_tar_cell = 72
+L2P leaf_number = 512
+[L2P time measured : 0.08554 seconds.]
+[M2P time measured : 0.00000 seconds.]
+p2p_pair.size() = 0
+[P2P time measured : 0.39418 seconds.]
+[FMM_kernels time measured : 0.63605 seconds.]
+[FMM time measured : 2.41636 seconds.]
+[DIRECT time measured : 6.14272 seconds.]
+fmm:
+[0],(0.1561,-1.4272,1.8133),-0.3019,2.036860532287,(-0.29002691,2.16263354,-3.90932459)
+[1],(0.1146,2.2974,-2.0787),-0.0229,-0.537042302194,(2.26305434,-1.03517338,2.47206296)
+[2],(-1.5276,2.2053,2.9648),-0.0482,0.015854077280,(-1.57406932,-5.68742958,0.19263204)
+
+direct:
+[0],(0.1561,-1.4272,1.8133),-0.3019,2.036860533823,(-0.29002682,2.16263353,-3.90932462)
+[1],(0.1146,2.2974,-2.0787),-0.0229,-0.537042410067,(2.26305487,-1.03517345,2.47206348)
+[2],(-1.5276,2.2053,2.9648),-0.0482,0.015854044938,(-1.57406858,-5.68742928,0.19263187)
+
+-----------------------------FMM vs Direct------------------------------[24000]
+L2  (p)  : 3.48385e-08   L2  (f)  : 1.01090e-07   L2  (e)  : 4.85213e-08
+Rms (p)  : 3.90785e-08   Rms (f)  : 1.01378e-06
+p-energy1 : 4.020911696519e+01
+p-energy2 : 4.020911501419e+01
+
+[       OK ] FmmTest.n24000_p8_reg0025 (8605 ms)
+[ RUN      ] FmmTest.n24000_p8_reg005
+input parameters=[
+  P                    = 8
+  n                    = 24000
+  ncrit                = 128
+  images               = 0
+  cycle                = 6.2832
+  rega                 = 0.0500
+  ewald_ksize          = 11
+  (f,d,e)              = (1,1,1)
+  num_compare          = 24000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 1
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 0
+  zero_netcharge       = 0
+  print_body_number    = 3
+  divide_4pi           = 1
+  setting_t            = 1
+]
+
+# of threads = 8
+build adaptive octree
+[build_tree time measured : 0.00761 seconds.]
+horizontal_origin
+tree_depth_range = [0,3]
+[traverse time measured : 0.29524 seconds.]
+[build_and_traverse time measured : 0.30286 seconds.]
+[init_cell_matrix time measured : 1.25964 seconds.]
+[precompute_others time measured : 0.07621 seconds.]
+precompute
+precompute M2L, conv_grid(N = 15, N3 = 3375, N_freq = 1800, delta = 0.942478, gsize = 6.59734)
+M2L precompute range=3
+[precompute_m2l time measured : 0.15708 seconds.]
+[precompute time measured : 0.23333 seconds.]
+P2M leaf_number = 512
+[P2M time measured : 0.08162 seconds.]
+[M2M time measured : 0.00224 seconds.]
+M2L conv_grid(N = 15, N3 = 3375, N_freq = 1800, delta = 0.942478, gsize = 6.59734)
+[setup time measured : 0.00332 seconds.]
+[prepare_memory time measured : 0.00104 seconds.]
+[up time measured : 0.00220 seconds.]
+[hadamard_8x8 time measured : 0.05600 seconds.]
+[down time measured : 0.00263 seconds.]
+[store time measured : 0.00020 seconds.]
+[M2L time measured : 0.06623 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.00296 seconds.]
+num_src_cell = 72, num_tar_cell = 72
+L2P leaf_number = 512
+[L2P time measured : 0.09996 seconds.]
+[M2P time measured : 0.00000 seconds.]
+p2p_pair.size() = 0
+[P2P time measured : 0.55334 seconds.]
+[FMM_kernels time measured : 0.81779 seconds.]
+[FMM time measured : 2.61460 seconds.]
+[DIRECT time measured : 6.14694 seconds.]
+fmm:
+[0],(0.1561,-1.4272,1.8133),-0.3019,2.036860545994,(-0.29002694,2.16263352,-3.90932454)
+[1],(0.1146,2.2974,-2.0787),-0.0229,-0.537042278325,(2.26305421,-1.03517333,2.47206295)
+[2],(-1.5276,2.2053,2.9648),-0.0482,0.015854075652,(-1.57406932,-5.68742958,0.19263203)
+
+direct:
+[0],(0.1561,-1.4272,1.8133),-0.3019,2.036860533823,(-0.29002682,2.16263353,-3.90932462)
+[1],(0.1146,2.2974,-2.0787),-0.0229,-0.537042410067,(2.26305487,-1.03517345,2.47206348)
+[2],(-1.5276,2.2053,2.9648),-0.0482,0.015854044938,(-1.57406858,-5.68742928,0.19263187)
+
+-----------------------------FMM vs Direct------------------------------[24000]
+L2  (p)  : 3.37324e-08   L2  (f)  : 9.53282e-08   L2  (e)  : 1.66222e-08
+Rms (p)  : 3.78378e-08   Rms (f)  : 9.56004e-07
+p-energy1 : 4.020911434583e+01
+p-energy2 : 4.020911501419e+01
+
+[       OK ] FmmTest.n24000_p8_reg005 (8808 ms)
+[ RUN      ] FmmTest.n24000_p8_reg0075
+input parameters=[
+  P                    = 8
+  n                    = 24000
+  ncrit                = 128
+  images               = 0
+  cycle                = 6.2832
+  rega                 = 0.0750
+  ewald_ksize          = 11
+  (f,d,e)              = (1,1,1)
+  num_compare          = 24000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 1
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 0
+  zero_netcharge       = 0
+  print_body_number    = 3
+  divide_4pi           = 1
+  setting_t            = 1
+]
+
+# of threads = 8
+build adaptive octree
+[build_tree time measured : 0.00767 seconds.]
+horizontal_origin
+tree_depth_range = [0,3]
+[traverse time measured : 0.29501 seconds.]
+[build_and_traverse time measured : 0.30268 seconds.]
+[init_cell_matrix time measured : 1.26724 seconds.]
+[precompute_others time measured : 0.06514 seconds.]
+precompute
+precompute M2L, conv_grid(N = 15, N3 = 3375, N_freq = 1800, delta = 0.942478, gsize = 6.59734)
+M2L precompute range=3
+[precompute_m2l time measured : 0.15900 seconds.]
+[precompute time measured : 0.22418 seconds.]
+P2M leaf_number = 512
+[P2M time measured : 0.09320 seconds.]
+[M2M time measured : 0.00214 seconds.]
+M2L conv_grid(N = 15, N3 = 3375, N_freq = 1800, delta = 0.942478, gsize = 6.59734)
+[setup time measured : 0.00334 seconds.]
+[prepare_memory time measured : 0.00157 seconds.]
+[up time measured : 0.00243 seconds.]
+[hadamard_8x8 time measured : 0.05589 seconds.]
+[down time measured : 0.00266 seconds.]
+[store time measured : 0.00020 seconds.]
+[M2L time measured : 0.06693 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.00284 seconds.]
+num_src_cell = 72, num_tar_cell = 72
+L2P leaf_number = 512
+[L2P time measured : 0.11428 seconds.]
+[M2P time measured : 0.00000 seconds.]
+p2p_pair.size() = 0
+[P2P time measured : 0.74355 seconds.]
+[FMM_kernels time measured : 1.03397 seconds.]
+[FMM time measured : 2.82905 seconds.]
+[DIRECT time measured : 6.14459 seconds.]
+fmm:
+[0],(0.1561,-1.4272,1.8133),-0.3019,2.036860553615,(-0.29002692,2.16263355,-3.90932449)
+[1],(0.1146,2.2974,-2.0787),-0.0229,-0.537042242626,(2.26305405,-1.03517329,2.47206292)
+[2],(-1.5276,2.2053,2.9648),-0.0482,0.015854087569,(-1.57406912,-5.68742946,0.19263197)
+
+direct:
+[0],(0.1561,-1.4272,1.8133),-0.3019,2.036860533823,(-0.29002682,2.16263353,-3.90932462)
+[1],(0.1146,2.2974,-2.0787),-0.0229,-0.537042410067,(2.26305487,-1.03517345,2.47206348)
+[2],(-1.5276,2.2053,2.9648),-0.0482,0.015854044938,(-1.57406858,-5.68742928,0.19263187)
+
+-----------------------------FMM vs Direct------------------------------[24000]
+L2  (p)  : 3.59121e-08   L2  (f)  : 1.02472e-07   L2  (e)  : 6.54236e-08
+Rms (p)  : 4.02828e-08   Rms (f)  : 1.02765e-06
+p-energy1 : 4.020911238357e+01
+p-energy2 : 4.020911501419e+01
+
+[       OK ] FmmTest.n24000_p8_reg0075 (9019 ms)
+[ RUN      ] FmmTest.n24000_p8_reg01
+input parameters=[
+  P                    = 8
+  n                    = 24000
+  ncrit                = 128
+  images               = 0
+  cycle                = 6.2832
+  rega                 = 0.1000
+  ewald_ksize          = 11
+  (f,d,e)              = (1,1,1)
+  num_compare          = 24000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 1
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 0
+  zero_netcharge       = 0
+  print_body_number    = 3
+  divide_4pi           = 1
+  setting_t            = 1
+]
+
+# of threads = 8
+build adaptive octree
+[build_tree time measured : 0.00795 seconds.]
+horizontal_origin
+tree_depth_range = [0,3]
+[traverse time measured : 0.29508 seconds.]
+[build_and_traverse time measured : 0.30303 seconds.]
+[init_cell_matrix time measured : 1.27586 seconds.]
+[precompute_others time measured : 0.06369 seconds.]
+precompute
+precompute M2L, conv_grid(N = 15, N3 = 3375, N_freq = 1800, delta = 0.942478, gsize = 6.59734)
+M2L precompute range=3
+[precompute_m2l time measured : 0.15819 seconds.]
+[precompute time measured : 0.22192 seconds.]
+P2M leaf_number = 512
+[P2M time measured : 0.10695 seconds.]
+[M2M time measured : 0.00253 seconds.]
+M2L conv_grid(N = 15, N3 = 3375, N_freq = 1800, delta = 0.942478, gsize = 6.59734)
+[setup time measured : 0.00342 seconds.]
+[prepare_memory time measured : 0.00098 seconds.]
+[up time measured : 0.00242 seconds.]
+[hadamard_8x8 time measured : 0.05575 seconds.]
+[down time measured : 0.00261 seconds.]
+[store time measured : 0.00020 seconds.]
+[M2L time measured : 0.06621 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.00268 seconds.]
+num_src_cell = 72, num_tar_cell = 72
+L2P leaf_number = 512
+[L2P time measured : 0.13126 seconds.]
+[M2P time measured : 0.00000 seconds.]
+p2p_pair.size() = 0
+[P2P time measured : 1.00762 seconds.]
+[FMM_kernels time measured : 1.33253 seconds.]
+[FMM time measured : 3.13432 seconds.]
+[DIRECT time measured : 6.16423 seconds.]
+fmm:
+[0],(0.1561,-1.4272,1.8133),-0.3019,2.036860559372,(-0.29002692,2.16263359,-3.90932445)
+[1],(0.1146,2.2974,-2.0787),-0.0229,-0.537042231534,(2.26305411,-1.03517345,2.47206288)
+[2],(-1.5276,2.2053,2.9648),-0.0482,0.015854103373,(-1.57406898,-5.68742934,0.19263207)
+
+direct:
+[0],(0.1561,-1.4272,1.8133),-0.3019,2.036860533823,(-0.29002682,2.16263353,-3.90932462)
+[1],(0.1146,2.2974,-2.0787),-0.0229,-0.537042410067,(2.26305487,-1.03517345,2.47206348)
+[2],(-1.5276,2.2053,2.9648),-0.0482,0.015854044938,(-1.57406858,-5.68742928,0.19263187)
+
+-----------------------------FMM vs Direct------------------------------[24000]
+L2  (p)  : 4.26038e-08   L2  (f)  : 1.24544e-07   L2  (e)  : 1.00841e-07
+Rms (p)  : 4.77889e-08   Rms (f)  : 1.24900e-06
+p-energy1 : 4.020911095948e+01
+p-energy2 : 4.020911501419e+01
+
+[       OK ] FmmTest.n24000_p8_reg01 (9344 ms)
+[ RUN      ] FmmTest.n24000_p8_reg015
+input parameters=[
+  P                    = 8
+  n                    = 24000
+  ncrit                = 128
+  images               = 0
+  cycle                = 6.2832
+  rega                 = 0.1500
+  ewald_ksize          = 11
+  (f,d,e)              = (1,1,1)
+  num_compare          = 24000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 0
+  zero_netcharge       = 0
+  print_body_number    = 3
+  divide_4pi           = 1
+  setting_t            = 1
+]
+
+# of threads = 8
+[build_tree time measured : 0.00783 seconds.]
+[traverse time measured : 0.29490 seconds.]
+[build_and_traverse time measured : 0.30274 seconds.]
+[init_cell_matrix time measured : 1.29322 seconds.]
+[precompute_others time measured : 0.06627 seconds.]
+[precompute_m2l time measured : 0.15883 seconds.]
+[precompute time measured : 0.22514 seconds.]
+[P2M time measured : 0.13801 seconds.]
+[M2M time measured : 0.00239 seconds.]
+[setup time measured : 0.00332 seconds.]
+[prepare_memory time measured : 0.00113 seconds.]
+[up time measured : 0.00257 seconds.]
+[hadamard_8x8 time measured : 0.05640 seconds.]
+[down time measured : 0.00264 seconds.]
+[store time measured : 0.00019 seconds.]
+[M2L time measured : 0.06715 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.00275 seconds.]
+[L2P time measured : 0.16816 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 1.73881 seconds.]
+[FMM_kernels time measured : 2.12926 seconds.]
+-----------------------------[FMM time measured : 3.95136 seconds.]
+[DIRECT time measured : 6.14680 seconds.]
+FMM vs Direct------------------------------[24000]
+L2  (p)  : 7.84405e-08   L2  (f)  : 2.35246e-07   L2  (e)  : 1.57082e-07
+Rms (p)  : 8.79871e-08   Rms (f)  : 2.35918e-06
+p-energy1 : 4.020910869807e+01
+p-energy2 : 4.020911501419e+01
+
+[       OK ] FmmTest.n24000_p8_reg015 (10142 ms)
+[----------] 8 tests from FmmTest (71440 ms total)
+
+[----------] Global test environment tear-down
+[==========] 8 tests from 1 test suite ran. (71440 ms total)
+[  PASSED  ] 8 tests.

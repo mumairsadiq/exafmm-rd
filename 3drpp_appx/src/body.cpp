@@ -156,13 +156,12 @@ rtfmm::BodyCompareResult rtfmm::compare(const Bodies3& bs1, const Bodies3& bs2, 
         fnrm += b2.f.norm();
         int flag = diff.r() > 1e-4 ? 1 : 0;
         diff_r_max = std::max(diff_r_max, diff.r());
-        //if(flag)
-        /*RTLOG("[%d]  %d  %.4f  %.4f(%.4f,%.4f,%.4f)      %.8f (%.8f,%.8f,%.8f)   %.8f (%.8f,%.8f,%.8f)   %.8f (%.8f,%.8f,%.8f)\n", 
+        /*RTLOG("[%d]  %d  %.4f  %.4f(%.4f,%.4f,%.4f)      %.8f (%.8f,%.8f,%.8f)   %.8f (%.8f,%.8f,%.8f)   %.8f (%.8f,%.8f,%.8f) %.8f\n", 
             i, flag, diff.r(),
             b1.q, b1.x[0], b1.x[1], b1.x[2],
             b1.p, b1.f[0], b1.f[1], b1.f[2],
             b2.p, b2.f[0], b2.f[1], b2.f[2],
-            std::abs(b1.p - b2.p), diff[0], diff[1], diff[2]);*/
+            std::abs(b1.p - b2.p), diff[0], diff[1], diff[2], std::abs(b1.q-b2.q));*/
     }
     //RTLOG("diff_r_max = %.4f\n", diff_r_max);
     //RTLOG("pnrm = %.8f\n", pnrm);
