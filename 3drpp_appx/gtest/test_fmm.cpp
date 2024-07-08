@@ -11,7 +11,7 @@
 
 namespace
 {
-unsigned int random_seed = 123;
+unsigned int random_seed = 5;
 rtfmm::Argument env_args;
 #define GTEST_WARNING std::cerr << "\u001b[33m[ WARN     ] \u001b[0m" << std::flush
 
