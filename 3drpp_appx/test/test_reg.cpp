@@ -20,6 +20,14 @@ int main(int argc, char* argv[])
 
     /* prepare bodies */
     rtfmm::Bodies3 bs = rtfmm::generate_random_bodies(args.n, args.r, args.x, args.seed, args.zero_netcharge);
+    //rtfmm::Bodies3 bs = rtfmm::generate_random_bodies(args.n, args.r - args.rega * 2, args.x, args.seed, args.zero_netcharge);
+
+    if(args.body0_idx != -1)
+    {
+        RTLOG("move body %d\n", args.body0_idx);
+        bs[args.body0_idx].x = rtfmm::vec3r(args.x0, args.y0, args.z0);
+        //bs[args.body0_idx].q = 0;
+    }
 
     /* solve by FMM */
     rtfmm::Bodies3 res_fmm;
@@ -62,12 +70,23 @@ int main(int argc, char* argv[])
     }
 
     /* compare */
-    if(rtfmm::verbose)
+    //if(rtfmm::verbose)
     {
         if(args.enable_fmm) rtfmm::print_bodies(res_fmm, args.print_body_number, 0, "fmm");
         if(args.enable_direct) rtfmm::print_bodies(res_direct, args.print_body_number, 0, "direct");
         if(args.enable_ewald) rtfmm::print_bodies(res_ewald, args.print_body_number, 0, "ewald");
     }
+
+    if(args.body0_idx != -1)
+    {
+        RTLOG("check : ");
+        rtfmm::Body3& cb = res_fmm[args.check_body_idx];
+        /*std::cout << "idx=" << cb.idx << ","
+                   << "p=" << cb.p << ","
+                   << "f=" << cb.f << std::endl;*/
+        printf("idx = %d, p = %.12f\n", cb.idx, cb.p);
+    }
+
     if(args.enable_fmm && args.enable_direct)
         rtfmm::compare(res_fmm, res_direct, "FMM", "Direct", args.num_compare).show();
     if(args.enable_fmm && args.enable_ewald)

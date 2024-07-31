@@ -16,7 +16,8 @@ rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
     tbegin(build_and_traverse);
     tbegin(build_tree);
     Tree tree;
-    tree.build(bs, args.x, args.r, args.ncrit, Tree::TreeType::nonuniform);
+    //tree.build(bs, args.x, args.r, args.ncrit, Tree::TreeType::nonuniform);
+    tree.build(bs, args.x, args.r, 3, Tree::TreeType::uniform);
     cs = tree.get_cells();
     if(verbose && args.check_tree) check_tree(cs);
     tend(build_tree);
@@ -28,6 +29,7 @@ rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
     if(verbose && args.check_tree) check_traverser(traverser);
     if(verbose && args.check_tree) check_cells(cs);
     tree_depth_range = get_min_max_depth(cs);
+    if(verbose) std::cout<<"# of cells = "<<cs.size()<<std::endl;
     if(verbose) std::cout<<"tree_depth_range = "<<tree_depth_range<<std::endl;
     tend(traverse);
     tend(build_and_traverse);
@@ -232,6 +234,7 @@ void rtfmm::LaplaceFMM::P2P()
     TIME_BEGIN(P2P);
     PeriodicInteractionMap p2p_map = traverser.get_map(OperatorType::P2P);
     if(verbose) std::cout<<"p2p_pair.size() = "<<traverser.get_pairs(OperatorType::P2P).size()<<std::endl;
+    std::vector<int> leaves = traverser.leaf_cell_idx;
     #pragma omp parallel for
     for(int i = 0; i < p2p_map.size(); i++)
     {
@@ -240,6 +243,12 @@ void rtfmm::LaplaceFMM::P2P()
         Cell3& ctar = cs[p2p->first];
         if(args.use_simd)
         {
+            /*std::vector<std::pair<int, vec3r>> temp;
+            for(int j = 0; j < leaves.size(); j++)
+            {
+                temp.push_back(std::make_pair(leaves[j],vec3r(0,0,0)));
+            }
+            kernel.p2p_1toN_256(cs, temp, ctar);*/
             kernel.p2p_1toN_256(cs, p2p->second, ctar);
         }
         else
@@ -303,73 +312,100 @@ void rtfmm::LaplaceFMM::init_reg_body(Cells3& cells)
 {
     std::vector<int> leaves = traverser.leaf_cell_idx;
 
-    for(int i = 0; i < bs.size(); i++)
+    if(args.rega > 0)
     {
-        vec3r ploc = bs[i].x;
+        printf("~~~~~~~~~~ rega!\n");
+        for(int i = 0; i < bs.size(); i++)
+        {
+            vec3r ploc = bs[i].x;
+            for(int leaf_idx = 0; leaf_idx < leaves.size(); leaf_idx++)
+            {
+                Cell3& cell = cells[leaves[leaf_idx]];
+                if(!(i >= cell.brange.offset && i < cell.brange.offset + cell.brange.number))
+                {
+                    vec3r dx = ploc - cell.x;
+                    real w = get_w_xyz(dx, cell.r, args.rega).mul();
+                    if(w > 0)
+                    {
+                        if(bs[i].idx == 130)
+                        {
+                            print_body(bs[i]);
+                            printf("cell %d, w = %.4f\n", cell.idx, w);
+                        }
+                        cell.reg_body_idx.push_back(std::make_pair(i, vec3r(0,0,0)));
+                    }
+                }
+            }
+        }
+
         for(int leaf_idx = 0; leaf_idx < leaves.size(); leaf_idx++)
         {
             Cell3& cell = cells[leaves[leaf_idx]];
-            if(!(i >= cell.brange.offset && i < cell.brange.offset + cell.brange.number))
+            for(int i = cell.brange.offset; i < cell.brange.offset + cell.brange.number; i++)
             {
-                vec3r dx = ploc - cell.x;
-                real w = get_w_xyz(dx, cell.r, args.rega).mul();
+                Body3 body = bs[i];
+                vec3r dx = body.x - cell.x;
+
+                vec3r dx_simcenter = (body.x - args.x).abs() + args.rega;
+                vec3r ws = get_w_xyz(dx, cell.r, args.rega);
+                for(int d = 0; d <= 2; d++)
+                {
+                    if(dx_simcenter[d] >= args.r)
+                    {
+                        ws[d] = 1;
+                    }
+                }
+                real w = ws.mul();
                 if(w > 0)
                 {
-                    cell.reg_body_idx.push_back(std::make_pair(i, vec3r(0,0,0)));
+                    if(w != 1)
+                    {
+                        RTLOG("inside  %d, %.12f  %d\n", body.idx, w, cell.idx);
+                    }
+                    cell.bodies.push_back(body);
+                    cell.weights.push_back(w);
+                }
+            }
+            for(int i = 0; i < cell.reg_body_idx.size(); i++)
+            {
+                int bidx = cell.reg_body_idx[i].first;
+                Body3 body = bs[bidx];
+                body.x += cell.reg_body_idx[i].second;
+                vec3r dx = body.x - cell.x;
+                vec3r dx_simcenter = (body.x - args.x).abs() + args.rega;
+                vec3r ws = get_w_xyz(dx, cell.r, args.rega);
+                for(int d = 0; d <= 2; d++)
+                {
+                    if(dx_simcenter[d] >= args.r)
+                    {
+                        ws[d] = 1;
+                    }
+                }
+                real w = ws.mul();
+                if(w > 0)
+                {
+                    RTLOG("outside %d, %.12f  %d\n", body.idx, w,cell.idx);
+                    cell.bodies.push_back(body);
+                    cell.weights.push_back(w);
                 }
             }
         }
     }
-
-    for(int leaf_idx = 0; leaf_idx < leaves.size(); leaf_idx++)
+    else
     {
-        Cell3& cell = cells[leaves[leaf_idx]];
-        for(int i = cell.brange.offset; i < cell.brange.offset + cell.brange.number; i++)
+        for(int leaf_idx = 0; leaf_idx < leaves.size(); leaf_idx++)
         {
-            Body3 body = bs[i];
-            vec3r dx = body.x - cell.x;
+            Cell3& cell = cells[leaves[leaf_idx]];
+            for(int i = cell.brange.offset; i < cell.brange.offset + cell.brange.number; i++)
+            {
+                Body3 body = bs[i];
+                cell.bodies.push_back(body);
+                cell.weights.push_back(1);
 
-            vec3r dx_simcenter = (body.x - args.x).abs() + args.rega;
-            vec3r ws = get_w_xyz(dx, cell.r, args.rega);
-            for(int d = 0; d <= 2; d++)
-            {
-                if(dx_simcenter[d] >= args.r)
+                if(body.idx == 0)
                 {
-                    ws[d] = 1;
+                    std::cout<<body.x<<", "<<body.idx<<", "<<cell.idx<<std::endl;
                 }
-            }
-            real w = ws.mul();
-            if(w > 0)
-            {
-                if(w != 1)
-                {
-                    //RTLOG("inside  %d, %.2f    %.4f,%.4f,%.4f\n", i, w,body.x[0],body.x[1],body.x[2]);
-                }
-                cell.bodies.push_back(body);
-                cell.weights.push_back(w);
-            }
-        }
-        for(int i = 0; i < cell.reg_body_idx.size(); i++)
-        {
-            int bidx = cell.reg_body_idx[i].first;
-            Body3 body = bs[bidx];
-            body.x += cell.reg_body_idx[i].second;
-            vec3r dx = body.x - cell.x;
-            vec3r dx_simcenter = (body.x - args.x).abs() + args.rega;
-            vec3r ws = get_w_xyz(dx, cell.r, args.rega);
-            for(int d = 0; d <= 2; d++)
-            {
-                if(dx_simcenter[d] >= args.r)
-                {
-                    ws[d] = 1;
-                }
-            }
-            real w = ws.mul();
-            if(w > 0)
-            {
-                //RTLOG("outside %d, %.2f    %.4f,%.4f,%.4f\n", bidx, w,body.x[0],body.x[1],body.x[2]);
-                cell.bodies.push_back(body);
-                cell.weights.push_back(w);
             }
         }
     }

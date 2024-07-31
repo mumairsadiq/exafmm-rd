@@ -9,16 +9,17 @@
 #include "ewald.h"
 #include <omp.h>
 
-namespace
-{
+
 unsigned int random_seed = 5;
 rtfmm::Argument env_args;
 #define GTEST_WARNING std::cerr << "\u001b[33m[ WARN     ] \u001b[0m" << std::flush
+#define GTEST_COUT std::cerr << "[          ] " << std::flush
 
 TEST(FmmTest, basic) 
 {
     rtfmm::Argument args;
 
+    //rtfmm::verbose = 1;
     args.n = 1000;
     args.P = 4;
     args.images = 0;
@@ -37,6 +38,12 @@ TEST(FmmTest, basic)
 
     /* prepare bodies */
     rtfmm::Bodies3 bs = rtfmm::generate_random_bodies(args.n, args.r, args.x, args.seed, args.zero_netcharge);
+
+    if(args.body0_idx != -1)
+    {
+        RTLOG("move body %d\n", args.body0_idx);
+        bs[args.body0_idx].x = rtfmm::vec3r(args.x0, args.y0, args.z0);
+    }
 
     /* solve by FMM */
     rtfmm::Bodies3 res_fmm;
@@ -79,11 +86,19 @@ TEST(FmmTest, basic)
     }
 
     /* compare */
-    if(rtfmm::verbose)
+    if(args.print_body_number)
     {
         if(args.enable_fmm) rtfmm::print_bodies(res_fmm, args.print_body_number, 0, "fmm");
         if(args.enable_direct) rtfmm::print_bodies(res_direct, args.print_body_number, 0, "direct");
         if(args.enable_ewald) rtfmm::print_bodies(res_ewald, args.print_body_number, 0, "ewald");
+    }
+    if(args.body0_idx != -1)
+    {
+        RTLOG("check : ");
+        rtfmm::Body3& cb = res_fmm[args.check_body_idx];
+        GTEST_COUT << "idx=" << cb.idx << ","
+                   << "p=" << cb.p << ","
+                   << "f=" << cb.f << std::endl;
     }
     if(args.enable_fmm && args.enable_direct)
     {
@@ -2054,8 +2069,6 @@ if(env_args.override_gtest_setting)
         EXPECT_LE(res.l2f, 5e-6);
         EXPECT_LE(res.l2e, 5e-7);
     }
-}
-
 }
 
 int main(int argc, char** argv)

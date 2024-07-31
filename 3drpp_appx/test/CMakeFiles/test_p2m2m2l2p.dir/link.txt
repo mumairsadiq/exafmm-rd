@@ -1,0 +1,1 @@
+/usr/bin/c++  -march=native CMakeFiles/test_p2m2m2l2p.dir/test_p2m2m2l2p.cpp.o -o test_p2m2m2l2p  ../src/libcore.a -lfftw3 /usr/lib/gcc/x86_64-linux-gnu/9/libgomp.so /usr/lib/x86_64-linux-gnu/libpthread.so -lpthread -lm -ldl /usr/lib/x86_64-linux-gnu/libopenblas.so 

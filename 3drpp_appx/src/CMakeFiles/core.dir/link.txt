@@ -1,0 +1,2 @@
+/usr/bin/ar qc libcore.a CMakeFiles/core.dir/body.cpp.o CMakeFiles/core.dir/surface.cpp.o CMakeFiles/core.dir/fmm.cpp.o CMakeFiles/core.dir/kernel.cpp.o CMakeFiles/core.dir/mathfunc.cpp.o CMakeFiles/core.dir/tree.cpp.o CMakeFiles/core.dir/traverser.cpp.o CMakeFiles/core.dir/ewald.cpp.o CMakeFiles/core.dir/argument.cpp.o
+/usr/bin/ranlib libcore.a

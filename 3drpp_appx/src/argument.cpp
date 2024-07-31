@@ -47,6 +47,11 @@ rtfmm::Argument::Argument()
     use_simd = cmd.get<int>("use_simd");
     setting_t = cmd.get<int>("setting_t");
     rega = cmd.get<real>("rega");
+    cmd.add<real>("x0", 0, "x0", false, 0.0);
+    cmd.add<real>("y0", 0, "y0", false, 0.0);
+    cmd.add<real>("z0", 0, "z0", false, 0.0);
+    cmd.add<int>("body0_idx", 0, "index of body moved(for reg plot check)", false, -1);
+    cmd.add<int>("check_body_idx", 0, "index of body check(for reg plot check)", false, 0);
 
     num_compare = cmd.get<int>("num_compare");
     if(num_compare == -1) num_compare = n;
@@ -61,6 +66,12 @@ rtfmm::Argument::Argument()
     check_tree = cmd.get<int>("check_tree");
 
     override_gtest_setting = cmd.get<int>("override");
+
+    x0 = cmd.get<real>("x0");
+    y0 = cmd.get<real>("y0");
+    z0 = cmd.get<real>("z0");
+    body0_idx = cmd.get<int>("body0_idx");
+    check_body_idx = cmd.get<int>("check_body_idx");
 
     x = vec3r(0,0,0);
     r = cycle / 2;
@@ -99,6 +110,11 @@ rtfmm::Argument::Argument(int argc, char* argv[])
     cmd.add<int>("setting_t", 0, "set some parameters to match the result with exafmm-t", false, 0);
     cmd.add<real>("rega", 'r', "regularization alpha", false, 0);
     cmd.add<int>("override", 0, "override gtest setting", false, 0);
+    cmd.add<real>("x0", 0, "x0", false, 0.0);
+    cmd.add<real>("y0", 0, "y0", false, 0.0);
+    cmd.add<real>("z0", 0, "z0", false, 0.0);
+    cmd.add<int>("body0_idx", 0, "index of body moved(for reg plot check)", false, -1);
+    cmd.add<int>("check_body_idx", 0, "index of body check(for reg plot check)", false, 0);
     cmd.parse_check(argc, argv);
     P = cmd.get<int>("P");
     n = cmd.get<int>("nbody");
@@ -129,6 +145,12 @@ rtfmm::Argument::Argument(int argc, char* argv[])
     enable_ewald = CONTAINS(algo, "e") ? 1 : 0;
     check_tree = cmd.get<int>("check_tree");
     override_gtest_setting = cmd.get<int>("override");
+    check_body_idx = cmd.get<int>("check_body_idx");
+
+    x0 = cmd.get<real>("x0");
+    y0 = cmd.get<real>("y0");
+    z0 = cmd.get<real>("z0");
+    body0_idx = cmd.get<int>("body0_idx");
 
     x = vec3r(0,0,0);
     r = cycle / 2;
@@ -167,5 +189,6 @@ void rtfmm::Argument::show()
     RTLOG("  %-20s = %d\n","print_body_number",print_body_number);
     RTLOG("  %-20s = %d\n","divide_4pi",divide_4pi);
     RTLOG("  %-20s = %d\n","setting_t",setting_t);
+    RTLOG("  %-20s = [%.6f,%.6f,%.6f] for body[%d], check body[%d]\n","[x0,y0,z0]",x0,y0,z0,body0_idx,check_body_idx);
     RTLOG("]\n\n");
 }

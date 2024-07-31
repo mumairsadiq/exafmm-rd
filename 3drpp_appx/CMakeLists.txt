@@ -17,8 +17,8 @@ endif()
 message("DEFINE_TEST_TREE = ${DEFINE_TEST_TREE}")
 
 add_subdirectory(src)
-#add_subdirectory(test)
-add_subdirectory(gtest)
+add_subdirectory(test)
+#add_subdirectory(gtest)
 
 include(CheckLanguage)
 check_language(CUDA)

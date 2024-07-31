@@ -165,10 +165,11 @@ void rtfmm::Tree::build_nonuniform_octree(Bodies3& bodies, vec3r x, real r, int 
             //create leaves
             int cnt = 0;
             int insert_offset = this->cells.size();
+            if(num_child >= 1) num_child = 8;
             this->cells[branch_cell_idx].crange = Range(insert_offset,num_child);
             for(int i = 0; i < 8; i++)
             {
-                if(quad_num[i] > 0)
+                if(num_child == 8)
                 {
                     Cell3 child_cell;
                     child_cell.idx = this->cells.size();

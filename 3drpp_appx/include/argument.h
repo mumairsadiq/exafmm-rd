@@ -45,6 +45,12 @@ public:
 
     int setting_t;
 
+    real x0;
+    real y0;
+    real z0;
+    int body0_idx;
+    int check_body_idx;
+
     real rega; // regularization alpha
 };
 

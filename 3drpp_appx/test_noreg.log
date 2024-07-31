@@ -1,0 +1,2164 @@
+run regularization check with parameter : --check_body_idx 100 -P 2 --rega 0.0
+Note: Google Test filter = *basic
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from FmmTest
+[ RUN      ] FmmTest.basic
+[33m[ WARN     ] [0mdefault settings were overrided!
+input parameters=[
+  override             = 1
+  P                    = 2
+  n                    = 1000
+  ncrit                = 16
+  images               = 0
+  cycle                = 6.2832
+  rega                 = 0.0000
+  ewald_ksize          = 11
+  (f,d,e)              = (1,1,1)
+  num_compare          = 1000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 1
+  zero_netcharge       = 1
+  print_body_number    = 3
+  divide_4pi           = 0
+  setting_t            = 0
+  [x0,y0,z0]           = [0.100,0.100,-0.010] for body[0], check body[100]
+]
+
+# of threads = 8
+move body 0
+[build_tree time measured : 0.00107 seconds.]
+[traverse time measured : 0.05722 seconds.]
+[build_and_traverse time measured : 0.05829 seconds.]
+[init_cell_matrix time measured : 0.00043 seconds.]
+[precompute_others time measured : 0.00090 seconds.]
+[precompute_m2l time measured : 0.00605 seconds.]
+[precompute time measured : 0.00696 seconds.]
+[P2M time measured : 0.00036 seconds.]
+[M2M time measured : 0.00008 seconds.]
+[setup time measured : 0.00104 seconds.]
+[prepare_memory time measured : 0.00006 seconds.]
+[up time measured : 0.00020 seconds.]
+[hadamard_8x8 time measured : 0.00027 seconds.]
+[down time measured : 0.00030 seconds.]
+[store time measured : 0.00003 seconds.]
+[M2L time measured : 0.00201 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.00015 seconds.]
+[L2P time measured : 0.00061 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.01290 seconds.]
+[FMM_kernels time measured : 0.01656 seconds.]
+[real_part time measured : 0.19918 seconds.]
+[fourier_part time measured : 0.98863 seconds.]
+[self_correction time measured : 0.00001 seconds.]
+[FMM time measured : 0.08236 seconds.]
+[EWALD time measured : 1.18904 seconds.]
+[DIRECT time measured : 0.02115 seconds.]
+fmm:
+[0],(0.1000,0.1000,-0.0100),-0.2990,-0.394327184676,(1.89757962,-0.53773512,2.21435249)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.113666727223,(-0.17187237,1.65828810,-2.27500495)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-0.136541005847,(2.06348350,3.63072991,2.23090855)
+
+direct:
+[0],(0.1000,0.1000,-0.0100),-0.2990,-0.468740584572,(1.92259163,-0.46430511,2.20260838)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.180166261032,(-0.15308534,1.72138022,-2.19923740)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-0.147787275687,(2.14243365,3.53381478,2.25603178)
+
+ewald:
+[0],(0.1000,0.1000,-0.0100),-0.2990,-0.259801061109,(1.99452826,-0.54840977,2.26923671)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.346877016670,(0.02943012,1.33023841,-1.56424555)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-1.774825207180,(3.47241630,4.23408971,1.31383732)
+
+check : [          ] idx=100,p=-0.661705,f=[3.29015,0.356645,0.295665]
+-----------------------------FMM vs Direct------------------------------[1000]
+L2  (p)  : 6.57993e-03   L2  (f)  : 7.13454e-03   L2  (e)  : 1.86354e-02
+Rms (p)  : 6.15659e-02   Rms (f)  : 2.13372e-01
+p-energy1 : -3.986332399125e+01
+p-energy2 : -3.913404575015e+01
+
+------------------------------FMM vs Ewald------------------------------[1000]
+L2  (p)  : 3.71411e+00   L2  (f)  : 5.70558e-02   L2  (e)  : 8.86436e-01
+Rms (p)  : 9.01948e+00   Rms (f)  : 1.71318e+00
+p-energy1 : -3.986332399125e+01
+p-energy2 : -2.113155094464e+01
+
+----------------------------Direct vs Ewald-----------------------------[1000]
+L2  (p)  : 3.71514e+00   L2  (f)  : 5.63833e-02   L2  (e)  : 8.51925e-01
+Rms (p)  : 9.02199e+00   Rms (f)  : 1.69299e+00
+p-energy1 : -3.913404575015e+01
+p-energy2 : -2.113155094464e+01
+
+[       OK ] FmmTest.basic (1295 ms)
+[----------] 1 test from FmmTest (1295 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (1295 ms total)
+[  PASSED  ] 1 test.
+Note: Google Test filter = *basic
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from FmmTest
+[ RUN      ] FmmTest.basic
+[33m[ WARN     ] [0mdefault settings were overrided!
+input parameters=[
+  override             = 1
+  P                    = 2
+  n                    = 1000
+  ncrit                = 16
+  images               = 0
+  cycle                = 6.2832
+  rega                 = 0.0000
+  ewald_ksize          = 11
+  (f,d,e)              = (1,1,1)
+  num_compare          = 1000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 1
+  zero_netcharge       = 1
+  print_body_number    = 3
+  divide_4pi           = 0
+  setting_t            = 0
+  [x0,y0,z0]           = [0.100,0.100,-0.009] for body[0], check body[100]
+]
+
+# of threads = 8
+move body 0
+[build_tree time measured : 0.00140 seconds.]
+[traverse time measured : 0.06116 seconds.]
+[build_and_traverse time measured : 0.06257 seconds.]
+[init_cell_matrix time measured : 0.00043 seconds.]
+[precompute_others time measured : 0.00090 seconds.]
+[precompute_m2l time measured : 0.00988 seconds.]
+[precompute time measured : 0.01080 seconds.]
+[P2M time measured : 0.00064 seconds.]
+[M2M time measured : 0.00013 seconds.]
+[setup time measured : 0.00179 seconds.]
+[prepare_memory time measured : 0.00011 seconds.]
+[up time measured : 0.00031 seconds.]
+[hadamard_8x8 time measured : 0.00044 seconds.]
+[down time measured : 0.00034 seconds.]
+[store time measured : 0.00005 seconds.]
+[M2L time measured : 0.00318 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.00011 seconds.]
+[L2P time measured : 0.00060 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.01188 seconds.]
+[FMM_kernels time measured : 0.01701 seconds.]
+[real_part time measured : 0.20116 seconds.]
+[fourier_part time measured : 0.88345 seconds.]
+[self_correction time measured : 0.00001 seconds.]
+[FMM time measured : 0.09097 seconds.]
+[EWALD time measured : 1.08585 seconds.]
+[DIRECT time measured : 0.02212 seconds.]
+fmm:
+[0],(0.1000,0.1000,-0.0090),-0.2990,-0.391656513629,(1.89453605,-0.53930608,2.21460497)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.113657893137,(-0.17187248,1.65827181,-2.27499544)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-0.136558101111,(2.06348190,3.63073325,2.23091654)
+
+direct:
+[0],(0.1000,0.1000,-0.0090),-0.2990,-0.466081521510,(1.91987043,-0.46619553,2.20313328)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.180157426945,(-0.15308545,1.72136394,-2.19922789)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-0.147807303115,(2.14242936,3.53382033,2.25603997)
+
+ewald:
+[0],(0.1000,0.1000,-0.0090),-0.2990,-0.257531642645,(1.99180351,-0.55025784,2.26960208)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.346862364284,(0.02943004,1.33022710,-1.56423432)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-1.774826895814,(3.47241553,4.23409059,1.31384736)
+
+check : [          ] idx=100,p=-0.661825,f=[3.29061,0.356553,0.295087]
+-----------------------------FMM vs Direct------------------------------[1000]
+L2  (p)  : 6.58022e-03   L2  (f)  : 7.13452e-03   L2  (e)  : 1.86349e-02
+Rms (p)  : 6.15680e-02   Rms (f)  : 2.13371e-01
+p-energy1 : -3.986464841188e+01
+p-energy2 : -3.913536322836e+01
+
+------------------------------FMM vs Ewald------------------------------[1000]
+L2  (p)  : 3.71409e+00   L2  (f)  : 5.70557e-02   L2  (e)  : 8.86378e-01
+Rms (p)  : 9.01938e+00   Rms (f)  : 1.71318e+00
+p-energy1 : -3.986464841188e+01
+p-energy2 : -2.113290822380e+01
+
+----------------------------Direct vs Ewald-----------------------------[1000]
+L2  (p)  : 3.71512e+00   L2  (f)  : 5.63833e-02   L2  (e)  : 8.51868e-01
+Rms (p)  : 9.02188e+00   Rms (f)  : 1.69299e+00
+p-energy1 : -3.913536322836e+01
+p-energy2 : -2.113290822380e+01
+
+[       OK ] FmmTest.basic (1202 ms)
+[----------] 1 test from FmmTest (1202 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (1202 ms total)
+[  PASSED  ] 1 test.
+Note: Google Test filter = *basic
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from FmmTest
+[ RUN      ] FmmTest.basic
+[33m[ WARN     ] [0mdefault settings were overrided!
+input parameters=[
+  override             = 1
+  P                    = 2
+  n                    = 1000
+  ncrit                = 16
+  images               = 0
+  cycle                = 6.2832
+  rega                 = 0.0000
+  ewald_ksize          = 11
+  (f,d,e)              = (1,1,1)
+  num_compare          = 1000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 1
+  zero_netcharge       = 1
+  print_body_number    = 3
+  divide_4pi           = 0
+  setting_t            = 0
+  [x0,y0,z0]           = [0.100,0.100,-0.008] for body[0], check body[100]
+]
+
+# of threads = 8
+move body 0
+[build_tree time measured : 0.00147 seconds.]
+[traverse time measured : 0.05807 seconds.]
+[build_and_traverse time measured : 0.05955 seconds.]
+[init_cell_matrix time measured : 0.00044 seconds.]
+[precompute_others time measured : 0.00061 seconds.]
+[precompute_m2l time measured : 0.00894 seconds.]
+[precompute time measured : 0.00956 seconds.]
+[P2M time measured : 0.00061 seconds.]
+[M2M time measured : 0.00013 seconds.]
+[setup time measured : 0.00224 seconds.]
+[prepare_memory time measured : 0.00013 seconds.]
+[up time measured : 0.00042 seconds.]
+[hadamard_8x8 time measured : 0.00041 seconds.]
+[down time measured : 0.00038 seconds.]
+[store time measured : 0.00004 seconds.]
+[M2L time measured : 0.00380 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.00012 seconds.]
+[L2P time measured : 0.00076 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.01580 seconds.]
+[FMM_kernels time measured : 0.02196 seconds.]
+[real_part time measured : 0.20386 seconds.]
+[fourier_part time measured : 0.89764 seconds.]
+[self_correction time measured : 0.00001 seconds.]
+[FMM time measured : 0.09164 seconds.]
+[EWALD time measured : 1.10275 seconds.]
+[DIRECT time measured : 0.02233 seconds.]
+fmm:
+[0],(0.1000,0.1000,-0.0080),-0.2990,-0.388985589978,(1.89147821,-0.54087836,2.21486777)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.113649063360,(-0.17187259,1.65825554,-2.27498593)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-0.136575190996,(2.06348030,3.63073660,2.23092453)
+
+direct:
+[0],(0.1000,0.1000,-0.0080),-0.2990,-0.463421932903,(1.91713552,-0.46808846,2.20366954)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.180148597168,(-0.15308556,1.72134767,-2.19921838)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-0.147827333611,(2.14242507,3.53382588,2.25604815)
+
+ewald:
+[0],(0.1000,0.1000,-0.0080),-0.2990,-0.255261853224,(1.98906505,-0.55210851,2.26997862)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.346847723135,(0.02942995,1.33021581,-1.56422308)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-1.774828594488,(3.47241475,4.23409147,1.31385740)
+
+check : [          ] idx=100,p=-0.661945,f=[3.29107,0.35646,0.294507]
+-----------------------------FMM vs Direct------------------------------[1000]
+L2  (p)  : 6.58052e-03   L2  (f)  : 7.13449e-03   L2  (e)  : 1.86345e-02
+Rms (p)  : 6.15700e-02   Rms (f)  : 2.13370e-01
+p-energy1 : -3.986597298661e+01
+p-energy2 : -3.913668102389e+01
+
+------------------------------FMM vs Ewald------------------------------[1000]
+L2  (p)  : 3.71406e+00   L2  (f)  : 5.70557e-02   L2  (e)  : 8.86319e-01
+Rms (p)  : 9.01927e+00   Rms (f)  : 1.71318e+00
+p-energy1 : -3.986597298661e+01
+p-energy2 : -2.113426572481e+01
+
+----------------------------Direct vs Ewald-----------------------------[1000]
+L2  (p)  : 3.71509e+00   L2  (f)  : 5.63832e-02   L2  (e)  : 8.51812e-01
+Rms (p)  : 9.02177e+00   Rms (f)  : 1.69299e+00
+p-energy1 : -3.913668102389e+01
+p-energy2 : -2.113426572481e+01
+
+[       OK ] FmmTest.basic (1219 ms)
+[----------] 1 test from FmmTest (1219 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (1219 ms total)
+[  PASSED  ] 1 test.
+Note: Google Test filter = *basic
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from FmmTest
+[ RUN      ] FmmTest.basic
+[33m[ WARN     ] [0mdefault settings were overrided!
+input parameters=[
+  override             = 1
+  P                    = 2
+  n                    = 1000
+  ncrit                = 16
+  images               = 0
+  cycle                = 6.2832
+  rega                 = 0.0000
+  ewald_ksize          = 11
+  (f,d,e)              = (1,1,1)
+  num_compare          = 1000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 1
+  zero_netcharge       = 1
+  print_body_number    = 3
+  divide_4pi           = 0
+  setting_t            = 0
+  [x0,y0,z0]           = [0.100,0.100,-0.007] for body[0], check body[100]
+]
+
+# of threads = 8
+move body 0
+[build_tree time measured : 0.00162 seconds.]
+[traverse time measured : 0.05842 seconds.]
+[build_and_traverse time measured : 0.06005 seconds.]
+[init_cell_matrix time measured : 0.00044 seconds.]
+[precompute_others time measured : 0.00055 seconds.]
+[precompute_m2l time measured : 0.00857 seconds.]
+[precompute time measured : 0.00914 seconds.]
+[P2M time measured : 0.00068 seconds.]
+[M2M time measured : 0.00009 seconds.]
+[setup time measured : 0.00135 seconds.]
+[prepare_memory time measured : 0.00006 seconds.]
+[up time measured : 0.00027 seconds.]
+[hadamard_8x8 time measured : 0.00040 seconds.]
+[down time measured : 0.00037 seconds.]
+[store time measured : 0.00004 seconds.]
+[M2L time measured : 0.00263 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.00012 seconds.]
+[L2P time measured : 0.00062 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.01153 seconds.]
+[FMM_kernels time measured : 0.01615 seconds.]
+[real_part time measured : 0.20256 seconds.]
+[fourier_part time measured : 0.94317 seconds.]
+[self_correction time measured : 0.00001 seconds.]
+[FMM time measured : 0.08592 seconds.]
+[EWALD time measured : 1.14699 seconds.]
+[DIRECT time measured : 0.02017 seconds.]
+fmm:
+[0],(0.1000,0.1000,-0.0070),-0.2990,-0.386314403418,(1.88840611,-0.54245197,2.21514085)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.113640237896,(-0.17187270,1.65823928,-2.27497641)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-0.136592275472,(2.06347870,3.63073995,2.23093251)
+
+direct:
+[0],(0.1000,0.1000,-0.0070),-0.2990,-0.460761807415,(1.91438691,-0.46998389,2.20421711)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.180139771704,(-0.15308566,1.72133141,-2.19920887)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-0.147847367173,(2.14242077,3.53383144,2.25605633)
+
+ewald:
+[0],(0.1000,0.1000,-0.0070),-0.2990,-0.252991681703,(1.98631288,-0.55396178,2.27036627)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.346833093229,(0.02942986,1.33020453,-1.56421183)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-1.774830303200,(3.47241397,4.23409236,1.31386744)
+
+check : [          ] idx=100,p=-0.662064,f=[3.29152,0.356369,0.293926]
+-----------------------------FMM vs Direct------------------------------[1000]
+L2  (p)  : 6.58081e-03   L2  (f)  : 7.13447e-03   L2  (e)  : 1.86340e-02
+Rms (p)  : 6.15720e-02   Rms (f)  : 2.13370e-01
+p-energy1 : -3.986729772158e+01
+p-energy2 : -3.913799914353e+01
+
+------------------------------FMM vs Ewald------------------------------[1000]
+L2  (p)  : 3.71403e+00   L2  (f)  : 5.70557e-02   L2  (e)  : 8.86261e-01
+Rms (p)  : 9.01916e+00   Rms (f)  : 1.71318e+00
+p-energy1 : -3.986729772158e+01
+p-energy2 : -2.113562345435e+01
+
+----------------------------Direct vs Ewald-----------------------------[1000]
+L2  (p)  : 3.71507e+00   L2  (f)  : 5.63832e-02   L2  (e)  : 8.51755e-01
+Rms (p)  : 9.02167e+00   Rms (f)  : 1.69298e+00
+p-energy1 : -3.913799914353e+01
+p-energy2 : -2.113562345435e+01
+
+[       OK ] FmmTest.basic (1256 ms)
+[----------] 1 test from FmmTest (1256 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (1256 ms total)
+[  PASSED  ] 1 test.
+Note: Google Test filter = *basic
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from FmmTest
+[ RUN      ] FmmTest.basic
+[33m[ WARN     ] [0mdefault settings were overrided!
+input parameters=[
+  override             = 1
+  P                    = 2
+  n                    = 1000
+  ncrit                = 16
+  images               = 0
+  cycle                = 6.2832
+  rega                 = 0.0000
+  ewald_ksize          = 11
+  (f,d,e)              = (1,1,1)
+  num_compare          = 1000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 1
+  zero_netcharge       = 1
+  print_body_number    = 3
+  divide_4pi           = 0
+  setting_t            = 0
+  [x0,y0,z0]           = [0.100,0.100,-0.006] for body[0], check body[100]
+]
+
+# of threads = 8
+move body 0
+[build_tree time measured : 0.00131 seconds.]
+[traverse time measured : 0.05857 seconds.]
+[build_and_traverse time measured : 0.05989 seconds.]
+[init_cell_matrix time measured : 0.00044 seconds.]
+[precompute_others time measured : 0.00052 seconds.]
+[precompute_m2l time measured : 0.00824 seconds.]
+[precompute time measured : 0.00878 seconds.]
+[P2M time measured : 0.00048 seconds.]
+[M2M time measured : 0.00013 seconds.]
+[setup time measured : 0.00177 seconds.]
+[prepare_memory time measured : 0.00008 seconds.]
+[up time measured : 0.00032 seconds.]
+[hadamard_8x8 time measured : 0.00037 seconds.]
+[down time measured : 0.00037 seconds.]
+[store time measured : 0.00003 seconds.]
+[M2L time measured : 0.00313 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.00012 seconds.]
+[L2P time measured : 0.00075 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.01621 seconds.]
+[FMM_kernels time measured : 0.02130 seconds.]
+[real_part time measured : 0.21596 seconds.]
+[fourier_part time measured : 0.89896 seconds.]
+[self_correction time measured : 0.00001 seconds.]
+[FMM time measured : 0.09058 seconds.]
+[EWALD time measured : 1.11617 seconds.]
+[DIRECT time measured : 0.02074 seconds.]
+fmm:
+[0],(0.1000,0.1000,-0.0060),-0.2990,-0.383642943699,(1.88531973,-0.54402689,2.21542416)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.113631416752,(-0.17187280,1.65822303,-2.27496689)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-0.136609354509,(2.06347710,3.63074329,2.23094049)
+
+direct:
+[0],(0.1000,0.1000,-0.0060),-0.2990,-0.458101133759,(1.91162459,-0.47188180,2.20477595)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.180130950560,(-0.15308577,1.72131516,-2.19919934)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-0.147867403801,(2.14241648,3.53383700,2.25606451)
+
+ewald:
+[0],(0.1000,0.1000,-0.0060),-0.2990,-0.250721116989,(1.98354700,-0.55581765,2.27076499)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.346818474574,(0.02942977,1.33019326,-1.56420058)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-1.774832021950,(3.47241319,4.23409325,1.31387748)
+
+check : [          ] idx=100,p=-0.662182,f=[3.29197,0.356277,0.293342]
+-----------------------------FMM vs Direct------------------------------[1000]
+L2  (p)  : 6.58110e-03   L2  (f)  : 7.13445e-03   L2  (e)  : 1.86336e-02
+Rms (p)  : 6.15740e-02   Rms (f)  : 2.13369e-01
+p-energy1 : -3.986862262294e+01
+p-energy2 : -3.913931759403e+01
+
+------------------------------FMM vs Ewald------------------------------[1000]
+L2  (p)  : 3.71401e+00   L2  (f)  : 5.70556e-02   L2  (e)  : 8.86202e-01
+Rms (p)  : 9.01905e+00   Rms (f)  : 1.71318e+00
+p-energy1 : -3.986862262294e+01
+p-energy2 : -2.113698141904e+01
+
+----------------------------Direct vs Ewald-----------------------------[1000]
+L2  (p)  : 3.71504e+00   L2  (f)  : 5.63832e-02   L2  (e)  : 8.51699e-01
+Rms (p)  : 9.02156e+00   Rms (f)  : 1.69298e+00
+p-energy1 : -3.913931759403e+01
+p-energy2 : -2.113698141904e+01
+
+[       OK ] FmmTest.basic (1230 ms)
+[----------] 1 test from FmmTest (1230 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (1230 ms total)
+[  PASSED  ] 1 test.
+Note: Google Test filter = *basic
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from FmmTest
+[ RUN      ] FmmTest.basic
+[33m[ WARN     ] [0mdefault settings were overrided!
+input parameters=[
+  override             = 1
+  P                    = 2
+  n                    = 1000
+  ncrit                = 16
+  images               = 0
+  cycle                = 6.2832
+  rega                 = 0.0000
+  ewald_ksize          = 11
+  (f,d,e)              = (1,1,1)
+  num_compare          = 1000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 1
+  zero_netcharge       = 1
+  print_body_number    = 3
+  divide_4pi           = 0
+  setting_t            = 0
+  [x0,y0,z0]           = [0.100,0.100,-0.005] for body[0], check body[100]
+]
+
+# of threads = 8
+move body 0
+[build_tree time measured : 0.00120 seconds.]
+[traverse time measured : 0.05846 seconds.]
+[build_and_traverse time measured : 0.05967 seconds.]
+[init_cell_matrix time measured : 0.00044 seconds.]
+[precompute_others time measured : 0.00054 seconds.]
+[precompute_m2l time measured : 0.00801 seconds.]
+[precompute time measured : 0.00856 seconds.]
+[P2M time measured : 0.00032 seconds.]
+[M2M time measured : 0.00008 seconds.]
+[setup time measured : 0.00121 seconds.]
+[prepare_memory time measured : 0.00006 seconds.]
+[up time measured : 0.00020 seconds.]
+[hadamard_8x8 time measured : 0.00028 seconds.]
+[down time measured : 0.00027 seconds.]
+[store time measured : 0.00003 seconds.]
+[M2L time measured : 0.00216 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.00010 seconds.]
+[L2P time measured : 0.00038 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.01302 seconds.]
+[FMM_kernels time measured : 0.01652 seconds.]
+[real_part time measured : 0.20183 seconds.]
+[fourier_part time measured : 0.96358 seconds.]
+[self_correction time measured : 0.00001 seconds.]
+[FMM time measured : 0.08532 seconds.]
+[EWALD time measured : 1.16666 seconds.]
+[DIRECT time measured : 0.02184 seconds.]
+fmm:
+[0],(0.1000,0.1000,-0.0050),-0.2990,-0.380971200622,(1.88221909,-0.54560312,2.21571764)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.113622599931,(-0.17187291,1.65820679,-2.27495737)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-0.136626428076,(2.06347550,3.63074664,2.23094848)
+
+direct:
+[0],(0.1000,0.1000,-0.0050),-0.2990,-0.455439900701,(1.90884856,-0.47378220,2.20534599)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.180122133739,(-0.15308588,1.72129892,-2.19918982)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-0.147887443493,(2.14241218,3.53384256,2.25607269)
+
+ewald:
+[0],(0.1000,0.1000,-0.0050),-0.2990,-0.248450148041,(1.98076741,-0.55767610,2.27117473)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.346803867180,(0.02942968,1.33018200,-1.56418931)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-1.774833750736,(3.47241240,4.23409415,1.31388751)
+
+check : [          ] idx=100,p=-0.6623,f=[3.29242,0.356186,0.292757]
+-----------------------------FMM vs Direct------------------------------[1000]
+L2  (p)  : 6.58140e-03   L2  (f)  : 7.13442e-03   L2  (e)  : 1.86331e-02
+Rms (p)  : 6.15761e-02   Rms (f)  : 2.13368e-01
+p-energy1 : -3.986994769679e+01
+p-energy2 : -3.914063638211e+01
+
+------------------------------FMM vs Ewald------------------------------[1000]
+L2  (p)  : 3.71398e+00   L2  (f)  : 5.70556e-02   L2  (e)  : 8.86144e-01
+Rms (p)  : 9.01894e+00   Rms (f)  : 1.71317e+00
+p-energy1 : -3.986994769679e+01
+p-energy2 : -2.113833962550e+01
+
+----------------------------Direct vs Ewald-----------------------------[1000]
+L2  (p)  : 3.71501e+00   L2  (f)  : 5.63831e-02   L2  (e)  : 8.51642e-01
+Rms (p)  : 9.02145e+00   Rms (f)  : 1.69298e+00
+p-energy1 : -3.914063638211e+01
+p-energy2 : -2.113833962550e+01
+
+[       OK ] FmmTest.basic (1277 ms)
+[----------] 1 test from FmmTest (1277 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (1277 ms total)
+[  PASSED  ] 1 test.
+Note: Google Test filter = *basic
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from FmmTest
+[ RUN      ] FmmTest.basic
+[33m[ WARN     ] [0mdefault settings were overrided!
+input parameters=[
+  override             = 1
+  P                    = 2
+  n                    = 1000
+  ncrit                = 16
+  images               = 0
+  cycle                = 6.2832
+  rega                 = 0.0000
+  ewald_ksize          = 11
+  (f,d,e)              = (1,1,1)
+  num_compare          = 1000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 1
+  zero_netcharge       = 1
+  print_body_number    = 3
+  divide_4pi           = 0
+  setting_t            = 0
+  [x0,y0,z0]           = [0.100,0.100,-0.004] for body[0], check body[100]
+]
+
+# of threads = 8
+move body 0
+[build_tree time measured : 0.00173 seconds.]
+[traverse time measured : 0.05756 seconds.]
+[build_and_traverse time measured : 0.05931 seconds.]
+[init_cell_matrix time measured : 0.00045 seconds.]
+[precompute_others time measured : 0.00056 seconds.]
+[precompute_m2l time measured : 0.00654 seconds.]
+[precompute time measured : 0.00712 seconds.]
+[P2M time measured : 0.00046 seconds.]
+[M2M time measured : 0.00008 seconds.]
+[setup time measured : 0.00133 seconds.]
+[prepare_memory time measured : 0.00007 seconds.]
+[up time measured : 0.00032 seconds.]
+[hadamard_8x8 time measured : 0.00043 seconds.]
+[down time measured : 0.00040 seconds.]
+[store time measured : 0.00003 seconds.]
+[M2L time measured : 0.00270 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.00008 seconds.]
+[L2P time measured : 0.00044 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.01280 seconds.]
+[FMM_kernels time measured : 0.01703 seconds.]
+[real_part time measured : 0.20149 seconds.]
+[fourier_part time measured : 1.00554 seconds.]
+[self_correction time measured : 0.00001 seconds.]
+[FMM time measured : 0.08404 seconds.]
+[EWALD time measured : 1.20827 seconds.]
+[DIRECT time measured : 0.01914 seconds.]
+fmm:
+[0],(0.1000,0.1000,-0.0040),-0.2990,-0.378299164038,(1.87910417,-0.54718064,2.21602124)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.113613787438,(-0.17187302,1.65819056,-2.27494783)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-0.136643496143,(2.06347390,3.63074998,2.23095646)
+
+direct:
+[0],(0.1000,0.1000,-0.0040),-0.2990,-0.452778097057,(1.90605883,-0.47568506,2.20592719)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.180113321246,(-0.15308599,1.72128268,-2.19918029)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-0.147907486251,(2.14240787,3.53384812,2.25608088)
+
+ewald:
+[0],(0.1000,0.1000,-0.0040),-0.2990,-0.246178763867,(1.97797411,-0.55953711,2.27159544)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.346789271052,(0.02942959,1.33017076,-1.56417804)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-1.774835489559,(3.47241161,4.23409505,1.31389755)
+
+check : [          ] idx=100,p=-0.662417,f=[3.29287,0.356095,0.292171]
+-----------------------------FMM vs Direct------------------------------[1000]
+L2  (p)  : 6.58169e-03   L2  (f)  : 7.13440e-03   L2  (e)  : 1.86326e-02
+Rms (p)  : 6.15781e-02   Rms (f)  : 2.13368e-01
+p-energy1 : -3.987127294918e+01
+p-energy2 : -3.914195551446e+01
+
+------------------------------FMM vs Ewald------------------------------[1000]
+L2  (p)  : 3.71395e+00   L2  (f)  : 5.70556e-02   L2  (e)  : 8.86085e-01
+Rms (p)  : 9.01883e+00   Rms (f)  : 1.71317e+00
+p-energy1 : -3.987127294918e+01
+p-energy2 : -2.113969808029e+01
+
+----------------------------Direct vs Ewald-----------------------------[1000]
+L2  (p)  : 3.71499e+00   L2  (f)  : 5.63831e-02   L2  (e)  : 8.51585e-01
+Rms (p)  : 9.02134e+00   Rms (f)  : 1.69298e+00
+p-energy1 : -3.914195551446e+01
+p-energy2 : -2.113969808029e+01
+
+[       OK ] FmmTest.basic (1314 ms)
+[----------] 1 test from FmmTest (1314 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (1314 ms total)
+[  PASSED  ] 1 test.
+Note: Google Test filter = *basic
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from FmmTest
+[ RUN      ] FmmTest.basic
+[33m[ WARN     ] [0mdefault settings were overrided!
+input parameters=[
+  override             = 1
+  P                    = 2
+  n                    = 1000
+  ncrit                = 16
+  images               = 0
+  cycle                = 6.2832
+  rega                 = 0.0000
+  ewald_ksize          = 11
+  (f,d,e)              = (1,1,1)
+  num_compare          = 1000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 1
+  zero_netcharge       = 1
+  print_body_number    = 3
+  divide_4pi           = 0
+  setting_t            = 0
+  [x0,y0,z0]           = [0.100,0.100,-0.003] for body[0], check body[100]
+]
+
+# of threads = 8
+move body 0
+[build_tree time measured : 0.00132 seconds.]
+[traverse time measured : 0.05720 seconds.]
+[build_and_traverse time measured : 0.05852 seconds.]
+[init_cell_matrix time measured : 0.00044 seconds.]
+[precompute_others time measured : 0.00055 seconds.]
+[precompute_m2l time measured : 0.00572 seconds.]
+[precompute time measured : 0.00628 seconds.]
+[P2M time measured : 0.00040 seconds.]
+[M2M time measured : 0.00008 seconds.]
+[setup time measured : 0.00133 seconds.]
+[prepare_memory time measured : 0.00007 seconds.]
+[up time measured : 0.00024 seconds.]
+[hadamard_8x8 time measured : 0.00028 seconds.]
+[down time measured : 0.00028 seconds.]
+[store time measured : 0.00003 seconds.]
+[M2L time measured : 0.00232 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.00009 seconds.]
+[L2P time measured : 0.00045 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.01187 seconds.]
+[FMM_kernels time measured : 0.01566 seconds.]
+[real_part time measured : 0.20058 seconds.]
+[fourier_part time measured : 0.99099 seconds.]
+[self_correction time measured : 0.00001 seconds.]
+[FMM time measured : 0.08104 seconds.]
+[EWALD time measured : 1.19281 seconds.]
+[DIRECT time measured : 0.02096 seconds.]
+fmm:
+[0],(0.1000,0.1000,-0.0030),-0.2990,-0.375626823855,(1.87597499,-0.54875944,2.21633491)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.113604979279,(-0.17187313,1.65817434,-2.27493830)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-0.136660558681,(2.06347231,3.63075333,2.23096444)
+
+direct:
+[0],(0.1000,0.1000,-0.0030),-0.2990,-0.450115711695,(1.90325538,-0.47759039,2.20651950)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.180104513087,(-0.15308609,1.72126647,-2.19917075)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-0.147927532072,(2.14240357,3.53385369,2.25608906)
+
+ewald:
+[0],(0.1000,0.1000,-0.0030),-0.2990,-0.243906953529,(1.97516709,-0.56140070,2.27202705)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.346774686201,(0.02942950,1.33015952,-1.56416676)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-1.774837238415,(3.47241081,4.23409596,1.31390758)
+
+check : [          ] idx=100,p=-0.662533,f=[3.29331,0.356005,0.291582]
+-----------------------------FMM vs Direct------------------------------[1000]
+L2  (p)  : 6.58199e-03   L2  (f)  : 7.13438e-03   L2  (e)  : 1.86322e-02
+Rms (p)  : 6.15801e-02   Rms (f)  : 2.13367e-01
+p-energy1 : -3.987259838617e+01
+p-energy2 : -3.914327499773e+01
+
+------------------------------FMM vs Ewald------------------------------[1000]
+L2  (p)  : 3.71393e+00   L2  (f)  : 5.70555e-02   L2  (e)  : 8.86027e-01
+Rms (p)  : 9.01872e+00   Rms (f)  : 1.71317e+00
+p-energy1 : -3.987259838617e+01
+p-energy2 : -2.114105678996e+01
+
+----------------------------Direct vs Ewald-----------------------------[1000]
+L2  (p)  : 3.71496e+00   L2  (f)  : 5.63830e-02   L2  (e)  : 8.51529e-01
+Rms (p)  : 9.02123e+00   Rms (f)  : 1.69298e+00
+p-energy1 : -3.914327499773e+01
+p-energy2 : -2.114105678996e+01
+
+[       OK ] FmmTest.basic (1297 ms)
+[----------] 1 test from FmmTest (1297 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (1297 ms total)
+[  PASSED  ] 1 test.
+Note: Google Test filter = *basic
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from FmmTest
+[ RUN      ] FmmTest.basic
+[33m[ WARN     ] [0mdefault settings were overrided!
+input parameters=[
+  override             = 1
+  P                    = 2
+  n                    = 1000
+  ncrit                = 16
+  images               = 0
+  cycle                = 6.2832
+  rega                 = 0.0000
+  ewald_ksize          = 11
+  (f,d,e)              = (1,1,1)
+  num_compare          = 1000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 1
+  zero_netcharge       = 1
+  print_body_number    = 3
+  divide_4pi           = 0
+  setting_t            = 0
+  [x0,y0,z0]           = [0.100,0.100,-0.002] for body[0], check body[100]
+]
+
+# of threads = 8
+move body 0
+[build_tree time measured : 0.00130 seconds.]
+[traverse time measured : 0.06163 seconds.]
+[build_and_traverse time measured : 0.06294 seconds.]
+[init_cell_matrix time measured : 0.00043 seconds.]
+[precompute_others time measured : 0.00083 seconds.]
+[precompute_m2l time measured : 0.00821 seconds.]
+[precompute time measured : 0.00906 seconds.]
+[P2M time measured : 0.00067 seconds.]
+[M2M time measured : 0.00014 seconds.]
+[setup time measured : 0.00107 seconds.]
+[prepare_memory time measured : 0.00009 seconds.]
+[up time measured : 0.00026 seconds.]
+[hadamard_8x8 time measured : 0.00028 seconds.]
+[down time measured : 0.00025 seconds.]
+[store time measured : 0.00003 seconds.]
+[M2L time measured : 0.00208 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.00009 seconds.]
+[L2P time measured : 0.00045 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.01354 seconds.]
+[FMM_kernels time measured : 0.01774 seconds.]
+[real_part time measured : 0.20075 seconds.]
+[fourier_part time measured : 0.99014 seconds.]
+[self_correction time measured : 0.00001 seconds.]
+[FMM time measured : 0.09033 seconds.]
+[EWALD time measured : 1.19214 seconds.]
+[DIRECT time measured : 0.02097 seconds.]
+fmm:
+[0],(0.1000,0.1000,-0.0020),-0.2990,-0.372954170032,(1.87283154,-0.55033952,2.21665860)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.113596175457,(-0.17187323,1.65815813,-2.27492876)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-0.136677615659,(2.06347071,3.63075667,2.23097241)
+
+direct:
+[0],(0.1000,0.1000,-0.0020),-0.2990,-0.447452733535,(1.90043822,-0.47949816,2.20712286)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.180095709265,(-0.15308620,1.72125026,-2.19916121)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-0.147947580957,(2.14239926,3.53385926,2.25609724)
+
+ewald:
+[0],(0.1000,0.1000,-0.0020),-0.2990,-0.241634706139,(1.97234635,-0.56326683,2.27246953)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.346760112632,(0.02942941,1.33014830,-1.56415548)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-1.774838997306,(3.47241000,4.23409687,1.31391762)
+
+check : [          ] idx=100,p=-0.662649,f=[3.29375,0.355915,0.290992]
+-----------------------------FMM vs Direct------------------------------[1000]
+L2  (p)  : 6.58228e-03   L2  (f)  : 7.13435e-03   L2  (e)  : 1.86317e-02
+Rms (p)  : 6.15822e-02   Rms (f)  : 2.13366e-01
+p-energy1 : -3.987392401375e+01
+p-energy2 : -3.914459483855e+01
+
+------------------------------FMM vs Ewald------------------------------[1000]
+L2  (p)  : 3.71390e+00   L2  (f)  : 5.70555e-02   L2  (e)  : 8.85968e-01
+Rms (p)  : 9.01861e+00   Rms (f)  : 1.71317e+00
+p-energy1 : -3.987392401375e+01
+p-energy2 : -2.114241576101e+01
+
+----------------------------Direct vs Ewald-----------------------------[1000]
+L2  (p)  : 3.71493e+00   L2  (f)  : 5.63830e-02   L2  (e)  : 8.51472e-01
+Rms (p)  : 9.02112e+00   Rms (f)  : 1.69298e+00
+p-energy1 : -3.914459483855e+01
+p-energy2 : -2.114241576101e+01
+
+[       OK ] FmmTest.basic (1306 ms)
+[----------] 1 test from FmmTest (1306 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (1306 ms total)
+[  PASSED  ] 1 test.
+Note: Google Test filter = *basic
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from FmmTest
+[ RUN      ] FmmTest.basic
+[33m[ WARN     ] [0mdefault settings were overrided!
+input parameters=[
+  override             = 1
+  P                    = 2
+  n                    = 1000
+  ncrit                = 16
+  images               = 0
+  cycle                = 6.2832
+  rega                 = 0.0000
+  ewald_ksize          = 11
+  (f,d,e)              = (1,1,1)
+  num_compare          = 1000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 1
+  zero_netcharge       = 1
+  print_body_number    = 3
+  divide_4pi           = 0
+  setting_t            = 0
+  [x0,y0,z0]           = [0.100,0.100,-0.001] for body[0], check body[100]
+]
+
+# of threads = 8
+move body 0
+[build_tree time measured : 0.00170 seconds.]
+[traverse time measured : 0.05801 seconds.]
+[build_and_traverse time measured : 0.05972 seconds.]
+[init_cell_matrix time measured : 0.00045 seconds.]
+[precompute_others time measured : 0.00051 seconds.]
+[precompute_m2l time measured : 0.00611 seconds.]
+[precompute time measured : 0.00664 seconds.]
+[P2M time measured : 0.00067 seconds.]
+[M2M time measured : 0.00014 seconds.]
+[setup time measured : 0.00113 seconds.]
+[prepare_memory time measured : 0.00006 seconds.]
+[up time measured : 0.00021 seconds.]
+[hadamard_8x8 time measured : 0.00028 seconds.]
+[down time measured : 0.00025 seconds.]
+[store time measured : 0.00001 seconds.]
+[M2L time measured : 0.00206 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.00009 seconds.]
+[L2P time measured : 0.00046 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.01303 seconds.]
+[FMM_kernels time measured : 0.01691 seconds.]
+[real_part time measured : 0.20064 seconds.]
+[fourier_part time measured : 0.92104 seconds.]
+[self_correction time measured : 0.00001 seconds.]
+[FMM time measured : 0.08385 seconds.]
+[EWALD time measured : 1.12292 seconds.]
+[DIRECT time measured : 0.02192 seconds.]
+fmm:
+[0],(0.1000,0.1000,-0.0010),-0.2990,-0.370281192579,(1.86967381,-0.55192087,2.21699224)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.113587375978,(-0.17187334,1.65814193,-2.27491921)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-0.136694667046,(2.06346912,3.63076001,2.23098039)
+
+direct:
+[0],(0.1000,0.1000,-0.0010),-0.2990,-0.444789151550,(1.89760735,-0.48140837,2.20773722)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.180086909786,(-0.15308631,1.72123406,-2.19915166)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-0.147967632905,(2.14239495,3.53386484,2.25610541)
+
+ewald:
+[0],(0.1000,0.1000,-0.0010),-0.2990,-0.239362010861,(1.96951190,-0.56513550,2.27292282)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.346745550355,(0.02942933,1.33013710,-1.56414418)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-1.774840766229,(3.47240920,4.23409779,1.31392765)
+
+check : [          ] idx=100,p=-0.662765,f=[3.2942,0.355826,0.2904]
+-----------------------------FMM vs Direct------------------------------[1000]
+L2  (p)  : 6.58258e-03   L2  (f)  : 7.13433e-03   L2  (e)  : 1.86312e-02
+Rms (p)  : 6.15842e-02   Rms (f)  : 2.13366e-01
+p-energy1 : -3.987524983790e+01
+p-energy2 : -3.914591504352e+01
+
+------------------------------FMM vs Ewald------------------------------[1000]
+L2  (p)  : 3.71387e+00   L2  (f)  : 5.70555e-02   L2  (e)  : 8.85910e-01
+Rms (p)  : 9.01850e+00   Rms (f)  : 1.71317e+00
+p-energy1 : -3.987524983790e+01
+p-energy2 : -2.114377499994e+01
+
+----------------------------Direct vs Ewald-----------------------------[1000]
+L2  (p)  : 3.71491e+00   L2  (f)  : 5.63830e-02   L2  (e)  : 8.51416e-01
+Rms (p)  : 9.02101e+00   Rms (f)  : 1.69298e+00
+p-energy1 : -3.914591504352e+01
+p-energy2 : -2.114377499994e+01
+
+[       OK ] FmmTest.basic (1231 ms)
+[----------] 1 test from FmmTest (1231 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (1231 ms total)
+[  PASSED  ] 1 test.
+Note: Google Test filter = *basic
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from FmmTest
+[ RUN      ] FmmTest.basic
+[33m[ WARN     ] [0mdefault settings were overrided!
+input parameters=[
+  override             = 1
+  P                    = 2
+  n                    = 1000
+  ncrit                = 16
+  images               = 0
+  cycle                = 6.2832
+  rega                 = 0.0000
+  ewald_ksize          = 11
+  (f,d,e)              = (1,1,1)
+  num_compare          = 1000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 1
+  zero_netcharge       = 1
+  print_body_number    = 3
+  divide_4pi           = 0
+  setting_t            = 0
+  [x0,y0,z0]           = [0.100,0.100,0.000] for body[0], check body[100]
+]
+
+# of threads = 8
+move body 0
+[build_tree time measured : 0.00133 seconds.]
+[traverse time measured : 0.06159 seconds.]
+[build_and_traverse time measured : 0.06293 seconds.]
+[init_cell_matrix time measured : 0.00044 seconds.]
+[precompute_others time measured : 0.00050 seconds.]
+[precompute_m2l time measured : 0.00603 seconds.]
+[precompute time measured : 0.00655 seconds.]
+[P2M time measured : 0.00038 seconds.]
+[M2M time measured : 0.00009 seconds.]
+[setup time measured : 0.00108 seconds.]
+[prepare_memory time measured : 0.00006 seconds.]
+[up time measured : 0.00025 seconds.]
+[hadamard_8x8 time measured : 0.00023 seconds.]
+[down time measured : 0.00022 seconds.]
+[store time measured : 0.00003 seconds.]
+[M2L time measured : 0.00195 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.00008 seconds.]
+[L2P time measured : 0.00044 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.01179 seconds.]
+[FMM_kernels time measured : 0.01519 seconds.]
+[real_part time measured : 0.20123 seconds.]
+[fourier_part time measured : 0.94114 seconds.]
+[self_correction time measured : 0.00001 seconds.]
+[FMM time measured : 0.08524 seconds.]
+[EWALD time measured : 1.14353 seconds.]
+[DIRECT time measured : 0.02178 seconds.]
+fmm:
+[0],(0.1000,0.1000,0.0000),-0.2990,-0.367607881564,(1.86650182,-0.55350348,2.21733579)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.113578580846,(-0.17187345,1.65812574,-2.27490966)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-0.136711712813,(2.06346752,3.63076335,2.23098836)
+
+direct:
+[0],(0.1000,0.1000,0.0000),-0.2990,-0.442124954762,(1.89476275,-0.48332102,2.20836253)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.180078114654,(-0.15308642,1.72121787,-2.19914211)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-0.147987687915,(2.14239064,3.53387042,2.25611359)
+
+ewald:
+[0],(0.1000,0.1000,0.0000),-0.2990,-0.237088856911,(1.96666372,-0.56700671,2.27338687)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.346730999377,(0.02942924,1.33012590,-1.56413288)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-1.774842545184,(3.47240838,4.23409871,1.31393768)
+
+check : [          ] idx=100,p=-0.662879,f=[3.29464,0.355737,0.289807]
+-----------------------------FMM vs Direct------------------------------[1000]
+L2  (p)  : 6.58288e-03   L2  (f)  : 7.13431e-03   L2  (e)  : 1.86307e-02
+Rms (p)  : 6.15863e-02   Rms (f)  : 2.13365e-01
+p-energy1 : -3.987657586455e+01
+p-energy2 : -3.914723561920e+01
+
+------------------------------FMM vs Ewald------------------------------[1000]
+L2  (p)  : 3.71385e+00   L2  (f)  : 5.70554e-02   L2  (e)  : 8.85851e-01
+Rms (p)  : 9.01839e+00   Rms (f)  : 1.71317e+00
+p-energy1 : -3.987657586455e+01
+p-energy2 : -2.114513451319e+01
+
+----------------------------Direct vs Ewald-----------------------------[1000]
+L2  (p)  : 3.71488e+00   L2  (f)  : 5.63829e-02   L2  (e)  : 8.51359e-01
+Rms (p)  : 9.02090e+00   Rms (f)  : 1.69298e+00
+p-energy1 : -3.914723561920e+01
+p-energy2 : -2.114513451319e+01
+
+[       OK ] FmmTest.basic (1253 ms)
+[----------] 1 test from FmmTest (1253 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (1253 ms total)
+[  PASSED  ] 1 test.
+Note: Google Test filter = *basic
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from FmmTest
+[ RUN      ] FmmTest.basic
+[33m[ WARN     ] [0mdefault settings were overrided!
+input parameters=[
+  override             = 1
+  P                    = 2
+  n                    = 1000
+  ncrit                = 16
+  images               = 0
+  cycle                = 6.2832
+  rega                 = 0.0000
+  ewald_ksize          = 11
+  (f,d,e)              = (1,1,1)
+  num_compare          = 1000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 1
+  zero_netcharge       = 1
+  print_body_number    = 3
+  divide_4pi           = 0
+  setting_t            = 0
+  [x0,y0,z0]           = [0.100,0.100,0.001] for body[0], check body[100]
+]
+
+# of threads = 8
+move body 0
+[build_tree time measured : 0.00129 seconds.]
+[traverse time measured : 0.05396 seconds.]
+[build_and_traverse time measured : 0.05525 seconds.]
+[init_cell_matrix time measured : 0.00043 seconds.]
+[precompute_others time measured : 0.00050 seconds.]
+[precompute_m2l time measured : 0.00904 seconds.]
+[precompute time measured : 0.00956 seconds.]
+[P2M time measured : 0.00061 seconds.]
+[M2M time measured : 0.00010 seconds.]
+[setup time measured : 0.00169 seconds.]
+[prepare_memory time measured : 0.00008 seconds.]
+[up time measured : 0.00033 seconds.]
+[hadamard_8x8 time measured : 0.00045 seconds.]
+[down time measured : 0.00039 seconds.]
+[store time measured : 0.00005 seconds.]
+[M2L time measured : 0.00314 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.00012 seconds.]
+[L2P time measured : 0.00057 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.01516 seconds.]
+[FMM_kernels time measured : 0.02046 seconds.]
+[real_part time measured : 0.20145 seconds.]
+[fourier_part time measured : 0.99473 seconds.]
+[self_correction time measured : 0.00001 seconds.]
+[FMM time measured : 0.08588 seconds.]
+[EWALD time measured : 1.19744 seconds.]
+[DIRECT time measured : 0.01945 seconds.]
+fmm:
+[0],(0.1000,0.1000,0.0010),-0.2990,-0.370060182568,(1.93975071,-0.29052001,1.66382063)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.114065708473,(-0.16477043,1.65693541,-2.27394100)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-0.137881298598,(2.06152292,3.63166807,2.23028849)
+
+direct:
+[0],(0.1000,0.1000,0.0010),-0.2990,-0.439460132250,(1.89190444,-0.48523608,2.20899874)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.180069323874,(-0.15308652,1.72120169,-2.19913256)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-0.148007745986,(2.14238632,3.53387600,2.25612177)
+
+ewald:
+[0],(0.1000,0.1000,0.0010),-0.2990,-0.234815233000,(1.96380182,-0.56888044,2.27386161)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.346716459705,(0.02942915,1.33011471,-1.56412157)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-1.774844334169,(3.47240757,4.23409964,1.31394771)
+
+check : [          ] idx=100,p=-0.660721,f=[3.28717,0.338523,0.262702]
+-----------------------------FMM vs Direct------------------------------[1000]
+L2  (p)  : 6.46088e-03   L2  (f)  : 6.93938e-03   L2  (e)  : 1.65271e-02
+Rms (p)  : 6.04443e-02   Rms (f)  : 2.07535e-01
+p-energy1 : -3.979556916333e+01
+p-energy2 : -3.914855657212e+01
+
+------------------------------FMM vs Ewald------------------------------[1000]
+L2  (p)  : 3.71379e+00   L2  (f)  : 5.70295e-02   L2  (e)  : 8.81899e-01
+Rms (p)  : 9.01820e+00   Rms (f)  : 1.71239e+00
+p-energy1 : -3.979556916333e+01
+p-energy2 : -2.114650092379e+01
+
+----------------------------Direct vs Ewald-----------------------------[1000]
+L2  (p)  : 3.71485e+00   L2  (f)  : 5.63829e-02   L2  (e)  : 8.51302e-01
+Rms (p)  : 9.02079e+00   Rms (f)  : 1.69298e+00
+p-energy1 : -3.914855657212e+01
+p-energy2 : -2.114650092379e+01
+
+[       OK ] FmmTest.basic (1305 ms)
+[----------] 1 test from FmmTest (1305 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (1305 ms total)
+[  PASSED  ] 1 test.
+Note: Google Test filter = *basic
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from FmmTest
+[ RUN      ] FmmTest.basic
+[33m[ WARN     ] [0mdefault settings were overrided!
+input parameters=[
+  override             = 1
+  P                    = 2
+  n                    = 1000
+  ncrit                = 16
+  images               = 0
+  cycle                = 6.2832
+  rega                 = 0.0000
+  ewald_ksize          = 11
+  (f,d,e)              = (1,1,1)
+  num_compare          = 1000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 1
+  zero_netcharge       = 1
+  print_body_number    = 3
+  divide_4pi           = 0
+  setting_t            = 0
+  [x0,y0,z0]           = [0.100,0.100,0.002] for body[0], check body[100]
+]
+
+# of threads = 8
+move body 0
+[build_tree time measured : 0.00131 seconds.]
+[traverse time measured : 0.05666 seconds.]
+[build_and_traverse time measured : 0.05798 seconds.]
+[init_cell_matrix time measured : 0.00044 seconds.]
+[precompute_others time measured : 0.00054 seconds.]
+[precompute_m2l time measured : 0.00747 seconds.]
+[precompute time measured : 0.00803 seconds.]
+[P2M time measured : 0.00052 seconds.]
+[M2M time measured : 0.00016 seconds.]
+[setup time measured : 0.00159 seconds.]
+[prepare_memory time measured : 0.00006 seconds.]
+[up time measured : 0.00026 seconds.]
+[hadamard_8x8 time measured : 0.00028 seconds.]
+[down time measured : 0.00021 seconds.]
+[store time measured : 0.00003 seconds.]
+[M2L time measured : 0.00255 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.00007 seconds.]
+[L2P time measured : 0.00044 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.01216 seconds.]
+[FMM_kernels time measured : 0.01664 seconds.]
+[real_part time measured : 0.19969 seconds.]
+[fourier_part time measured : 0.88312 seconds.]
+[self_correction time measured : 0.00001 seconds.]
+[FMM time measured : 0.08327 seconds.]
+[EWALD time measured : 1.08393 seconds.]
+[DIRECT time measured : 0.02210 seconds.]
+fmm:
+[0],(0.1000,0.1000,0.0020),-0.2990,-0.367939509467,(1.93701401,-0.29242240,1.66525186)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.114062190150,(-0.16477334,1.65692666,-2.27393090)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-0.137901359730,(2.06151860,3.63167366,2.23029667)
+
+direct:
+[0],(0.1000,0.1000,0.0020),-0.2990,-0.436794673141,(1.88903240,-0.48715355,2.20964579)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.180060537451,(-0.15308663,1.72118553,-2.19912300)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-0.148027807118,(2.14238201,3.53388158,2.25612995)
+
+ewald:
+[0],(0.1000,0.1000,0.0020),-0.2990,-0.232541129575,(1.96092618,-0.57075668,2.27434701)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.346701931349,(0.02942906,1.33010354,-1.56411025)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-1.774846133184,(3.47240674,4.23410057,1.31395774)
+
+check : [          ] idx=100,p=-0.660835,f=[3.28761,0.338435,0.262105]
+-----------------------------FMM vs Direct------------------------------[1000]
+L2  (p)  : 6.46074e-03   L2  (f)  : 6.93928e-03   L2  (e)  : 1.65182e-02
+Rms (p)  : 6.04422e-02   Rms (f)  : 2.07532e-01
+p-energy1 : -3.979656467790e+01
+p-energy2 : -3.914987790879e+01
+
+------------------------------FMM vs Ewald------------------------------[1000]
+L2  (p)  : 3.71376e+00   L2  (f)  : 5.70294e-02   L2  (e)  : 8.81825e-01
+Rms (p)  : 9.01810e+00   Rms (f)  : 1.71239e+00
+p-energy1 : -3.979656467790e+01
+p-energy2 : -2.114786100490e+01
+
+----------------------------Direct vs Ewald-----------------------------[1000]
+L2  (p)  : 3.71483e+00   L2  (f)  : 5.63828e-02   L2  (e)  : 8.51245e-01
+Rms (p)  : 9.02069e+00   Rms (f)  : 1.69297e+00
+p-energy1 : -3.914987790879e+01
+p-energy2 : -2.114786100490e+01
+
+[       OK ] FmmTest.basic (1193 ms)
+[----------] 1 test from FmmTest (1193 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (1193 ms total)
+[  PASSED  ] 1 test.
+Note: Google Test filter = *basic
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from FmmTest
+[ RUN      ] FmmTest.basic
+[33m[ WARN     ] [0mdefault settings were overrided!
+input parameters=[
+  override             = 1
+  P                    = 2
+  n                    = 1000
+  ncrit                = 16
+  images               = 0
+  cycle                = 6.2832
+  rega                 = 0.0000
+  ewald_ksize          = 11
+  (f,d,e)              = (1,1,1)
+  num_compare          = 1000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 1
+  zero_netcharge       = 1
+  print_body_number    = 3
+  divide_4pi           = 0
+  setting_t            = 0
+  [x0,y0,z0]           = [0.100,0.100,0.003] for body[0], check body[100]
+]
+
+# of threads = 8
+move body 0
+[build_tree time measured : 0.00143 seconds.]
+[traverse time measured : 0.05494 seconds.]
+[build_and_traverse time measured : 0.05638 seconds.]
+[init_cell_matrix time measured : 0.00044 seconds.]
+[precompute_others time measured : 0.00053 seconds.]
+[precompute_m2l time measured : 0.00914 seconds.]
+[precompute time measured : 0.00969 seconds.]
+[P2M time measured : 0.00054 seconds.]
+[M2M time measured : 0.00012 seconds.]
+[setup time measured : 0.00170 seconds.]
+[prepare_memory time measured : 0.00010 seconds.]
+[up time measured : 0.00034 seconds.]
+[hadamard_8x8 time measured : 0.00048 seconds.]
+[down time measured : 0.00031 seconds.]
+[store time measured : 0.00004 seconds.]
+[M2L time measured : 0.00311 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.00012 seconds.]
+[L2P time measured : 0.00058 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.01164 seconds.]
+[FMM_kernels time measured : 0.01658 seconds.]
+[real_part time measured : 0.20237 seconds.]
+[fourier_part time measured : 0.98868 seconds.]
+[self_correction time measured : 0.00001 seconds.]
+[FMM time measured : 0.08322 seconds.]
+[EWALD time measured : 1.19229 seconds.]
+[DIRECT time measured : 0.02220 seconds.]
+fmm:
+[0],(0.1000,0.1000,0.0030),-0.2990,-0.365817404852,(1.93426326,-0.29432733,1.66669373)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.114058667003,(-0.16477626,1.65691791,-2.27392079)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-0.137921423923,(2.06151428,3.63167925,2.23030484)
+
+direct:
+[0],(0.1000,0.1000,0.0030),-0.2990,-0.434128566620,(1.88614663,-0.48907343,2.21030364)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.180051755390,(-0.15308674,1.72116937,-2.19911343)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-0.148047871311,(2.14237769,3.53388717,2.25613812)
+
+ewald:
+[0],(0.1000,0.1000,0.0030),-0.2990,-0.230266535443,(1.95803682,-0.57263543,2.27484301)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.346687414314,(0.02942897,1.33009238,-1.56409892)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-1.774847942227,(3.47240592,4.23410151,1.31396777)
+
+check : [          ] idx=100,p=-0.660947,f=[3.28804,0.338347,0.261507]
+-----------------------------FMM vs Direct------------------------------[1000]
+L2  (p)  : 6.46060e-03   L2  (f)  : 6.93918e-03   L2  (e)  : 1.65094e-02
+Rms (p)  : 6.04402e-02   Rms (f)  : 2.07529e-01
+p-energy1 : -3.979756105163e+01
+p-energy2 : -3.915119963567e+01
+
+------------------------------FMM vs Ewald------------------------------[1000]
+L2  (p)  : 3.71373e+00   L2  (f)  : 5.70294e-02   L2  (e)  : 8.81751e-01
+Rms (p)  : 9.01799e+00   Rms (f)  : 1.71239e+00
+p-energy1 : -3.979756105163e+01
+p-energy2 : -2.114922137948e+01
+
+----------------------------Direct vs Ewald-----------------------------[1000]
+L2  (p)  : 3.71480e+00   L2  (f)  : 5.63828e-02   L2  (e)  : 8.51189e-01
+Rms (p)  : 9.02058e+00   Rms (f)  : 1.69297e+00
+p-energy1 : -3.915119963567e+01
+p-energy2 : -2.114922137948e+01
+
+[       OK ] FmmTest.basic (1300 ms)
+[----------] 1 test from FmmTest (1300 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (1301 ms total)
+[  PASSED  ] 1 test.
+Note: Google Test filter = *basic
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from FmmTest
+[ RUN      ] FmmTest.basic
+[33m[ WARN     ] [0mdefault settings were overrided!
+input parameters=[
+  override             = 1
+  P                    = 2
+  n                    = 1000
+  ncrit                = 16
+  images               = 0
+  cycle                = 6.2832
+  rega                 = 0.0000
+  ewald_ksize          = 11
+  (f,d,e)              = (1,1,1)
+  num_compare          = 1000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 1
+  zero_netcharge       = 1
+  print_body_number    = 3
+  divide_4pi           = 0
+  setting_t            = 0
+  [x0,y0,z0]           = [0.100,0.100,0.004] for body[0], check body[100]
+]
+
+# of threads = 8
+move body 0
+[build_tree time measured : 0.00131 seconds.]
+[traverse time measured : 0.05701 seconds.]
+[build_and_traverse time measured : 0.05833 seconds.]
+[init_cell_matrix time measured : 0.00043 seconds.]
+[precompute_others time measured : 0.00057 seconds.]
+[precompute_m2l time measured : 0.00892 seconds.]
+[precompute time measured : 0.00952 seconds.]
+[P2M time measured : 0.00066 seconds.]
+[M2M time measured : 0.00030 seconds.]
+[setup time measured : 0.00169 seconds.]
+[prepare_memory time measured : 0.00009 seconds.]
+[up time measured : 0.00036 seconds.]
+[hadamard_8x8 time measured : 0.00055 seconds.]
+[down time measured : 0.00037 seconds.]
+[store time measured : 0.00004 seconds.]
+[M2L time measured : 0.00326 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.00013 seconds.]
+[L2P time measured : 0.00082 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.01837 seconds.]
+[FMM_kernels time measured : 0.02430 seconds.]
+[real_part time measured : 0.20324 seconds.]
+[fourier_part time measured : 0.91903 seconds.]
+[self_correction time measured : 0.00001 seconds.]
+[FMM time measured : 0.09277 seconds.]
+[EWALD time measured : 1.12400 seconds.]
+[DIRECT time measured : 0.02131 seconds.]
+fmm:
+[0],(0.1000,0.1000,0.0040),-0.2990,-0.363693858120,(1.93149846,-0.29623476,1.66814617)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.114055139038,(-0.16477917,1.65690916,-2.27391069)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-0.137941491175,(2.06150996,3.63168484,2.23031302)
+
+direct:
+[0],(0.1000,0.1000,0.0040),-0.2990,-0.431461801921,(1.88324713,-0.49099570,2.21097222)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.180042977694,(-0.15308684,1.72115323,-2.19910386)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-0.148067938563,(2.14237336,3.53389276,2.25614630)
+
+ewald:
+[0],(0.1000,0.1000,0.0040),-0.2990,-0.227991440031,(1.95513372,-0.57451667,2.27534956)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.346672908610,(0.02942888,1.33008123,-1.56408759)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-1.774849761298,(3.47240509,4.23410246,1.31397779)
+
+check : [          ] idx=100,p=-0.66106,f=[3.28847,0.33826,0.260906]
+-----------------------------FMM vs Direct------------------------------[1000]
+L2  (p)  : 6.46046e-03   L2  (f)  : 6.93908e-03   L2  (e)  : 1.65005e-02
+Rms (p)  : 6.04382e-02   Rms (f)  : 2.07526e-01
+p-energy1 : -3.979855829087e+01
+p-energy2 : -3.915252175920e+01
+
+------------------------------FMM vs Ewald------------------------------[1000]
+L2  (p)  : 3.71371e+00   L2  (f)  : 5.70293e-02   L2  (e)  : 8.81677e-01
+Rms (p)  : 9.01788e+00   Rms (f)  : 1.71239e+00
+p-energy1 : -3.979855829087e+01
+p-energy2 : -2.115058205386e+01
+
+----------------------------Direct vs Ewald-----------------------------[1000]
+L2  (p)  : 3.71477e+00   L2  (f)  : 5.63828e-02   L2  (e)  : 8.51132e-01
+Rms (p)  : 9.02047e+00   Rms (f)  : 1.69297e+00
+p-energy1 : -3.915252175920e+01
+p-energy2 : -2.115058205386e+01
+
+[       OK ] FmmTest.basic (1241 ms)
+[----------] 1 test from FmmTest (1241 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (1241 ms total)
+[  PASSED  ] 1 test.
+Note: Google Test filter = *basic
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from FmmTest
+[ RUN      ] FmmTest.basic
+[33m[ WARN     ] [0mdefault settings were overrided!
+input parameters=[
+  override             = 1
+  P                    = 2
+  n                    = 1000
+  ncrit                = 16
+  images               = 0
+  cycle                = 6.2832
+  rega                 = 0.0000
+  ewald_ksize          = 11
+  (f,d,e)              = (1,1,1)
+  num_compare          = 1000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 1
+  zero_netcharge       = 1
+  print_body_number    = 3
+  divide_4pi           = 0
+  setting_t            = 0
+  [x0,y0,z0]           = [0.100,0.100,0.005] for body[0], check body[100]
+]
+
+# of threads = 8
+move body 0
+[build_tree time measured : 0.00162 seconds.]
+[traverse time measured : 0.05371 seconds.]
+[build_and_traverse time measured : 0.05534 seconds.]
+[init_cell_matrix time measured : 0.00044 seconds.]
+[precompute_others time measured : 0.00054 seconds.]
+[precompute_m2l time measured : 0.00852 seconds.]
+[precompute time measured : 0.00908 seconds.]
+[P2M time measured : 0.00074 seconds.]
+[M2M time measured : 0.00011 seconds.]
+[setup time measured : 0.00168 seconds.]
+[prepare_memory time measured : 0.00009 seconds.]
+[up time measured : 0.00043 seconds.]
+[hadamard_8x8 time measured : 0.00046 seconds.]
+[down time measured : 0.00035 seconds.]
+[store time measured : 0.00004 seconds.]
+[M2L time measured : 0.00322 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.00010 seconds.]
+[L2P time measured : 0.00059 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.01370 seconds.]
+[FMM_kernels time measured : 0.01894 seconds.]
+[real_part time measured : 0.20175 seconds.]
+[fourier_part time measured : 0.90066 seconds.]
+[self_correction time measured : 0.00001 seconds.]
+[FMM time measured : 0.08393 seconds.]
+[EWALD time measured : 1.10364 seconds.]
+[DIRECT time measured : 0.02185 seconds.]
+fmm:
+[0],(0.1000,0.1000,0.0050),-0.2990,-0.361568858722,(1.92871960,-0.29814471,1.66960913)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.114051606262,(-0.16478209,1.65690040,-2.27390058)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-0.137961561486,(2.06150563,3.63169043,2.23032120)
+
+direct:
+[0],(0.1000,0.1000,0.0050),-0.2990,-0.428794368334,(1.88033390,-0.49292035,2.21165148)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.180034204369,(-0.15308695,1.72113709,-2.19909429)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-0.148088008875,(2.14236904,3.53389836,2.25615448)
+
+ewald:
+[0],(0.1000,0.1000,0.0050),-0.2990,-0.225715832821,(1.95221689,-0.57640040,2.27586660)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.346658414245,(0.02942880,1.33007010,-1.56407625)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-1.774851590396,(3.47240425,4.23410341,1.31398782)
+
+check : [          ] idx=100,p=-0.661172,f=[3.2889,0.338173,0.260305]
+-----------------------------FMM vs Direct------------------------------[1000]
+L2  (p)  : 6.46032e-03   L2  (f)  : 6.93898e-03   L2  (e)  : 1.64917e-02
+Rms (p)  : 6.04362e-02   Rms (f)  : 2.07523e-01
+p-energy1 : -3.979955640192e+01
+p-energy2 : -3.915384428579e+01
+
+------------------------------FMM vs Ewald------------------------------[1000]
+L2  (p)  : 3.71368e+00   L2  (f)  : 5.70293e-02   L2  (e)  : 8.81603e-01
+Rms (p)  : 9.01777e+00   Rms (f)  : 1.71238e+00
+p-energy1 : -3.979955640192e+01
+p-energy2 : -2.115194303434e+01
+
+----------------------------Direct vs Ewald-----------------------------[1000]
+L2  (p)  : 3.71475e+00   L2  (f)  : 5.63827e-02   L2  (e)  : 8.51076e-01
+Rms (p)  : 9.02036e+00   Rms (f)  : 1.69297e+00
+p-energy1 : -3.915384428579e+01
+p-energy2 : -2.115194303434e+01
+
+[       OK ] FmmTest.basic (1212 ms)
+[----------] 1 test from FmmTest (1212 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (1212 ms total)
+[  PASSED  ] 1 test.
+Note: Google Test filter = *basic
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from FmmTest
+[ RUN      ] FmmTest.basic
+[33m[ WARN     ] [0mdefault settings were overrided!
+input parameters=[
+  override             = 1
+  P                    = 2
+  n                    = 1000
+  ncrit                = 16
+  images               = 0
+  cycle                = 6.2832
+  rega                 = 0.0000
+  ewald_ksize          = 11
+  (f,d,e)              = (1,1,1)
+  num_compare          = 1000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 1
+  zero_netcharge       = 1
+  print_body_number    = 3
+  divide_4pi           = 0
+  setting_t            = 0
+  [x0,y0,z0]           = [0.100,0.100,0.006] for body[0], check body[100]
+]
+
+# of threads = 8
+move body 0
+[build_tree time measured : 0.00078 seconds.]
+[traverse time measured : 0.05220 seconds.]
+[build_and_traverse time measured : 0.05298 seconds.]
+[init_cell_matrix time measured : 0.00043 seconds.]
+[precompute_others time measured : 0.00053 seconds.]
+[precompute_m2l time measured : 0.00906 seconds.]
+[precompute time measured : 0.00961 seconds.]
+[P2M time measured : 0.00050 seconds.]
+[M2M time measured : 0.00012 seconds.]
+[setup time measured : 0.00169 seconds.]
+[prepare_memory time measured : 0.00009 seconds.]
+[up time measured : 0.00040 seconds.]
+[hadamard_8x8 time measured : 0.00045 seconds.]
+[down time measured : 0.00043 seconds.]
+[store time measured : 0.00005 seconds.]
+[M2L time measured : 0.00327 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.00013 seconds.]
+[L2P time measured : 0.00081 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.01643 seconds.]
+[FMM_kernels time measured : 0.02175 seconds.]
+[real_part time measured : 0.20173 seconds.]
+[fourier_part time measured : 0.89423 seconds.]
+[self_correction time measured : 0.00001 seconds.]
+[FMM time measured : 0.08494 seconds.]
+[EWALD time measured : 1.09720 seconds.]
+[DIRECT time measured : 0.02353 seconds.]
+fmm:
+[0],(0.1000,0.1000,0.0060),-0.2990,-0.359442396162,(1.92592668,-0.30005716,1.67108256)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.114048068680,(-0.16478500,1.65689165,-2.27389048)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-0.137981634856,(2.06150131,3.63169603,2.23032937)
+
+direct:
+[0],(0.1000,0.1000,0.0060),-0.2990,-0.426126255201,(1.87740692,-0.49484737,2.21234138)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.180025435420,(-0.15308706,1.72112097,-2.19908471)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-0.148108082245,(2.14236471,3.53390395,2.25616265)
+
+ewald:
+[0],(0.1000,0.1000,0.0060),-0.2990,-0.223439703345,(1.94928631,-0.57828661,2.27639408)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.346643931225,(0.02942871,1.33005897,-1.56406490)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-1.774853429519,(3.47240341,4.23410436,1.31399784)
+
+check : [          ] idx=100,p=-0.661283,f=[3.28932,0.338087,0.259701]
+-----------------------------FMM vs Direct------------------------------[1000]
+L2  (p)  : 6.46018e-03   L2  (f)  : 6.93888e-03   L2  (e)  : 1.64828e-02
+Rms (p)  : 6.04342e-02   Rms (f)  : 2.07520e-01
+p-energy1 : -3.980055539107e+01
+p-energy2 : -3.915516722182e+01
+
+------------------------------FMM vs Ewald------------------------------[1000]
+L2  (p)  : 3.71366e+00   L2  (f)  : 5.70292e-02   L2  (e)  : 8.81529e-01
+Rms (p)  : 9.01766e+00   Rms (f)  : 1.71238e+00
+p-energy1 : -3.980055539107e+01
+p-energy2 : -2.115330432717e+01
+
+----------------------------Direct vs Ewald-----------------------------[1000]
+L2  (p)  : 3.71472e+00   L2  (f)  : 5.63827e-02   L2  (e)  : 8.51019e-01
+Rms (p)  : 9.02025e+00   Rms (f)  : 1.69297e+00
+p-energy1 : -3.915516722182e+01
+p-energy2 : -2.115330432717e+01
+
+[       OK ] FmmTest.basic (1208 ms)
+[----------] 1 test from FmmTest (1208 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (1208 ms total)
+[  PASSED  ] 1 test.
+Note: Google Test filter = *basic
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from FmmTest
+[ RUN      ] FmmTest.basic
+[33m[ WARN     ] [0mdefault settings were overrided!
+input parameters=[
+  override             = 1
+  P                    = 2
+  n                    = 1000
+  ncrit                = 16
+  images               = 0
+  cycle                = 6.2832
+  rega                 = 0.0000
+  ewald_ksize          = 11
+  (f,d,e)              = (1,1,1)
+  num_compare          = 1000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 1
+  zero_netcharge       = 1
+  print_body_number    = 3
+  divide_4pi           = 0
+  setting_t            = 0
+  [x0,y0,z0]           = [0.100,0.100,0.007] for body[0], check body[100]
+]
+
+# of threads = 8
+move body 0
+[build_tree time measured : 0.00102 seconds.]
+[traverse time measured : 0.05352 seconds.]
+[build_and_traverse time measured : 0.05455 seconds.]
+[init_cell_matrix time measured : 0.00043 seconds.]
+[precompute_others time measured : 0.00061 seconds.]
+[precompute_m2l time measured : 0.00607 seconds.]
+[precompute time measured : 0.00670 seconds.]
+[P2M time measured : 0.00066 seconds.]
+[M2M time measured : 0.00009 seconds.]
+[setup time measured : 0.00102 seconds.]
+[prepare_memory time measured : 0.00007 seconds.]
+[up time measured : 0.00023 seconds.]
+[hadamard_8x8 time measured : 0.00027 seconds.]
+[down time measured : 0.00027 seconds.]
+[store time measured : 0.00002 seconds.]
+[M2L time measured : 0.00201 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.00015 seconds.]
+[L2P time measured : 0.00080 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.01364 seconds.]
+[FMM_kernels time measured : 0.01783 seconds.]
+[real_part time measured : 0.20154 seconds.]
+[fourier_part time measured : 0.99768 seconds.]
+[self_correction time measured : 0.00001 seconds.]
+[FMM time measured : 0.07965 seconds.]
+[EWALD time measured : 1.20044 seconds.]
+[DIRECT time measured : 0.02203 seconds.]
+fmm:
+[0],(0.1000,0.1000,0.0070),-0.2990,-0.357314459997,(1.92311969,-0.30197209,1.67256641)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.114044526300,(-0.16478792,1.65688289,-2.27388037)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-0.138001711284,(2.06149698,3.63170163,2.23033754)
+
+direct:
+[0],(0.1000,0.1000,0.0070),-0.2990,-0.423457451919,(1.87446620,-0.49677676,2.21304185)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.180016670850,(-0.15308717,1.72110485,-2.19907513)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-0.148128158672,(2.14236038,3.53390955,2.25617082)
+
+ewald:
+[0],(0.1000,0.1000,0.0070),-0.2990,-0.221163041193,(1.94634198,-0.58017528,2.27693195)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.346629459558,(0.02942862,1.33004786,-1.56405354)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-1.774855278666,(3.47240257,4.23410532,1.31400787)
+
+check : [          ] idx=100,p=-0.661393,f=[3.28975,0.338001,0.259096]
+-----------------------------FMM vs Direct------------------------------[1000]
+L2  (p)  : 6.46005e-03   L2  (f)  : 6.93878e-03   L2  (e)  : 1.64740e-02
+Rms (p)  : 6.04322e-02   Rms (f)  : 2.07517e-01
+p-energy1 : -3.980155526455e+01
+p-energy2 : -3.915649057362e+01
+
+------------------------------FMM vs Ewald------------------------------[1000]
+L2  (p)  : 3.71363e+00   L2  (f)  : 5.70292e-02   L2  (e)  : 8.81455e-01
+Rms (p)  : 9.01755e+00   Rms (f)  : 1.71238e+00
+p-energy1 : -3.980155526455e+01
+p-energy2 : -2.115466593858e+01
+
+----------------------------Direct vs Ewald-----------------------------[1000]
+L2  (p)  : 3.71469e+00   L2  (f)  : 5.63826e-02   L2  (e)  : 8.50962e-01
+Rms (p)  : 9.02014e+00   Rms (f)  : 1.69297e+00
+p-energy1 : -3.915649057362e+01
+p-energy2 : -2.115466593858e+01
+
+[       OK ] FmmTest.basic (1305 ms)
+[----------] 1 test from FmmTest (1305 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (1305 ms total)
+[  PASSED  ] 1 test.
+Note: Google Test filter = *basic
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from FmmTest
+[ RUN      ] FmmTest.basic
+[33m[ WARN     ] [0mdefault settings were overrided!
+input parameters=[
+  override             = 1
+  P                    = 2
+  n                    = 1000
+  ncrit                = 16
+  images               = 0
+  cycle                = 6.2832
+  rega                 = 0.0000
+  ewald_ksize          = 11
+  (f,d,e)              = (1,1,1)
+  num_compare          = 1000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 1
+  zero_netcharge       = 1
+  print_body_number    = 3
+  divide_4pi           = 0
+  setting_t            = 0
+  [x0,y0,z0]           = [0.100,0.100,0.008] for body[0], check body[100]
+]
+
+# of threads = 8
+move body 0
+[build_tree time measured : 0.00171 seconds.]
+[traverse time measured : 0.05326 seconds.]
+[build_and_traverse time measured : 0.05498 seconds.]
+[init_cell_matrix time measured : 0.00044 seconds.]
+[precompute_others time measured : 0.00051 seconds.]
+[precompute_m2l time measured : 0.00743 seconds.]
+[precompute time measured : 0.00796 seconds.]
+[P2M time measured : 0.00046 seconds.]
+[M2M time measured : 0.00009 seconds.]
+[setup time measured : 0.00129 seconds.]
+[prepare_memory time measured : 0.00011 seconds.]
+[up time measured : 0.00035 seconds.]
+[hadamard_8x8 time measured : 0.00055 seconds.]
+[down time measured : 0.00041 seconds.]
+[store time measured : 0.00002 seconds.]
+[M2L time measured : 0.00291 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.00013 seconds.]
+[L2P time measured : 0.00074 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.01368 seconds.]
+[FMM_kernels time measured : 0.01848 seconds.]
+[real_part time measured : 0.20035 seconds.]
+[fourier_part time measured : 0.89774 seconds.]
+[self_correction time measured : 0.00001 seconds.]
+[FMM time measured : 0.08201 seconds.]
+[EWALD time measured : 1.09931 seconds.]
+[DIRECT time measured : 0.01991 seconds.]
+fmm:
+[0],(0.1000,0.1000,0.0080),-0.2990,-0.355185039840,(1.92029863,-0.30388950,1.67406062)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.114040979127,(-0.16479084,1.65687414,-2.27387025)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-0.138021790769,(2.06149264,3.63170724,2.23034572)
+
+direct:
+[0],(0.1000,0.1000,0.0080),-0.2990,-0.420787947939,(1.87151173,-0.49870851,2.21375285)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.180007910666,(-0.15308727,1.72108875,-2.19906554)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-0.148148238157,(2.14235605,3.53391516,2.25617900)
+
+ewald:
+[0],(0.1000,0.1000,0.0080),-0.2990,-0.218885836007,(1.94338390,-0.58206640,2.27748014)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.346614999253,(0.02942853,1.33003676,-1.56404217)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-1.774857137837,(3.47240172,4.23410629,1.31401789)
+
+check : [          ] idx=100,p=-0.661503,f=[3.29017,0.337915,0.258489]
+-----------------------------FMM vs Direct------------------------------[1000]
+L2  (p)  : 6.45991e-03   L2  (f)  : 6.93868e-03   L2  (e)  : 1.64652e-02
+Rms (p)  : 6.04302e-02   Rms (f)  : 2.07514e-01
+p-energy1 : -3.980255602859e+01
+p-energy2 : -3.915781434750e+01
+
+------------------------------FMM vs Ewald------------------------------[1000]
+L2  (p)  : 3.71360e+00   L2  (f)  : 5.70291e-02   L2  (e)  : 8.81381e-01
+Rms (p)  : 9.01744e+00   Rms (f)  : 1.71238e+00
+p-energy1 : -3.980255602859e+01
+p-energy2 : -2.115602787477e+01
+
+----------------------------Direct vs Ewald-----------------------------[1000]
+L2  (p)  : 3.71467e+00   L2  (f)  : 5.63826e-02   L2  (e)  : 8.50906e-01
+Rms (p)  : 9.02003e+00   Rms (f)  : 1.69297e+00
+p-energy1 : -3.915781434750e+01
+p-energy2 : -2.115602787477e+01
+
+[       OK ] FmmTest.basic (1204 ms)
+[----------] 1 test from FmmTest (1204 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (1204 ms total)
+[  PASSED  ] 1 test.
+Note: Google Test filter = *basic
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from FmmTest
+[ RUN      ] FmmTest.basic
+[33m[ WARN     ] [0mdefault settings were overrided!
+input parameters=[
+  override             = 1
+  P                    = 2
+  n                    = 1000
+  ncrit                = 16
+  images               = 0
+  cycle                = 6.2832
+  rega                 = 0.0000
+  ewald_ksize          = 11
+  (f,d,e)              = (1,1,1)
+  num_compare          = 1000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 1
+  zero_netcharge       = 1
+  print_body_number    = 3
+  divide_4pi           = 0
+  setting_t            = 0
+  [x0,y0,z0]           = [0.100,0.100,0.009] for body[0], check body[100]
+]
+
+# of threads = 8
+move body 0
+[build_tree time measured : 0.00161 seconds.]
+[traverse time measured : 0.05398 seconds.]
+[build_and_traverse time measured : 0.05560 seconds.]
+[init_cell_matrix time measured : 0.00044 seconds.]
+[precompute_others time measured : 0.00059 seconds.]
+[precompute_m2l time measured : 0.00785 seconds.]
+[precompute time measured : 0.00845 seconds.]
+[P2M time measured : 0.00027 seconds.]
+[M2M time measured : 0.00010 seconds.]
+[setup time measured : 0.00156 seconds.]
+[prepare_memory time measured : 0.00010 seconds.]
+[up time measured : 0.00039 seconds.]
+[hadamard_8x8 time measured : 0.00039 seconds.]
+[down time measured : 0.00039 seconds.]
+[store time measured : 0.00004 seconds.]
+[M2L time measured : 0.00299 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.00014 seconds.]
+[L2P time measured : 0.00072 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.01373 seconds.]
+[FMM_kernels time measured : 0.01845 seconds.]
+[real_part time measured : 0.20176 seconds.]
+[fourier_part time measured : 0.99091 seconds.]
+[self_correction time measured : 0.00001 seconds.]
+[FMM time measured : 0.08308 seconds.]
+[EWALD time measured : 1.19391 seconds.]
+[DIRECT time measured : 0.02178 seconds.]
+fmm:
+[0],(0.1000,0.1000,0.0090),-0.2990,-0.353054125358,(1.91746350,-0.30580938,1.67556513)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.114037427169,(-0.16479375,1.65686538,-2.27386014)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-0.138041873310,(2.06148831,3.63171284,2.23035389)
+
+direct:
+[0],(0.1000,0.1000,0.0090),-0.2990,-0.418117732766,(1.86854350,-0.50064260,2.21447431)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.179999154870,(-0.15308738,1.72107266,-2.19905595)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-0.148168320699,(2.14235171,3.53392077,2.25618717)
+
+ewald:
+[0],(0.1000,0.1000,0.0090),-0.2990,-0.216608077481,(1.94041206,-0.58395998,2.27803862)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.346600550318,(0.02942845,1.33002568,-1.56403080)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-1.774859007030,(3.47240086,4.23410726,1.31402791)
+
+check : [          ] idx=100,p=-0.661613,f=[3.29059,0.33783,0.257881]
+-----------------------------FMM vs Direct------------------------------[1000]
+L2  (p)  : 6.45977e-03   L2  (f)  : 6.93858e-03   L2  (e)  : 1.64564e-02
+Rms (p)  : 6.04282e-02   Rms (f)  : 2.07511e-01
+p-energy1 : -3.980355768935e+01
+p-energy2 : -3.915913854974e+01
+
+------------------------------FMM vs Ewald------------------------------[1000]
+L2  (p)  : 3.71358e+00   L2  (f)  : 5.70291e-02   L2  (e)  : 8.81308e-01
+Rms (p)  : 9.01734e+00   Rms (f)  : 1.71238e+00
+p-energy1 : -3.980355768935e+01
+p-energy2 : -2.115739014189e+01
+
+----------------------------Direct vs Ewald-----------------------------[1000]
+L2  (p)  : 3.71464e+00   L2  (f)  : 5.63826e-02   L2  (e)  : 8.50849e-01
+Rms (p)  : 9.01992e+00   Rms (f)  : 1.69297e+00
+p-energy1 : -3.915913854974e+01
+p-energy2 : -2.115739014189e+01
+
+[       OK ] FmmTest.basic (1302 ms)
+[----------] 1 test from FmmTest (1302 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (1302 ms total)
+[  PASSED  ] 1 test.
+Note: Google Test filter = *basic
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from FmmTest
+[ RUN      ] FmmTest.basic
+[33m[ WARN     ] [0mdefault settings were overrided!
+input parameters=[
+  override             = 1
+  P                    = 2
+  n                    = 1000
+  ncrit                = 16
+  images               = 0
+  cycle                = 6.2832
+  rega                 = 0.0000
+  ewald_ksize          = 11
+  (f,d,e)              = (1,1,1)
+  num_compare          = 1000
+  th_num               = 8
+  seed                 = 5
+  check_tree           = 0
+  timing               = 1
+  verbose              = 0
+  use_fft              = 1
+  use_precompute       = 1
+  use_simd             = 1
+  dipole_correction    = 1
+  zero_netcharge       = 1
+  print_body_number    = 3
+  divide_4pi           = 0
+  setting_t            = 0
+  [x0,y0,z0]           = [0.100,0.100,0.010] for body[0], check body[100]
+]
+
+# of threads = 8
+move body 0
+[build_tree time measured : 0.00119 seconds.]
+[traverse time measured : 0.05605 seconds.]
+[build_and_traverse time measured : 0.05724 seconds.]
+[init_cell_matrix time measured : 0.00043 seconds.]
+[precompute_others time measured : 0.00052 seconds.]
+[precompute_m2l time measured : 0.00792 seconds.]
+[precompute time measured : 0.00846 seconds.]
+[P2M time measured : 0.00046 seconds.]
+[M2M time measured : 0.00012 seconds.]
+[setup time measured : 0.00169 seconds.]
+[prepare_memory time measured : 0.00010 seconds.]
+[up time measured : 0.00031 seconds.]
+[hadamard_8x8 time measured : 0.00037 seconds.]
+[down time measured : 0.00035 seconds.]
+[store time measured : 0.00005 seconds.]
+[M2L time measured : 0.00301 seconds.]
+[P2L time measured : 0.00000 seconds.]
+[L2L time measured : 0.00013 seconds.]
+[L2P time measured : 0.00068 seconds.]
+[M2P time measured : 0.00000 seconds.]
+[P2P time measured : 0.01485 seconds.]
+[FMM_kernels time measured : 0.01975 seconds.]
+[real_part time measured : 0.19997 seconds.]
+[fourier_part time measured : 0.89441 seconds.]
+[self_correction time measured : 0.00001 seconds.]
+[FMM time measured : 0.08602 seconds.]
+[EWALD time measured : 1.09563 seconds.]
+[DIRECT time measured : 0.01975 seconds.]
+fmm:
+[0],(0.1000,0.1000,0.0100),-0.2990,-0.350921706273,(1.91461428,-0.30773173,1.67707989)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.114033870431,(-0.16479667,1.65685662,-2.27385003)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-0.138061958908,(2.06148397,3.63171845,2.23036206)
+
+direct:
+[0],(0.1000,0.1000,0.0100),-0.2990,-0.415446795960,(1.86556152,-0.50257903,2.21520618)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.179990403468,(-0.15308749,1.72105658,-2.19904635)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-0.148188406296,(2.14234737,3.53392638,2.25619534)
+
+ewald:
+[0],(0.1000,0.1000,0.0100),-0.2990,-0.214329755368,(1.93742646,-0.58585600,2.27860731)
+[1],(0.1146,2.2974,-2.0787),-0.0200,-3.346586112759,(0.02942836,1.33001460,-1.56401942)
+[2],(-1.5276,2.2053,2.9648),-0.0453,-1.774860886244,(3.47240001,4.23410824,1.31403793)
+
+check : [          ] idx=100,p=-0.661721,f=[3.29101,0.337745,0.257271]
+-----------------------------FMM vs Direct------------------------------[1000]
+L2  (p)  : 6.45964e-03   L2  (f)  : 6.93848e-03   L2  (e)  : 1.64476e-02
+Rms (p)  : 6.04262e-02   Rms (f)  : 2.07508e-01
+p-energy1 : -3.980456025299e+01
+p-energy2 : -3.916046318659e+01
+
+------------------------------FMM vs Ewald------------------------------[1000]
+L2  (p)  : 3.71355e+00   L2  (f)  : 5.70290e-02   L2  (e)  : 8.81234e-01
+Rms (p)  : 9.01723e+00   Rms (f)  : 1.71238e+00
+p-energy1 : -3.980456025299e+01
+p-energy2 : -2.115875274608e+01
+
+----------------------------Direct vs Ewald-----------------------------[1000]
+L2  (p)  : 3.71461e+00   L2  (f)  : 5.63825e-02   L2  (e)  : 8.50793e-01
+Rms (p)  : 9.01981e+00   Rms (f)  : 1.69297e+00
+p-energy1 : -3.916046318659e+01
+p-energy2 : -2.115875274608e+01
+
+[       OK ] FmmTest.basic (1204 ms)
+[----------] 1 test from FmmTest (1204 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (1204 ms total)
+[  PASSED  ] 1 test.
