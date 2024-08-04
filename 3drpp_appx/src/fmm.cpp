@@ -16,8 +16,8 @@ rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
     tbegin(build_and_traverse);
     tbegin(build_tree);
     Tree tree;
-    //tree.build(bs, args.x, args.r, args.ncrit, Tree::TreeType::nonuniform);
-    tree.build(bs, args.x, args.r, 3, Tree::TreeType::uniform);
+    tree.build(bs, args.x, args.r, args.ncrit, Tree::TreeType::nonuniform);
+    //tree.build(bs, args.x, args.r, 3, Tree::TreeType::uniform);
     cs = tree.get_cells();
     if(verbose && args.check_tree) check_tree(cs);
     tend(build_tree);
@@ -314,6 +314,8 @@ void rtfmm::LaplaceFMM::init_reg_body(Cells3& cells)
 
     if(args.rega > 0)
     {
+        printf("search 0,0,0\n");
+        // search reg body in 0,0,0
         printf("~~~~~~~~~~ rega!\n");
         for(int i = 0; i < bs.size(); i++)
         {
@@ -327,17 +329,47 @@ void rtfmm::LaplaceFMM::init_reg_body(Cells3& cells)
                     real w = get_w_xyz(dx, cell.r, args.rega).mul();
                     if(w > 0)
                     {
-                        if(bs[i].idx == 130)
-                        {
-                            print_body(bs[i]);
-                            printf("cell %d, w = %.4f\n", cell.idx, w);
-                        }
                         cell.reg_body_idx.push_back(std::make_pair(i, vec3r(0,0,0)));
+                        //printf("push %d -> %d\n", i, leaf_idx);
+                    }
+                }
+            }
+        }
+        printf("search except 0,0,0\n");
+
+        // search reg body except 0,0,0
+        if(args.images > 0)
+        {
+            for(int x = -1; x <= 1; x++)
+            {
+                for(int y = -1; y <= 1; y++)
+                {
+                    for(int z = -1; z <= 1; z++)
+                    {
+                        if(x == 0 && y == 0 && z == 0)
+                            continue;
+                        vec3r region_offset = vec3r(x,y,z) * args.cycle;
+                        for(int leaf_idx = 0; leaf_idx < leaves.size(); leaf_idx++)
+                        {
+                            Cell3& cell = cells[leaves[leaf_idx]];
+                            for(int i = 0; i < bs.size(); i++)
+                            {
+                                vec3r ploc = bs[i].x + region_offset;
+                                vec3r dx = ploc - cell.x;
+                                real w = get_w_xyz(dx, cell.r, args.rega).mul();
+                                if(w > 0)
+                                {
+                                    cell.reg_body_idx.push_back(std::make_pair(i, region_offset));
+                                    //printf("[%.2f] push %d\n", leaf_idx / leaves.size(), i);
+                                }
+                            }
+                        }
                     }
                 }
             }
         }
 
+        // compute weight and cache
         for(int leaf_idx = 0; leaf_idx < leaves.size(); leaf_idx++)
         {
             Cell3& cell = cells[leaves[leaf_idx]];
@@ -348,11 +380,14 @@ void rtfmm::LaplaceFMM::init_reg_body(Cells3& cells)
 
                 vec3r dx_simcenter = (body.x - args.x).abs() + args.rega;
                 vec3r ws = get_w_xyz(dx, cell.r, args.rega);
-                for(int d = 0; d <= 2; d++)
+                if(args.images == 0)
                 {
-                    if(dx_simcenter[d] >= args.r)
+                    for(int d = 0; d <= 2; d++)
                     {
-                        ws[d] = 1;
+                        if(dx_simcenter[d] >= args.r)
+                        {
+                            ws[d] = 1;
+                        }
                     }
                 }
                 real w = ws.mul();
@@ -374,11 +409,14 @@ void rtfmm::LaplaceFMM::init_reg_body(Cells3& cells)
                 vec3r dx = body.x - cell.x;
                 vec3r dx_simcenter = (body.x - args.x).abs() + args.rega;
                 vec3r ws = get_w_xyz(dx, cell.r, args.rega);
-                for(int d = 0; d <= 2; d++)
+                if(args.images == 0)
                 {
-                    if(dx_simcenter[d] >= args.r)
+                    for(int d = 0; d <= 2; d++)
                     {
-                        ws[d] = 1;
+                        if(dx_simcenter[d] >= args.r)
+                        {
+                            ws[d] = 1;
+                        }
                     }
                 }
                 real w = ws.mul();
