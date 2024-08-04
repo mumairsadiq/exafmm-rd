@@ -16,8 +16,8 @@ rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
     tbegin(build_and_traverse);
     tbegin(build_tree);
     Tree tree;
-    tree.build(bs, args.x, args.r, args.ncrit, Tree::TreeType::nonuniform);
-    //tree.build(bs, args.x, args.r, 3, Tree::TreeType::uniform);
+    //tree.build(bs, args.x, args.r, args.ncrit, Tree::TreeType::nonuniform);
+    tree.build(bs, args.x, args.r, 3, Tree::TreeType::uniform);
     cs = tree.get_cells();
     if(verbose && args.check_tree) check_tree(cs);
     tend(build_tree);
@@ -360,7 +360,7 @@ void rtfmm::LaplaceFMM::init_reg_body(Cells3& cells)
                                 if(w > 0)
                                 {
                                     cell.reg_body_idx.push_back(std::make_pair(i, region_offset));
-                                    //printf("[%.2f] push %d\n", leaf_idx / leaves.size(), i);
+                                    printf("[%.2f] push %d,%d\n", real(leaf_idx) / leaves.size(), i, bs[i].idx);
                                 }
                             }
                         }
@@ -395,7 +395,8 @@ void rtfmm::LaplaceFMM::init_reg_body(Cells3& cells)
                 {
                     if(w != 1)
                     {
-                        RTLOG("inside  %d, %.12f  %d\n", body.idx, w, cell.idx);
+                        //RTLOG("inside  %d, %.12f  %d\n", body.idx, w, cell.idx);
+                        std::cout<<"inside  "<<body.idx<<" "<<w<<"  "<<cell.idx<<"  "<<cell.x<<std::endl;
                     }
                     cell.bodies.push_back(body);
                     cell.weights.push_back(w);
@@ -422,7 +423,8 @@ void rtfmm::LaplaceFMM::init_reg_body(Cells3& cells)
                 real w = ws.mul();
                 if(w > 0)
                 {
-                    RTLOG("outside %d, %.12f  %d\n", body.idx, w,cell.idx);
+                    //RTLOG("outside %d, %.12f  %d\n", body.idx, w,cell.idx);
+                    std::cout<<"outside  "<<body.idx<<" "<<w<<"  "<<cell.idx<<"  "<<cell.x<<std::endl;
                     cell.bodies.push_back(body);
                     cell.weights.push_back(w);
                 }
