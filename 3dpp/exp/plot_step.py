@@ -64,4 +64,5 @@ for stepname in stepnames:
     cnt+=1
 
 fig.tight_layout()
+#fig.savefig("all_steps.png", dpi=200)
 fig.savefig("compare_allsteps.png", dpi=100)
