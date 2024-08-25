@@ -58,12 +58,20 @@ int main(int argc, char* argv[])
     {
         rtfmm::Cell3 cell_tar;
         cell_tar.bodies = bs;
-        rtfmm::Cell3 cell_src;
-        rtfmm::make_source_cell(cell_src, bs);
+        rtfmm::Cells3 cell_srcs(1);
+        rtfmm::make_src_cell(cell_srcs[0], bs, args.x, args.r);
+        if(args.reg_image0_type == "d")
+        {
+            rtfmm::make_reg_src_cell(cell_srcs, bs, args.x, args.r, args.cycle, args.rega);
+        }
+        for(int i = 0; i < cell_srcs.size(); i++)
+        {
+            std::cerr << cell_srcs[i] << std::endl;
+        }
 
         TIME_BEGIN(DIRECT);
         rtfmm::LaplaceKernel kernel;
-        kernel.direct(cell_src, cell_tar, args.images, args.cycle);
+        kernel.direct(cell_srcs[0], cell_tar, args.images, args.cycle);
         res_direct = cell_tar.bodies;
         if(args.dipole_correction)
             rtfmm::dipole_correction(res_direct, args.cycle);

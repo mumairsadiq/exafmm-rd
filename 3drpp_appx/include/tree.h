@@ -33,6 +33,14 @@ struct Cell3
 
     Cell3()
     {
+        octant = -1;
+        depth = 0;
+        r = 0;
+        x = vec3r(0,0,0);
+        idx = -1;
+        crange = Range(0,0);
+        brange = Range(0,0);
+
         M = 0;
         L = 0;
     }
