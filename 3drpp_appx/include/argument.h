@@ -52,7 +52,7 @@ public:
 
     real rega; // regularization alpha
 
-    char fmm_reg_image0_type; // 'c' or 'd'
+    std::string fmm_reg_image0_type; // 'c' or 'd'
 };
 
 }

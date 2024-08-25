@@ -35,7 +35,7 @@ rtfmm::Argument::Argument(int argc, char* argv[])
     cmd.add<real>("z0", 0, "z0", false, 0.0);
     cmd.add<int>("body0_idx", 0, "index of body moved(for reg plot check)", false, -1);
     cmd.add<int>("check_body_idx", 0, "index of body check(for reg plot check)", false, 0);
-    cmd.add<char>("fmm_reg_image0_type", 0, "type of fmm when reg=true,image=false", false, 'c');
+    cmd.add<std::string>("fmm_reg_image0_type", 0, "type of fmm when reg=true,image=false", false, "c");
 
     cmd.parse_check(argc, argv);
 
@@ -75,7 +75,7 @@ rtfmm::Argument::Argument(int argc, char* argv[])
     z0 = cmd.get<real>("z0");
     body0_idx = cmd.get<int>("body0_idx");
 
-    fmm_reg_image0_type = cmd.get<char>("fmm_reg_image0_type");
+    fmm_reg_image0_type = cmd.get<std::string>("fmm_reg_image0_type");
 
     x = vec3r(0,0,0);
     r = cycle / 2;
@@ -114,7 +114,7 @@ void rtfmm::Argument::show()
     RTLOG("  %-20s = %d\n","print_body_number",print_body_number);
     RTLOG("  %-20s = %d\n","divide_4pi",divide_4pi);
     RTLOG("  %-20s = %d\n","setting_t",setting_t);
-    RTLOG("  %-20s = %c\n","fmm_reg_image0_type",fmm_reg_image0_type);
+    RTLOG("  %-20s = %s\n","fmm_reg_image0_type",fmm_reg_image0_type.c_str());
     RTLOG("  %-20s = [%.6f,%.6f,%.6f] for body[%d], check body[%d]\n","[x0,y0,z0]",x0,y0,z0,body0_idx,check_body_idx);
     RTLOG("]\n\n");
 }

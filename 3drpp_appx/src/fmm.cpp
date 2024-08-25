@@ -338,7 +338,7 @@ void rtfmm::LaplaceFMM::init_reg_body(Cells3& cells)
         printf("search except 0,0,0\n");
 
         // search reg body except 0,0,0
-        if(args.images > 0)
+        if(args.images > 0 || args.fmm_reg_image0_type == "d")
         {
             for(int x = -1; x <= 1; x++)
             {
@@ -380,7 +380,7 @@ void rtfmm::LaplaceFMM::init_reg_body(Cells3& cells)
 
                 vec3r dx_simcenter = (body.x - args.x).abs() + args.rega;
                 vec3r ws = get_w_xyz(dx, cell.r, args.rega);
-                if(args.images == 0)
+                if(args.images == 0 && args.fmm_reg_image0_type == "c")
                 {
                     for(int d = 0; d <= 2; d++)
                     {
@@ -410,7 +410,7 @@ void rtfmm::LaplaceFMM::init_reg_body(Cells3& cells)
                 vec3r dx = body.x - cell.x;
                 vec3r dx_simcenter = (body.x - args.x).abs() + args.rega;
                 vec3r ws = get_w_xyz(dx, cell.r, args.rega);
-                if(args.images == 0)
+                if(args.images == 0 && args.fmm_reg_image0_type == "c")
                 {
                     for(int d = 0; d <= 2; d++)
                     {

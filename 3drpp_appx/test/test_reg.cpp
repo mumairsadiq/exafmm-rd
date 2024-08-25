@@ -20,7 +20,7 @@ int main(int argc, char* argv[])
     if(rtfmm::verbose) printf("# of threads = %d\n", omp_get_max_threads());
 
     /* prepare bodies */
-    rtfmm::Bodies3 bs = rtfmm::generate_random_bodies(args.n, args.r-0.05, args.x, args.seed, args.zero_netcharge);
+    rtfmm::Bodies3 bs = rtfmm::generate_random_bodies(args.n, args.r, args.x, args.seed, args.zero_netcharge);
     //rtfmm::Bodies3 bs = rtfmm::generate_random_bodies(args.n, args.r - args.rega * 2, args.x, args.seed, args.zero_netcharge);
 
     if(args.body0_idx != -1)
