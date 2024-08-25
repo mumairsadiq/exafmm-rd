@@ -11,7 +11,6 @@ extern int verbose;
 class Argument
 {
 public:
-    Argument();
     Argument(int argc, char* argv[]);
     void show();
 
@@ -52,6 +51,8 @@ public:
     int check_body_idx;
 
     real rega; // regularization alpha
+
+    char fmm_reg_image0_type; // 'c' or 'd'
 };
 
 }

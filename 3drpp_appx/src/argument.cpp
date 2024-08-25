@@ -4,86 +4,6 @@
 
 int rtfmm::verbose;
 
-rtfmm::Argument::Argument()
-{
-    cmdline::parser cmd;
-    cmd.add<int>("P", 'P', "point number per edge of surface point box", false, 4, cmdline::range(2, 32));
-    cmd.add<int>("nbody", 'n', "number of bodies", false, 1000);
-    cmd.add<int>("ncrit", 'm', "minimum number of bodies per leaf box", false, 16);
-    cmd.add<int>("timing", 't', "if measure execution time of computational steps", false, 1);
-    cmd.add<int>("images", 'i', "periodic images depth", false, 0, cmdline::range(0, 20));
-    cmd.add<int>("verbose", 'v', "is verbose", false, 0);
-    cmd.add<real>("cycle", 'c', "cycle of images(or box_r)", false, 2 * M_PI);
-    cmd.add<int>("num_compare", 0, "compare number of target body(also direct calculation number)", false, -1);
-    cmd.add<int>("ewald_ksize", 0, "ksize of ewald DFT", false, 11);
-    cmd.add<int>("th_num", 0, "number of omp threads", false, 8);
-    cmd.add<int>("seed", 0, "random seed", false, 5);
-    cmd.add<std::string>("algorithm", 'a', "algorithms", false, "fde");
-    cmd.add<int>("check_tree", 0, "if check tree", false, 0);
-    cmd.add<int>("use_fft", 0, "if use fft in M2L", false, 1);
-    cmd.add<int>("use_precompute", 0, "if use precomputed kernel", false, 1);
-    cmd.add<int>("use_simd", 0, "if use simd in P2P", false, 1);
-    cmd.add<int>("dipole_correction", 0, "if use dipole correction for FMM/direct", false, 1);
-    cmd.add<int>("zero_netcharge", 0, "if zero net charge", false, 1);
-    cmd.add<int>("print_body_number", 0, "print body number", false, 3);
-    cmd.add<int>("divide_4pi", 0, "if divide 4pi", false, 0);
-    cmd.add<int>("setting_t", 0, "set some parameters to match the result with exafmm-t", false, 0);
-    cmd.add<real>("rega", 'r', "regularization alpha", false, 0);
-    cmd.add<int>("override", 0, "override gtest setting", false, 0);
-    
-    P = cmd.get<int>("P");
-    n = cmd.get<int>("nbody");
-    ncrit = cmd.get<int>("ncrit");
-    timing = cmd.get<int>("timing");
-    images = cmd.get<int>("images");
-    verbose = cmd.get<int>("verbose");
-    cycle = cmd.get<real>("cycle");
-    use_fft = cmd.get<int>("use_fft");
-    use_precompute = cmd.get<int>("use_precompute");
-    dipole_correction = cmd.get<int>("dipole_correction");
-    zero_netcharge = cmd.get<int>("zero_netcharge");
-    print_body_number = cmd.get<int>("print_body_number");
-    divide_4pi = cmd.get<int>("divide_4pi");
-    use_simd = cmd.get<int>("use_simd");
-    setting_t = cmd.get<int>("setting_t");
-    rega = cmd.get<real>("rega");
-    cmd.add<real>("x0", 0, "x0", false, 0.0);
-    cmd.add<real>("y0", 0, "y0", false, 0.0);
-    cmd.add<real>("z0", 0, "z0", false, 0.0);
-    cmd.add<int>("body0_idx", 0, "index of body moved(for reg plot check)", false, -1);
-    cmd.add<int>("check_body_idx", 0, "index of body check(for reg plot check)", false, 0);
-
-    num_compare = cmd.get<int>("num_compare");
-    if(num_compare == -1) num_compare = n;
-    ewald_ksize = cmd.get<int>("ewald_ksize");
-    th_num = cmd.get<int>("th_num");
-    seed = cmd.get<int>("seed");
-
-    std::string algo = cmd.get<std::string>("algorithm");
-    enable_fmm = CONTAINS(algo, "f") ? 1 : 0;
-    enable_direct = CONTAINS(algo, "d") ? 1 : 0;
-    enable_ewald = CONTAINS(algo, "e") ? 1 : 0;
-    check_tree = cmd.get<int>("check_tree");
-
-    override_gtest_setting = cmd.get<int>("override");
-
-    x0 = cmd.get<real>("x0");
-    y0 = cmd.get<real>("y0");
-    z0 = cmd.get<real>("z0");
-    body0_idx = cmd.get<int>("body0_idx");
-    check_body_idx = cmd.get<int>("check_body_idx");
-
-    x = vec3r(0,0,0);
-    r = cycle / 2;
-
-    if(setting_t)
-    {
-        dipole_correction = 0;
-        zero_netcharge = 0;
-        divide_4pi = 1;
-    }
-}
-
 rtfmm::Argument::Argument(int argc, char* argv[])
 {
     cmdline::parser cmd;
@@ -115,7 +35,10 @@ rtfmm::Argument::Argument(int argc, char* argv[])
     cmd.add<real>("z0", 0, "z0", false, 0.0);
     cmd.add<int>("body0_idx", 0, "index of body moved(for reg plot check)", false, -1);
     cmd.add<int>("check_body_idx", 0, "index of body check(for reg plot check)", false, 0);
+    cmd.add<char>("fmm_reg_image0_type", 0, "type of fmm when reg=true,image=false", false, 'c');
+
     cmd.parse_check(argc, argv);
+
     P = cmd.get<int>("P");
     n = cmd.get<int>("nbody");
     ncrit = cmd.get<int>("ncrit");
@@ -151,6 +74,8 @@ rtfmm::Argument::Argument(int argc, char* argv[])
     y0 = cmd.get<real>("y0");
     z0 = cmd.get<real>("z0");
     body0_idx = cmd.get<int>("body0_idx");
+
+    fmm_reg_image0_type = cmd.get<char>("fmm_reg_image0_type");
 
     x = vec3r(0,0,0);
     r = cycle / 2;
@@ -189,6 +114,7 @@ void rtfmm::Argument::show()
     RTLOG("  %-20s = %d\n","print_body_number",print_body_number);
     RTLOG("  %-20s = %d\n","divide_4pi",divide_4pi);
     RTLOG("  %-20s = %d\n","setting_t",setting_t);
+    RTLOG("  %-20s = %c\n","fmm_reg_image0_type",fmm_reg_image0_type);
     RTLOG("  %-20s = [%.6f,%.6f,%.6f] for body[%d], check body[%d]\n","[x0,y0,z0]",x0,y0,z0,body0_idx,check_body_idx);
     RTLOG("]\n\n");
 }

@@ -21,6 +21,9 @@ public:
     */
     void direct(Bodies3& bs_src, Bodies3& bs_tar, int images, real cycle);
 
+
+    void direct(Cell3& cell_src, Cell3& cell_tar, int images, real cycle);
+
     /**
      * @brief cell_src -> cell_tar P2P
      * @param offset offset of cell_src

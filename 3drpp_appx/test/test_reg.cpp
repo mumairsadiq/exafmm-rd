@@ -4,6 +4,7 @@
 #include "fmm.h"
 #include "argument.h"
 #include "ewald.h"
+#include "direct.h"
 #include <omp.h>
 
 
@@ -19,7 +20,7 @@ int main(int argc, char* argv[])
     if(rtfmm::verbose) printf("# of threads = %d\n", omp_get_max_threads());
 
     /* prepare bodies */
-    rtfmm::Bodies3 bs = rtfmm::generate_random_bodies(args.n, args.r, args.x, args.seed, args.zero_netcharge);
+    rtfmm::Bodies3 bs = rtfmm::generate_random_bodies(args.n, args.r-0.05, args.x, args.seed, args.zero_netcharge);
     //rtfmm::Bodies3 bs = rtfmm::generate_random_bodies(args.n, args.r - args.rega * 2, args.x, args.seed, args.zero_netcharge);
 
     if(args.body0_idx != -1)
@@ -52,16 +53,18 @@ int main(int argc, char* argv[])
     }
 
     /* solve directly */
-    rtfmm::Bodies3 res_direct = bs;
+    rtfmm::Bodies3 res_direct;
     if(args.enable_direct)
     {
-        rtfmm::LaplaceKernel kernel;
-        rtfmm::Cell3 cell_src;
-        cell_src.brange = {0, args.n};
         rtfmm::Cell3 cell_tar;
-        cell_tar.brange = {0, args.num_compare};
+        cell_tar.bodies = bs;
+        rtfmm::Cell3 cell_src;
+        rtfmm::make_source_cell(cell_src, bs);
+
         TIME_BEGIN(DIRECT);
-        kernel.direct(res_direct, res_direct, args.images, args.cycle);
+        rtfmm::LaplaceKernel kernel;
+        kernel.direct(cell_src, cell_tar, args.images, args.cycle);
+        res_direct = cell_tar.bodies;
         if(args.dipole_correction)
             rtfmm::dipole_correction(res_direct, args.cycle);
         if(args.divide_4pi)
@@ -70,11 +73,10 @@ int main(int argc, char* argv[])
     }
 
     /* compare */
-    //if(rtfmm::verbose)
     {
-        if(args.enable_fmm) rtfmm::print_bodies(res_fmm, args.print_body_number, 0, "fmm");
+        if(args.enable_fmm)    rtfmm::print_bodies(res_fmm, args.print_body_number, 0, "fmm");
         if(args.enable_direct) rtfmm::print_bodies(res_direct, args.print_body_number, 0, "direct");
-        if(args.enable_ewald) rtfmm::print_bodies(res_ewald, args.print_body_number, 0, "ewald");
+        if(args.enable_ewald)  rtfmm::print_bodies(res_ewald, args.print_body_number, 0, "ewald");
     }
 
     if(args.body0_idx != -1)

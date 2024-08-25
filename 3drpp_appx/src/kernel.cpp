@@ -76,6 +76,11 @@ void rtfmm::LaplaceKernel::direct(Bodies3& bs_src, Bodies3& bs_tar, int images, 
     }
 }
 
+void rtfmm::LaplaceKernel::direct(Cell3& cell_src, Cell3& cell_tar, int images, real cycle)
+{
+    direct(cell_src.bodies, cell_tar.bodies, images, cycle);
+}
+
 void rtfmm::LaplaceKernel::p2p(Bodies3& bs_src, Bodies3& bs_tar, Cell3& cell_src, Cell3& cell_tar, vec3r offset, int use_simd)
 {
     if(!use_simd)
