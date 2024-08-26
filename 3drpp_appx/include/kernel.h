@@ -17,12 +17,18 @@ public:
     LaplaceKernel(){}
 
     /**
-     * @brief direct method use AVX
+     * @brief simple direct method use AVX enable PBC
     */
     void direct(Bodies3& bs_src, Bodies3& bs_tar, int images, real cycle);
 
+    /**
+     * @brief direct method use AVX without PBC but offset
+    */
+    void direct_w(Bodies3& bs_src, Bodies3& bs_tar, std::vector<real>& ws_src, std::vector<real>& ws_tar, vec3r offset = vec3r(0,0,0));
 
     void direct(Cell3& cell_src, Cell3& cell_tar, int images, real cycle);
+
+    void direct_reg(Cells3& cell_srcs, Cell3& cell_tar);
 
     /**
      * @brief cell_src -> cell_tar P2P

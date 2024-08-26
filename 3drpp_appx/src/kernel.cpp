@@ -76,9 +76,76 @@ void rtfmm::LaplaceKernel::direct(Bodies3& bs_src, Bodies3& bs_tar, int images, 
     }
 }
 
+void rtfmm::LaplaceKernel::direct_w(Bodies3& bs_src, Bodies3& bs_tar, std::vector<real>& ws_src, std::vector<real>& ws_tar, vec3r offset)
+{
+    vec4d zero(0);
+    vec4d one(1);
+    int num_tar = bs_tar.size();
+    int num_src = bs_src.size();
+    #pragma omp parallel for
+    for(int j = 0; j < num_tar; j+=4)
+    {
+        Body3* btar = &bs_tar[j];
+        real* wtar = &ws_tar[j];
+        vec4d xj,yj,zj;
+        int padding = j + 4 - num_tar;
+        padding = padding <= 0 ? 0 : padding;
+        for(int k = 0; k < 4 - padding; k++)
+        {
+            xj[k] = (btar + k)->x[0];
+            yj[k] = (btar + k)->x[1];
+            zj[k] = (btar + k)->x[2];
+        }
+        vec4d pj(0);
+        vec4d fxj(0);
+        vec4d fyj(0);
+        vec4d fzj(0);
+        vec4d dx, dy, dz, qi, invr, f, qinvr;
+        
+        for(int i = 0; i < num_src; i++)
+        {
+            Body3& bsrc = bs_src[i];
+            real& wsrc = ws_src[i];
+            vec3r bsrc_xi = bsrc.x + offset;
+            dx = vec4d(bsrc_xi[0]);
+            dy = vec4d(bsrc_xi[1]);
+            dz = vec4d(bsrc_xi[2]);
+            qi = vec4d(bsrc.q * wsrc);
+            dx = xj - dx;
+            dy = yj - dy;
+            dz = zj - dz;
+            invr = dx * dx + dy * dy + dz * dz;
+            f = invr > zero;
+            invr = one / invr.sqrt();
+            invr &= f;
+            qinvr = qi * invr;
+            pj += qinvr;
+            qinvr = qinvr * invr * invr;
+            fxj += qinvr * dx;
+            fyj += qinvr * dy;
+            fzj += qinvr * dz;
+        }
+        for(int k = 0; k < 4 - padding; k++)
+        {
+            (btar + k)->p    += (*(wtar + k)) * pj[k];
+            (btar + k)->f[0] -= (*(wtar + k)) * fxj[k];
+            (btar + k)->f[1] -= (*(wtar + k)) * fyj[k];
+            (btar + k)->f[2] -= (*(wtar + k)) * fzj[k];
+        }
+    }
+}
+
 void rtfmm::LaplaceKernel::direct(Cell3& cell_src, Cell3& cell_tar, int images, real cycle)
 {
     direct(cell_src.bodies, cell_tar.bodies, images, cycle);
+}
+
+void rtfmm::LaplaceKernel::direct_reg(Cells3& cell_srcs, Cell3& cell_tar)
+{
+    for(int i = 0; i < cell_srcs.size(); i++)
+    {
+        direct_w(cell_srcs[i].bodies, cell_tar.bodies, cell_srcs[i].weights, cell_tar.weights);
+    }
 }
 
 void rtfmm::LaplaceKernel::p2p(Bodies3& bs_src, Bodies3& bs_tar, Cell3& cell_src, Cell3& cell_tar, vec3r offset, int use_simd)

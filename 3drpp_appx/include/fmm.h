@@ -44,10 +44,11 @@ private:
     Indices get_leaf_cell_indices(const Cells3& cells);
     Indices get_nonleaf_cell_indices(const Cells3& cells, int depth);
 
-    real reg_w(real x);
-    real get_w_single(real dx, real R, real rega);
-    rtfmm::real get_w(vec3r dx, real R, real rega);
-    rtfmm::vec3r get_w_xyz(vec3r dx, real R, real rega);
+public:
+    static real reg_w(real x);
+    static real get_w_single(real dx, real R, real rega);
+    static rtfmm::real get_w(vec3r dx, real R, real rega);
+    static rtfmm::vec3r get_w_xyz(vec3r dx, real R, real rega);
 };
 
 }

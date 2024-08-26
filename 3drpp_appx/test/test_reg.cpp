@@ -56,23 +56,34 @@ int main(int argc, char* argv[])
     rtfmm::Bodies3 res_direct;
     if(args.enable_direct)
     {
-        rtfmm::Cell3 cell_tar;
-        cell_tar.bodies = bs;
-        rtfmm::Cells3 cell_srcs(1);
-        rtfmm::make_src_cell(cell_srcs[0], bs, args.x, args.r);
-        if(args.reg_image0_type == "d")
-        {
-            rtfmm::make_reg_src_cell(cell_srcs, bs, args.x, args.r, args.cycle, args.rega);
-        }
-        for(int i = 0; i < cell_srcs.size(); i++)
-        {
-            std::cerr << cell_srcs[i] << std::endl;
-        }
-
         TIME_BEGIN(DIRECT);
         rtfmm::LaplaceKernel kernel;
-        kernel.direct(cell_srcs[0], cell_tar, args.images, args.cycle);
-        res_direct = cell_tar.bodies;
+
+        if(args.reg_image0_type == "c")
+        {
+            rtfmm::Cell3 cell_tar;
+            rtfmm::make_tar_cell(cell_tar, bs, args.x, args.r);
+            rtfmm::Cell3 cell_src;
+            rtfmm::make_src_cell(cell_src, bs, args.x, args.r);
+            kernel.direct(cell_src, cell_tar, args.images, args.cycle);
+            res_direct = cell_tar.bodies;
+        }
+        else if(args.reg_image0_type == "d")
+        {
+            res_direct = bs;
+            rtfmm::Cell3 cell_tar;
+            rtfmm::make_reg_tar_cell(cell_tar, bs, args.x, args.r, args.cycle, args.rega);
+            rtfmm::Cells3 cell_srcs;
+            rtfmm::make_reg_src_cell(cell_srcs, bs, args.x, args.r, args.cycle, args.rega, args.images);
+            kernel.direct_reg(cell_srcs, cell_tar);
+            rtfmm::fusion_bodies(cell_tar, res_direct);
+        }
+        else
+        {
+            RTLOG("invalid reg_image0_type\n");
+            exit(0);
+        }
+
         if(args.dipole_correction)
             rtfmm::dipole_correction(res_direct, args.cycle);
         if(args.divide_4pi)
