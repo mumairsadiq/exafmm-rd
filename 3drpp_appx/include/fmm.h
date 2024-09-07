@@ -43,12 +43,6 @@ private:
     vec2i get_min_max_depth(const Cells3& cells);
     Indices get_leaf_cell_indices(const Cells3& cells);
     Indices get_nonleaf_cell_indices(const Cells3& cells, int depth);
-
-public:
-    static real reg_w(real x);
-    static real get_w_single(real dx, real R, real rega);
-    static rtfmm::real get_w(vec3r dx, real R, real rega);
-    static rtfmm::vec3r get_w_xyz(vec3r dx, real R, real rega);
 };
 
 }

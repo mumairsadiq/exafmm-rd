@@ -3,6 +3,7 @@
 #include "mathfunc.h"
 #include <omp.h>
 #include "surface.h"
+#include "reg.h"
 
 rtfmm::LaplaceFMM::LaplaceFMM(const Bodies3& bs_, const Argument& args_) 
     : bs(bs_), args(args_)
@@ -326,7 +327,7 @@ void rtfmm::LaplaceFMM::init_reg_body(Cells3& cells)
                 if(!(i >= cell.brange.offset && i < cell.brange.offset + cell.brange.number))
                 {
                     vec3r dx = ploc - cell.x;
-                    real w = get_w_xyz(dx, cell.r, args.rega).mul();
+                    real w = reg::get_w_xyz(dx, cell.r, args.rega).mul();
                     if(w > 0)
                     {
                         cell.reg_body_idx.push_back(std::make_pair(i, vec3r(0,0,0)));
@@ -356,7 +357,7 @@ void rtfmm::LaplaceFMM::init_reg_body(Cells3& cells)
                             {
                                 vec3r ploc = bs[i].x + region_offset;
                                 vec3r dx = ploc - cell.x;
-                                real w = get_w_xyz(dx, cell.r, args.rega).mul();
+                                real w = reg::get_w_xyz(dx, cell.r, args.rega).mul();
                                 if(w > 0)
                                 {
                                     cell.reg_body_idx.push_back(std::make_pair(i, region_offset));
@@ -379,7 +380,7 @@ void rtfmm::LaplaceFMM::init_reg_body(Cells3& cells)
                 vec3r dx = body.x - cell.x;
 
                 vec3r dx_simcenter = (body.x - args.x).abs() + args.rega;
-                vec3r ws = get_w_xyz(dx, cell.r, args.rega);
+                vec3r ws = reg::get_w_xyz(dx, cell.r, args.rega);
                 if(args.images == 0 && args.reg_image0_type == "c")
                 {
                     for(int d = 0; d <= 2; d++)
@@ -409,7 +410,7 @@ void rtfmm::LaplaceFMM::init_reg_body(Cells3& cells)
                 body.x += cell.reg_body_idx[i].second;
                 vec3r dx = body.x - cell.x;
                 vec3r dx_simcenter = (body.x - args.x).abs() + args.rega;
-                vec3r ws = get_w_xyz(dx, cell.r, args.rega);
+                vec3r ws = reg::get_w_xyz(dx, cell.r, args.rega);
                 if(args.images == 0 && args.reg_image0_type == "c")
                 {
                     for(int d = 0; d <= 2; d++)
@@ -596,39 +597,4 @@ void rtfmm::LaplaceFMM::check_cells(const Cells3& cells)
         Cell3 c = cells[i];
         assert_exit(c.idx == i, "cell idx error");
     }
-}
-
-rtfmm::real rtfmm::LaplaceFMM::reg_w(real x)
-{
-    return 0.25 * (2 + 3 * x - x * x * x);
-}
-
-rtfmm::real rtfmm::LaplaceFMM::get_w_single(real dx, real R, real rega)
-{
-    real r = std::abs(dx) - R + rega;
-    real x;
-    if(r <= 0) x = 1;
-    else if(r > 2 * rega) x = -1;
-    else x = 1 - r / rega;
-    return reg_w(x);
-}
-
-rtfmm::real rtfmm::LaplaceFMM::get_w(vec3r dx, real R, real rega)
-{
-    real w = 1;
-    for(int d = 0; d < 3; d++)
-    {
-        w *= get_w_single(dx[d], R, rega);
-    }
-    return w;
-}
-
-rtfmm::vec3r rtfmm::LaplaceFMM::get_w_xyz(vec3r dx, real R, real rega)
-{
-    rtfmm::vec3r res;
-    for(int d = 0; d < 3; d++)
-    {
-        res[d] = get_w_single(dx[d], R, rega);
-    }
-    return res;
 }

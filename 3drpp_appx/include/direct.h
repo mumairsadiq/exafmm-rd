@@ -4,6 +4,7 @@
 #include "body.h"
 #include "tree.h"
 #include "fmm.h"
+#include "reg.h"
 
 namespace rtfmm
 {
@@ -23,7 +24,7 @@ void make_reg_tar_cell(Cell3& cell_tar, const Bodies3& bs, vec3r root_x, real ro
     for(int i = 0; i < bs.size(); i++)
     {
         const Body3& b = bs[i];
-        real w = LaplaceFMM::get_w_xyz(b.x - cell_tar.x, cell_tar.r, rega).mul();
+        real w = reg::get_w_xyz(b.x - cell_tar.x, cell_tar.r, rega).mul();
         cell_tar.bodies.push_back(b);
         cell_tar.weights.push_back(w);
         if(w != 1)
@@ -39,7 +40,7 @@ void make_reg_tar_cell(Cell3& cell_tar, const Bodies3& bs, vec3r root_x, real ro
                         {
                             Body3 bb = b;
                             bb.x += offset;
-                            real w = LaplaceFMM::get_w_xyz(bb.x - cell_tar.x, cell_tar.r, rega).mul();
+                            real w = reg::get_w_xyz(bb.x - cell_tar.x, cell_tar.r, rega).mul();
                             if(w > 0)
                             {
                                 cell_tar.bodies.push_back(bb);
