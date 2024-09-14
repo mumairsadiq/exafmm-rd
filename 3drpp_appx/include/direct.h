@@ -67,7 +67,7 @@ int is_direction(const vec3r& x, const vec3r& dir)
     for(int i = 0; i < 3; i++)
     {
         if(dir[i] == 0) continue;
-        if(x[i] * dir[i] > 0)
+        if(x[i] * dir[i] >= 0)
         {
             res = 1;
             break;
@@ -76,9 +76,9 @@ int is_direction(const vec3r& x, const vec3r& dir)
     return res;
 }
 
-void partial_regularization(Cell3& cell, const Bodies3& bs, const real& rega, const vec3r& direction, const vec3r& bshift)
+void partial_regularization(Cell3& cell, const Bodies3& bs, const real& rega, const vec3r& direction, const vec3r& bshift, real cycle)
 {
-    vec3r reverse_direction = -direction;
+    vec3r reversed_direction = -direction;
     for(int i = 0; i < bs.size(); i++)
     {
         Body3 b = bs[i];
@@ -105,57 +105,56 @@ void partial_regularization(Cell3& cell, const Bodies3& bs, const real& rega, co
                 cell.weights.push_back(1);
                 // if body is at reversed direction
                 //if(dx[0] * reverse_direction[0] >= 0 && dx[1] * reverse_direction[1] >= 0 && dx[2] * reverse_direction[2] >= 0) 
-                if(is_direction(dx, reverse_direction))
+                if(is_direction(dx, reversed_direction))
                 {
-                    Body3 bb = b;
-                    bb.x += direction;
-                    real ww = reg::get_w_xyz(bb.x - cell.x, cell.r, rega).mul();
-                    cell.bodies.push_back(bb);
-                    cell.weights.push_back(ww);
+                    for(int z = -1; z <= 1; z++)
+                    {
+                        for(int y = -1; y <= 1; y++)
+                        {
+                            for(int x = -1; x <= 1; x++)
+                            {
+                                if(x != 0 || y != 0 || z != 0)
+                                {
+                                    Body3 bb = b;
+                                    bb.x += vec3r(x,y,z) * cycle;
+                                    real ww = reg::get_w_xyz(bb.x - cell.x, cell.r, rega).mul();
+                                    if(ww > 0)
+                                    {
+                                        cell.bodies.push_back(bb);
+                                        cell.weights.push_back(ww);
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
     }
 }
 
-void make_reg_src_cell(Cells3& cell_srcs, const Bodies3& bs, vec3r root_x, real root_r, real cycle, real rega, int image)
+void make_reg_src_cell(Cells3& cell_srcs, std::vector<vec3r>& offsets, const Bodies3& bs, vec3r root_x, real root_r, real cycle, real rega, int image)
 {
     if(image == 0)
     {
         cell_srcs.push_back(Cell3());
         make_reg_tar_cell(cell_srcs[0], bs, root_x, root_r, cycle, rega); // when image is 0, src and tar are same, see #1
+        offsets.push_back(vec3r(0,0,0));
     }
     else if(image == 1)
     {
-        // 1. add root
-        cell_srcs.push_back(Cell3());
-        cell_srcs[0].x = root_x;
-        cell_srcs[0].r = root_r;
-        for(int i = 0; i < bs.size(); i++)
-        {
-            const Body3& b = bs[i];
-            cell_srcs[0].bodies.push_back(b);
-            cell_srcs[0].weights.push_back(1);
-        }
-
-        // 2. add partial regularized boxes
+        Cell3 c;
+        make_reg_tar_cell(c, bs, root_x, root_r, cycle, rega);
         for(int z = -1; z <= 1; z++)
         {
             for(int y = -1; y <= 1; y++)
             {
                 for(int x = -1; x <= 1; x++)
                 {
-                    if(x != 0 || y != 0 || z != 0)
-                    {
-                        RTLOG("add partial regularized cell (%d,%d,%d)\n", x,y,z);
-                        // create partial cell/box
-                        vec3r offset = vec3r(x,y,z) * cycle;
-                        Cell3 cell_partial;
-                        cell_partial.x = root_x + offset;
-                        cell_partial.r = root_r;
-                        partial_regularization(cell_partial, bs, rega, offset, offset);
-                        cell_srcs.push_back(cell_partial);
-                    }
+                    RTLOG("add regularized cell (%d,%d,%d)\n", x,y,z);
+                    vec3r offset = vec3r(x,y,z) * cycle;    
+                    cell_srcs.push_back(c);
+                    offsets.push_back(offset);
                 }
             }
         }

@@ -74,8 +74,9 @@ int main(int argc, char* argv[])
             rtfmm::Cell3 cell_tar;
             rtfmm::make_reg_tar_cell(cell_tar, bs, args.x, args.r, args.cycle, args.rega);
             rtfmm::Cells3 cell_srcs;
-            rtfmm::make_reg_src_cell(cell_srcs, bs, args.x, args.r, args.cycle, args.rega, args.images);
-            kernel.direct_reg(cell_srcs, cell_tar);
+            std::vector<rtfmm::vec3r> cell_src_offsets;
+            rtfmm::make_reg_src_cell(cell_srcs, cell_src_offsets, bs, args.x, args.r, args.cycle, args.rega, args.images);
+            kernel.direct_reg(cell_srcs, cell_tar, cell_src_offsets);
             rtfmm::fusion_bodies(cell_tar, res_direct);
         }
         else

@@ -28,7 +28,7 @@ public:
 
     void direct(Cell3& cell_src, Cell3& cell_tar, int images, real cycle);
 
-    void direct_reg(Cells3& cell_srcs, Cell3& cell_tar);
+    void direct_reg(Cells3& cell_srcs, Cell3& cell_tar, std::vector<vec3r>& offsets);
 
     /**
      * @brief cell_src -> cell_tar P2P
