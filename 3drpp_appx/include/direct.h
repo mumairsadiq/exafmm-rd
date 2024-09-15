@@ -141,15 +141,17 @@ void make_reg_src_cell(Cells3& cell_srcs, std::vector<vec3r>& offsets, const Bod
         make_reg_tar_cell(cell_srcs[0], bs, root_x, root_r, cycle, rega); // when image is 0, src and tar are same, see #1
         offsets.push_back(vec3r(0,0,0));
     }
-    else if(image == 1)
+    else if(image >= 1)
     {
+        int dm = (std::pow(3, image) - 1) / 2;
+        RTLOG("dm = %d\n", dm);
         Cell3 c;
         make_reg_tar_cell(c, bs, root_x, root_r, cycle, rega);
-        for(int z = -1; z <= 1; z++)
+        for(int z = -dm; z <= dm; z++)
         {
-            for(int y = -1; y <= 1; y++)
+            for(int y = -dm; y <= dm; y++)
             {
-                for(int x = -1; x <= 1; x++)
+                for(int x = -dm; x <= dm; x++)
                 {
                     RTLOG("add regularized cell (%d,%d,%d)\n", x,y,z);
                     vec3r offset = vec3r(x,y,z) * cycle;    
@@ -158,10 +160,6 @@ void make_reg_src_cell(Cells3& cell_srcs, std::vector<vec3r>& offsets, const Bod
                 }
             }
         }
-    }
-    else if(image >= 2)
-    {
-
     }
     else
     {
