@@ -27,7 +27,7 @@ target_include_directories(
     "${PROJECT_SOURCE_DIR}/include"
 )
 
-target_link_libraries(core
+target_link_libraries(core PUBLIC
     OpenMP::OpenMP_CXX
     LAPACK::LAPACK
     BLAS::BLAS

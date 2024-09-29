@@ -62,7 +62,9 @@ rtfmm::Bodies3 rtfmm::EwaldSolver::solve()
     //tree.build(bs, args.x, args.r, 3, Tree::TreeType::uniform);
     cells = tree.get_cells();
     TIME_BEGIN(real_part);
-    real_part(0, 0);
+    RealMap real_map;
+    real_part(0, 0, real_map);
+    real_p2p(real_map);
     if(args.timing) {TIME_END(real_part);}
     TIME_BEGIN(fourier_part);
     fourier_part();
@@ -74,18 +76,18 @@ rtfmm::Bodies3 rtfmm::EwaldSolver::solve()
     return sort_bodies_by_idx(bs);
 }
 
-void rtfmm::EwaldSolver::real_part(int this_cell_idx, int that_cell_idx)
+void rtfmm::EwaldSolver::real_part(int this_cell_idx, int that_cell_idx, RealMap& real_map)
 {
     rtfmm::Cell3& this_cell = cells[this_cell_idx];
     if (this_cell.crange.number == 0) 
     {
-        child(this_cell_idx, that_cell_idx);
+        child(this_cell_idx, that_cell_idx, real_map);
     }
     else
     {
         for(int i = 0; i < this_cell.crange.number; i++)
         {
-            real_part(this_cell.crange.offset + i, that_cell_idx);
+            real_part(this_cell.crange.offset + i, that_cell_idx, real_map);
         }
     }
 }
@@ -118,7 +120,7 @@ void rtfmm::EwaldSolver::self_correction()
 }
 
 
-void rtfmm::EwaldSolver::child(int this_cell_idx, int that_cell_idx)
+void rtfmm::EwaldSolver::child(int this_cell_idx, int that_cell_idx, RealMap& real_map)
 {
     rtfmm::Cell3& this_cell = cells[this_cell_idx];
     rtfmm::Cell3& that_cell = cells[that_cell_idx];
@@ -139,20 +141,38 @@ void rtfmm::EwaldSolver::child(int this_cell_idx, int that_cell_idx)
     {
         if(that_cell.crange.number == 0)
         {
-            real_p2p(this_cell_idx, that_cell_idx, offset);
+            real_map.append(this_cell_idx, that_cell_idx, offset);
         }
         else
         {
             for (int j = 0; j < that_cell.crange.number; j++)
             {
-                child(this_cell_idx, that_cell.crange.offset + j);
+                child(this_cell_idx, that_cell.crange.offset + j, real_map);
             }
         }
     }
 }
 
+void rtfmm::EwaldSolver::real_p2p(RealMap& real_map)
+{
+    int ss = real_map.real_map.size();
+    #pragma omp parallel for
+    for(int i = 0; i < ss; i++)
+    {
+        auto real_list = real_map.real_map.begin();
+        std::advance(real_list, i);
+        int tar = real_list->first;
+        std::vector<IndexAndOffset> list = real_list->second;
+        for(int j = 0; j < list.size(); j++)
+        {
+            int src = list[j].index;
+            vec3r offset = list[j].offset;
+            real_p2p_kernel(tar, src, offset);
+        }
+    }
+}
 
-void rtfmm::EwaldSolver::real_p2p(int this_cell_idx, int that_cell_idx, rtfmm::vec3r offset)
+void rtfmm::EwaldSolver::real_p2p_kernel(int this_cell_idx, int that_cell_idx, rtfmm::vec3r offset)
 {
     rtfmm::Cell3& this_cell = cells[this_cell_idx];
     rtfmm::Cell3& that_cell = cells[that_cell_idx];

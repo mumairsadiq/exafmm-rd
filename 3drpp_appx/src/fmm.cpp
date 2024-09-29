@@ -312,6 +312,7 @@ void rtfmm::LaplaceFMM::init_cell_matrix(Cells3& cells)
 void rtfmm::LaplaceFMM::init_reg_body(Cells3& cells)
 {
     std::vector<int> leaves = traverser.leaf_cell_idx;
+    int leave_num = leaves.size();
 
     if(args.rega > 0)
     {
@@ -321,7 +322,8 @@ void rtfmm::LaplaceFMM::init_reg_body(Cells3& cells)
         for(int i = 0; i < bs.size(); i++)
         {
             vec3r ploc = bs[i].x;
-            for(int leaf_idx = 0; leaf_idx < leaves.size(); leaf_idx++)
+            #pragma omp parallel for
+            for(int leaf_idx = 0; leaf_idx < leave_num; leaf_idx++)
             {
                 Cell3& cell = cells[leaves[leaf_idx]];
                 if(!(i >= cell.brange.offset && i < cell.brange.offset + cell.brange.number))
@@ -350,7 +352,8 @@ void rtfmm::LaplaceFMM::init_reg_body(Cells3& cells)
                         if(x == 0 && y == 0 && z == 0)
                             continue;
                         vec3r region_offset = vec3r(x,y,z) * args.cycle;
-                        for(int leaf_idx = 0; leaf_idx < leaves.size(); leaf_idx++)
+                        #pragma omp parallel for
+                        for(int leaf_idx = 0; leaf_idx < leave_num; leaf_idx++)
                         {
                             Cell3& cell = cells[leaves[leaf_idx]];
                             for(int i = 0; i < bs.size(); i++)
@@ -361,7 +364,7 @@ void rtfmm::LaplaceFMM::init_reg_body(Cells3& cells)
                                 if(w > 0)
                                 {
                                     cell.reg_body_idx.push_back(std::make_pair(i, region_offset));
-                                    printf("[%.2f] push %d,%d\n", real(leaf_idx) / leaves.size(), i, bs[i].idx);
+                                    //printf("[%.2f] push %d,%d\n", real(leaf_idx) / leaves.size(), i, bs[i].idx);
                                 }
                             }
                         }
@@ -371,7 +374,8 @@ void rtfmm::LaplaceFMM::init_reg_body(Cells3& cells)
         }
 
         // compute weight and cache
-        for(int leaf_idx = 0; leaf_idx < leaves.size(); leaf_idx++)
+        #pragma omp parallel for
+        for(int leaf_idx = 0; leaf_idx < leave_num; leaf_idx++)
         {
             Cell3& cell = cells[leaves[leaf_idx]];
             for(int i = cell.brange.offset; i < cell.brange.offset + cell.brange.number; i++)
@@ -397,7 +401,7 @@ void rtfmm::LaplaceFMM::init_reg_body(Cells3& cells)
                     if(w != 1)
                     {
                         //RTLOG("inside  %d, %.12f  %d\n", body.idx, w, cell.idx);
-                        std::cout<<"inside  "<<body.idx<<" "<<w<<"  "<<cell.idx<<"  "<<cell.x<<std::endl;
+                        //std::cout<<"inside  "<<body.idx<<" "<<w<<"  "<<cell.idx<<"  "<<cell.x<<std::endl;
                     }
                     cell.bodies.push_back(body);
                     cell.weights.push_back(w);
@@ -425,7 +429,7 @@ void rtfmm::LaplaceFMM::init_reg_body(Cells3& cells)
                 if(w > 0)
                 {
                     //RTLOG("outside %d, %.12f  %d\n", body.idx, w,cell.idx);
-                    std::cout<<"outside  "<<body.idx<<" "<<w<<"  "<<cell.idx<<"  "<<cell.x<<std::endl;
+                    //std::cout<<"outside  "<<body.idx<<" "<<w<<"  "<<cell.idx<<"  "<<cell.x<<std::endl;
                     cell.bodies.push_back(body);
                     cell.weights.push_back(w);
                 }
@@ -434,7 +438,8 @@ void rtfmm::LaplaceFMM::init_reg_body(Cells3& cells)
     }
     else
     {
-        for(int leaf_idx = 0; leaf_idx < leaves.size(); leaf_idx++)
+        #pragma omp parallel for
+        for(int leaf_idx = 0; leaf_idx < leave_num; leaf_idx++)
         {
             Cell3& cell = cells[leaves[leaf_idx]];
             for(int i = cell.brange.offset; i < cell.brange.offset + cell.brange.number; i++)

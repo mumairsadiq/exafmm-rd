@@ -7,6 +7,27 @@
 
 namespace rtfmm
 {
+struct IndexAndOffset
+{
+    IndexAndOffset(int index_, vec3r offset_) : index(index_), offset(offset_){}
+    int index;
+    vec3r offset;
+};
+
+class RealMap
+{
+public:
+    void append(int tar, int src, const vec3r& offset)
+    {
+        real_map[tar].push_back(IndexAndOffset(src, offset));
+    }
+    std::vector<IndexAndOffset> get_list(int tar)
+    {
+        return real_map[tar];
+    }
+    std::map<int, std::vector<IndexAndOffset>> real_map;
+};
+
 class EwaldSolver
 {
 private:
@@ -20,15 +41,17 @@ public:
     EwaldSolver(const Bodies3& bs_, const Argument& args_);
     Bodies3 solve();
 private:
-    void real_part(int this_cell_idx, int that_cell_idx);
+    void real_part(int this_cell_idx, int that_cell_idx, RealMap& real_map);
 
     void fourier_part();
 
     void self_correction();
 
-    void child(int this_cell_idx, int that_cell_idx);
+    void child(int this_cell_idx, int that_cell_idx, RealMap& real_map);
 
-    void real_p2p(int this_cell_idx, int that_cell_idx, vec3r offset);
+    void real_p2p(RealMap& real_map);
+
+    void real_p2p_kernel(int this_cell_idx, int that_cell_idx, vec3r offset);
 
     void DFT(std::vector<Wave>& ws, std::vector<Body3>& bs);
 
