@@ -13,7 +13,7 @@ to sovle the problem.
 bash ./script/build.sh
 ```
 
-# Exection
+# Execution
 
 + test_fmm : kernel-independent FMM without PBC
 + test_pbc : kernel-independent FMM with PBC
