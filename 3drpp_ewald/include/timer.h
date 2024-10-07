@@ -13,9 +13,15 @@
 
 namespace rtfmm
 {
+
 class Timer
 {
 public:
+    struct TimeRecord
+    {
+        std::string name;
+        float time;
+    };
     void begin(std::string name)
     {
         name2index[name] = begins.size();
@@ -27,22 +33,28 @@ public:
         auto end = std::chrono::high_resolution_clock::now();
         int index = name2index[name];
         auto elapse = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begins[index]);
-        times.push_back(elapse.count() * 1e-9);
+        TimeRecord record;
+        record.name = name;
+        record.time = elapse.count() * 1e-9;
+        time_records.push_back(record);
     }
     void save(std::string path)
     {
         std::ofstream outputfile(path, std::ios::app);
-        for(int i = 0; i < times.size(); i++)
+        for(int i = 0; i < time_records.size(); i++)
         {
-            std::string ss = format("[%s time measured : %f seconds.]", names[i].c_str(), times[i]);
+            TimeRecord record = time_records[i];
+            std::string ss = format("[%s time measured : %f seconds.]", record.name.c_str(), record.time);
             outputfile << ss << std::endl;
+            std::cout << ss << std::endl;
         }
         outputfile << std::endl;
+        std::cout << std::endl;
         outputfile.close();
     }
 private:
     std::vector<std::chrono::high_resolution_clock::time_point> begins;
-    std::vector<float> times;
+    std::vector<TimeRecord> time_records;
     std::vector<std::string> names;
     std::map<std::string, int> name2index;
 };

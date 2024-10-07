@@ -7,6 +7,7 @@
 #include "direct.h"
 #include <omp.h>
 #include "timer.h"
+#include "epkifmm.h"
 
 int main(int argc, char* argv[])
 {
@@ -23,6 +24,11 @@ int main(int argc, char* argv[])
     timer.begin("TOTAL");
 
     rtfmm::Bodies3 bs = rtfmm::generate_random_bodies(args.n, args.r, args.x, args.seed, args.zero_netcharge);
+
+    timer.begin("EPKIFMM");
+    rtfmm::EpkiFMM epkifmm;
+    epkifmm.solve();
+    timer.end("EPKIFMM");
 
     timer.end("TOTAL");
     timer.save(args.res_filepath);

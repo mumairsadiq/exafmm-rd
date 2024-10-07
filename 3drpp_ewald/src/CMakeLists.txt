@@ -20,6 +20,7 @@ add_library(core
     traverser.cpp
     ewald.cpp
     argument.cpp
+    epkifmm.cpp
 )
 
 target_include_directories(
