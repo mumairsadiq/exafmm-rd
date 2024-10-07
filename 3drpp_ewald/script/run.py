@@ -26,7 +26,7 @@ if __name__ == "__main__":
     
     dt_now = datetime.datetime.now()
     result_path = os.path.abspath("./result")
-    result_filename = f"{result_path}/{args.exec}_{dt_now.strftime('%Y-%m-%d-%H-%M-%S')}.log"
+    result_filename = f"{result_path}/{dt_now.strftime('%Y%m%d%H%M%S')}@{args.exec}.log"
 
     cmd  = f"./build/test/{args.exec}"
     cmd += f" -n {args.num}"

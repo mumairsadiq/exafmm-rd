@@ -26,15 +26,15 @@ bash ./script/build.sh
 
 ### syntax
 ```shell
-python3 script/runfmm.py [exec] <options>
+python3 script/run.py [exec] <options>
 ```
 ### example
 ```shell
-python3 script/runfmm.py test_fmm -n 24000 -a fd -P 8 -i 0 -r 0 --seed=1234 -v 1 
+python3 script/run.py test_fmm -n 24000 -a fd -P 8 -i 0 -r 0 --seed=1234 -v 1 
 ```
 
 # Output
 
 + `./result` will be automatically created after running the script.
 
-+ `./result/[exec]_[time].log` is the log file of the execution.
++ `./result/[time]@[exec].log` is the log file of the execution.
