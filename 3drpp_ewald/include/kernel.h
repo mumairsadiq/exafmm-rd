@@ -10,7 +10,6 @@
 
 namespace rtfmm
 {
-    void dipole_correction(Bodies3& bs, real cycle);
 class LaplaceKernel
 {
 public:
