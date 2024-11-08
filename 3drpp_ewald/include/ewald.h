@@ -38,7 +38,8 @@ private:
         complexr val;
     };
 public:
-    EwaldSolver(const Bodies3& bs_, const Argument& args_);
+    EwaldSolver(const Bodies3& tar_bs_, const Argument& args_);
+    EwaldSolver(const Bodies3& tar_bs_, const Bodies3& src_bs_, const Argument& args_);
     Bodies3 solve();
 private:
     void real_part(int this_cell_idx, int that_cell_idx, RealMap& real_map);
@@ -58,13 +59,15 @@ private:
     void IDFT(std::vector<Wave>& ws, std::vector<Body3>& bs);
 
     Argument args;
-    Bodies3 bs;
+    Bodies3 tar_bs;
+    Bodies3 src_bs;
 
     int ksize;
     real scale;
     real alpha;
     real cutoff;
     std::vector<Wave> waves;
-    std::vector<Cell3> cells;
+    std::vector<Cell3> tar_cells;
+    std::vector<Cell3> src_cells;
 };
 }

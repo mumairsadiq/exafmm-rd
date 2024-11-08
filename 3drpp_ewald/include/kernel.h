@@ -17,8 +17,9 @@ public:
 
     /**
      * @brief simple direct method use AVX enable PBC
+     * @note image cells are created of indices = [lower, dm] and [-dm, -lower]
     */
-    void direct(Bodies3& bs_src, Bodies3& bs_tar, int images, real cycle);
+    void direct(Bodies3& bs_src, Bodies3& bs_tar, int images, real cycle, int lower = 0);
 
     /**
      * @brief direct method use AVX without PBC but offset
@@ -51,6 +52,8 @@ public:
     void p2m_precompute(int P, Cell3& cell_src);
 
     void m2m(int P, Cell3& cell_parent, Cells3& cs);
+
+    std::vector<real> m2m_ewald_root0(int P, Cell3& cell_parent, Cells3& cs, real cycle);
 
     void m2m_precompute(int P, Cell3& cell_parent, Cells3& cs);
 

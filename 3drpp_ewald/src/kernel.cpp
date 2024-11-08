@@ -8,13 +8,14 @@
 #include <algorithm>
 #include "c2c.h"
 
-void rtfmm::LaplaceKernel::direct(Bodies3& bs_src, Bodies3& bs_tar, int images, real cycle)
+void rtfmm::LaplaceKernel::direct(Bodies3& bs_src, Bodies3& bs_tar, int images, real cycle, int lower)
 {
     vec4d zero(0);
     vec4d one(1);
     int num_tar = bs_tar.size();
     int num_src = bs_src.size();
     int dm = (std::pow(3, images) - 1) / 2;
+    printf("dm = %d\n", dm);
     #pragma omp parallel for
     for(int j = 0; j < num_tar; j+=4)
     {
@@ -40,6 +41,8 @@ void rtfmm::LaplaceKernel::direct(Bodies3& bs_src, Bodies3& bs_tar, int images, 
             {
                 for(int px = -dm; px <= dm; px++)
                 {
+                    if(abs(px) < lower && abs(py) < lower && abs(pz) < lower)
+                        continue;
                     vec3r offset(px * cycle, py * cycle, pz * cycle);
                     for(int i = 0; i < num_src; i++)
                     {
@@ -475,6 +478,44 @@ void rtfmm::LaplaceKernel::m2m(int P, Cell3& cell_parent, Cells3& cs)
         Matrix q_equiv_parent = linear_equation_system_svd(pe2pc, p_check_parent);
         cell_parent.q_equiv = mat_mat_add(cell_parent.q_equiv, q_equiv_parent);
     }
+}
+
+std::vector<rtfmm::real> rtfmm::LaplaceKernel::m2m_ewald_root0(int P, Cell3& cell_parent, Cells3& cs, real cycle)
+{
+    int n = get_surface_point_num(P);
+    std::vector<real> res(n);
+    for(int i = 0; i < n; i++)
+    {
+        res[i] = 0;
+    }
+    /* parent equiv to parent check matrix */
+    std::vector<rtfmm::vec3r> x_check_parent = get_surface_points(P, cell_parent.r * 1.05, cell_parent.x);
+
+    for(int i = 0; i < cell_parent.crange.number; i++)
+    {
+        Cell3& cell_child = cs[cell_parent.crange.offset + i];
+
+        for(int z = -1; z <= 1; z++)
+        {
+            for(int y = -1; y <= 1; y++)
+            {
+                for(int x = -1; x <= 1; x++)
+                {
+                    /* child equivalent to parent check */
+                    vec3r offset(x,y,z);
+                    offset *= cycle;
+                    std::vector<rtfmm::vec3r> x_equiv_child = get_surface_points(P, cell_child.r * 1.05, cell_child.x + offset);
+                    Matrix ce2pc = get_p2p_matrix(x_equiv_child, x_check_parent);
+                    Matrix p_check_parent = mat_vec_mul(ce2pc, cell_child.q_equiv);
+                    for(int i = 0; i < n; i++)
+                    {
+                        res[i] += p_check_parent.d[i];
+                    }
+                }
+            }
+        }
+    }
+    return res;
 }
 
 void rtfmm::LaplaceKernel::m2m_precompute(int P, Cell3& cell_parent, Cells3& cs)

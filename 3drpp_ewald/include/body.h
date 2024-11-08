@@ -127,6 +127,6 @@ ManyBody Bodies2Manybody(const Bodies3& bs);
 
 Bodies3 Manybody2Bodies(const ManyBody& bs);
 
-void dipole_correction(Bodies3& bs, real cycle);
+void dipole_correction(Bodies3& bs, real cycle, int dir = -1);
 
 }

@@ -256,8 +256,9 @@ rtfmm::Bodies3 rtfmm::Manybody2Bodies(const ManyBody& bs)
     return res;
 }
 
-void rtfmm::dipole_correction(Bodies3& bs, real cycle)
+void rtfmm::dipole_correction(Bodies3& bs, real cycle, int dir)
 {
+    assert(dir == 1 || dir == -1);
     int num_body = bs.size();
     real coef = 4 * M_PI / (3 * cycle * cycle * cycle);
     vec3r dipole(0,0,0);
@@ -267,8 +268,8 @@ void rtfmm::dipole_correction(Bodies3& bs, real cycle)
     }
     real dnorm = dipole.norm();
     for (int i = 0; i < num_body; i++) 
-    { 
-        bs[i].p -= coef * dnorm / num_body / bs[i].q; 
-        bs[i].f -= coef * dipole;
+    {
+        bs[i].p += dir * coef * dnorm / num_body / bs[i].q; 
+        bs[i].f += dir * coef * dipole;
     }
 }

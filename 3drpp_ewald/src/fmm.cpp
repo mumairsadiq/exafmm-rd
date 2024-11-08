@@ -108,7 +108,7 @@ void rtfmm::LaplaceFMM::P2M()
 void rtfmm::LaplaceFMM::M2M()
 {
     TIME_BEGIN(M2M);
-    for(int depth = tree_depth_range[1]; depth > tree_depth_range[0]; depth--)
+    for(int depth = tree_depth_range[1]; depth >= tree_depth_range[0]; depth--)
     {
         Indices nlcidx = get_nonleaf_cell_indices(cs, depth);
         int num = nlcidx.size();
@@ -192,6 +192,12 @@ void rtfmm::LaplaceFMM::L2L()
         for(int i = 0; i < num; i++)
         {
             Cell3& ci = cs[nlcidx[i]];
+            if(depth == 0)
+            {
+                //std::cout<<ci<<std::endl;
+                //print_matrix(ci.p_check);
+                //print_matrix(ci.q_equiv);
+            }
             if(args.use_precompute)
             {
                 if(depth >= 0)

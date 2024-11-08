@@ -16,7 +16,7 @@ public:
 
     Bodies3 solve();
 
-private:
+protected:
     Argument args;
     Bodies3 bs;
     Cells3 cs;
@@ -24,7 +24,7 @@ private:
     LaplaceKernel kernel;
     vec2i tree_depth_range; //[min_depth,max_depth]
 
-private:
+protected:
     void P2M();
     void M2M();
     void M2L();
@@ -34,7 +34,7 @@ private:
     void P2L();
     void P2P();
 
-private:
+protected:
     void check_tree(const Cells3& cells);
     void check_traverser(Traverser& traverser);
     void check_cells(const Cells3& cells);

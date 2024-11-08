@@ -3,8 +3,13 @@
 
 //#define EWALD_USE_HALF
 
-rtfmm::EwaldSolver::EwaldSolver(const Bodies3& bs_, const Argument& args_) 
-: bs(bs_), args(args_)
+rtfmm::EwaldSolver::EwaldSolver(const Bodies3& tar_bs_, const Argument& args_) : EwaldSolver(tar_bs_, tar_bs_, args_)
+{
+    std::cout<<"EwaldSolver(const Bodies3& tar_bs_, const Argument& args_)"<<std::endl;
+}
+
+rtfmm::EwaldSolver::EwaldSolver(const Bodies3& tar_bs_, const Bodies3& src_bs_, const Argument& args_) 
+: tar_bs(tar_bs_), src_bs(src_bs_), args(args_)
 {
     ksize = args.ewald_ksize;
     if(verbose) printf("ksize = %d\n", ksize);
@@ -57,10 +62,14 @@ rtfmm::EwaldSolver::EwaldSolver(const Bodies3& bs_, const Argument& args_)
 
 rtfmm::Bodies3 rtfmm::EwaldSolver::solve()
 {
-    rtfmm::Tree tree;
-    tree.build(bs, args.x, args.r, args.ncrit, Tree::TreeType::nonuniform);
-    //tree.build(bs, args.x, args.r, 3, Tree::TreeType::uniform);
-    cells = tree.get_cells();
+    rtfmm::Tree tar_tree;
+    tar_tree.build(tar_bs, args.x, args.r, args.ncrit, Tree::TreeType::nonuniform);
+    tar_cells = tar_tree.get_cells();
+
+    rtfmm::Tree src_tree;
+    src_tree.build(tar_bs, args.x, args.r, args.ncrit, Tree::TreeType::nonuniform);
+    src_cells = src_tree.get_cells();
+
     TIME_BEGIN(real_part);
     RealMap real_map;
     real_part(0, 0, real_map);
@@ -73,12 +82,12 @@ rtfmm::Bodies3 rtfmm::EwaldSolver::solve()
     self_correction();
     if(args.timing) {TIME_END(self_correction);}
 
-    return sort_bodies_by_idx(bs);
+    return sort_bodies_by_idx(tar_bs);
 }
 
 void rtfmm::EwaldSolver::real_part(int this_cell_idx, int that_cell_idx, RealMap& real_map)
 {
-    rtfmm::Cell3& this_cell = cells[this_cell_idx];
+    rtfmm::Cell3& this_cell = tar_cells[this_cell_idx];
     if (this_cell.crange.number == 0) 
     {
         child(this_cell_idx, that_cell_idx, real_map);
@@ -95,7 +104,7 @@ void rtfmm::EwaldSolver::real_part(int this_cell_idx, int that_cell_idx, RealMap
 
 void rtfmm::EwaldSolver::fourier_part()
 {
-    DFT(waves,bs);
+    DFT(waves,tar_bs);
     #ifndef EWALD_USE_HALF
     rtfmm::real coef = 4 * M_PI / std::pow(args.cycle,3);
     #else
@@ -107,23 +116,23 @@ void rtfmm::EwaldSolver::fourier_part()
         rtfmm::real k2 = waves[w].K.norm() * scale * scale;
         waves[w].val *= coef * std::exp(-k2 / (4 * alpha * alpha)) / k2;
     }
-    IDFT(waves,bs);
+    IDFT(waves,tar_bs);
 }
 
 
 void rtfmm::EwaldSolver::self_correction()
 {
-    for (int i = 0; i < bs.size(); i++) 
+    for (int i = 0; i < tar_bs.size(); i++) 
     {
-        bs[i].p -= M_2_SQRTPI * bs[i].q * alpha;
+        tar_bs[i].p -= M_2_SQRTPI * tar_bs[i].q * alpha;
     }
 }
 
 
 void rtfmm::EwaldSolver::child(int this_cell_idx, int that_cell_idx, RealMap& real_map)
 {
-    rtfmm::Cell3& this_cell = cells[this_cell_idx];
-    rtfmm::Cell3& that_cell = cells[that_cell_idx];
+    rtfmm::Cell3& this_cell = tar_cells[this_cell_idx];
+    rtfmm::Cell3& that_cell = src_cells[that_cell_idx];
     rtfmm::vec3r offset(0,0,0);
     rtfmm::vec3r dx = this_cell.x - that_cell.x;
     for (int d = 0; d < 3; d++)
@@ -174,14 +183,14 @@ void rtfmm::EwaldSolver::real_p2p(RealMap& real_map)
 
 void rtfmm::EwaldSolver::real_p2p_kernel(int this_cell_idx, int that_cell_idx, rtfmm::vec3r offset)
 {
-    rtfmm::Cell3& this_cell = cells[this_cell_idx];
-    rtfmm::Cell3& that_cell = cells[that_cell_idx];
+    rtfmm::Cell3& this_cell = tar_cells[this_cell_idx];
+    rtfmm::Cell3& that_cell = src_cells[that_cell_idx];
     for (int i = 0; i < this_cell.brange.number; i++)
     {
-        rtfmm::Body3& bi = bs[this_cell.brange.offset + i];
+        rtfmm::Body3& bi = tar_bs[this_cell.brange.offset + i];
         for (int j = 0; j < that_cell.brange.number; j++)
         {  
-            rtfmm::Body3& bj = bs[that_cell.brange.offset + j];
+            rtfmm::Body3& bj = tar_bs[that_cell.brange.offset + j];
             rtfmm::vec3r dx = bi.x - bj.x - offset;
             rtfmm::real r = dx.r();
             if (r > 0 && r < cutoff)

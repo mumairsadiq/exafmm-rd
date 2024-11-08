@@ -40,7 +40,7 @@ int main(int argc, char* argv[])
     rtfmm::Bodies3 res_ewald;
     if(args.enable_ewald)
     {
-        rtfmm::EwaldSolver ewald(bs, args);
+        rtfmm::EwaldSolver ewald(bs, bs, args);
         TIME_BEGIN(EWALD);
         timer.begin("EWALD");
         res_ewald = ewald.solve();
