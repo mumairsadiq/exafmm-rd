@@ -273,7 +273,7 @@ void rtfmm::EpkiFMM::calculate_root_check5()
 
 void rtfmm::EpkiFMM::calculate_root_check6()
 {
-    printf("calculate_root_check6\n");
+    printf("calculate_root_check6()\n");
 
     // part 1
     LaplaceKernel kernel1;
@@ -305,7 +305,7 @@ void rtfmm::EpkiFMM::calculate_root_check6()
         body.idx = i;
         body.p = 0;
         body.f = vec3r(0,0,0);
-        body.x = vec3r(0.5,0.5,0.5);
+        body.x = vec3r(0.,0.,0.);
         body.q = cs[0].q_equiv[i];
         ewald_bodies2.push_back(body);
     }

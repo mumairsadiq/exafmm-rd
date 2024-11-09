@@ -2,14 +2,10 @@ cmake_minimum_required(VERSION 3.20)
 
 message("configure test")
 
-set(exec
-    test_fmm
-    test_pbc
-    test_reg
-    test_ef
-)
+file(GLOB exec *.cpp)
 
-foreach(filename IN LISTS exec)
+foreach(file ${exec})
+    get_filename_component(filename ${file} NAME_WE)
     message("configure ${filename}")
     add_executable(
         ${filename} 
