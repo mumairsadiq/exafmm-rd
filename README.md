@@ -15,12 +15,18 @@
   + Precomputation
   + FFT-M2L
 
-### `3drpp`
+### `3drpp`(deprecated)
   + kernel-independent
   + PBC
   + Precomputation
   + FFT-M2L
-  + Regularization(available for i=0)
+
+### `3dirpp`(deprecated)
+  + kernel-independent
+  + PBC
+  + Precomputation
+  + FFT-M2L
+  + interaction by index
 
 ### `3drpp_appx`
   + kernel-independent
