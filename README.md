@@ -1,4 +1,6 @@
-## Regularized Tensorcore FMM
+## exafmm-r
++ `r` for regularization 
++ name for development is `rtfmm`
 
 ### `3d`
   + kernel-independent
