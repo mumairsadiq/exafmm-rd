@@ -36,9 +36,9 @@ rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
 
     tbegin(init_cell_matrix);
     init_cell_matrix(cs);
-    tbegin(init_reg_body_time);
+    tbegin(init_reg_body_func);
     init_reg_body(cs); // init body index in image-1 cells
-    tend(init_reg_body_time);
+    tend(init_reg_body_func);
     tend(init_cell_matrix);
 
     if(args.use_precompute)
@@ -334,11 +334,14 @@ void rtfmm::LaplaceFMM::init_reg_body(Cells3& cells)
                     (body.x - args.x).abs() + args.rega;
                 vec3r ws = get_w_xyz(dx, cell.r, args.rega);
 
-                for (int d = 0; d <= 2; d++)
+                if(args.images == 0)
                 {
-                    if (dx_simcenter[d] >= args.r)
+                    for (int d = 0; d <= 2; d++)
                     {
-                        ws[d] = 1;
+                        if (dx_simcenter[d] >= args.r)
+                        {
+                            ws[d] = 1;
+                        }
                     }
                 }
                 const real w = ws.mul();
