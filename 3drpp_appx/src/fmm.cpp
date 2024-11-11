@@ -16,8 +16,8 @@ rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
     tbegin(build_and_traverse);
     tbegin(build_tree);
     Tree tree;
-    //tree.build(bs, args.x, args.r, args.ncrit, Tree::TreeType::nonuniform);
-    tree.build(bs, args.x, args.r, 3, Tree::TreeType::uniform);
+    tree.build(bs, args.x, args.r, args.ncrit, Tree::TreeType::nonuniform);
+    // tree.build(bs, args.x, args.r, 3, Tree::TreeType::uniform);
     cs = tree.get_cells();
     if(verbose && args.check_tree) check_tree(cs);
     tend(build_tree);
@@ -36,7 +36,9 @@ rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
 
     tbegin(init_cell_matrix);
     init_cell_matrix(cs);
+    tbegin(init_reg_body_time);
     init_reg_body(cs); // init body index in image-1 cells
+    tend(init_reg_body_time);
     tend(init_cell_matrix);
 
     if(args.use_precompute)
@@ -46,7 +48,7 @@ rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
         kernel.precompute(args.P, args.r, args.images);
         TIME_END(precompute_others);
         TIME_BEGIN(precompute_m2l);
-        kernel.precompute_m2l(args.P, args.r, cs, traverser.get_map(OperatorType::M2L), args.images);
+        kernel.precompute_m2l(args.P, args.r, cs, traverser.get_m2l_map(), args.images);
         TIME_END(precompute_m2l);
         if(args.timing) {TIME_END(precompute);}
     }
@@ -153,7 +155,7 @@ void rtfmm::LaplaceFMM::M2L()
     }
     else
     {
-        PeriodicInteractionMap m2l_map = traverser.get_map(OperatorType::M2L);
+        PeriodicInteractionMap m2l_map = traverser.get_m2l_map();
         for(int i = 0; i < m2l_map.size(); i++)
         {
             auto m2l_list = m2l_map.begin();
@@ -232,15 +234,13 @@ void rtfmm::LaplaceFMM::L2P()
 void rtfmm::LaplaceFMM::P2P()
 {
     TIME_BEGIN(P2P);
-    PeriodicInteractionMap p2p_map = traverser.get_map(OperatorType::P2P);
+    PeriodicInteractionMapP2P p2p_map = traverser.get_p2p_map();
     if(verbose) std::cout<<"p2p_pair.size() = "<<traverser.get_pairs(OperatorType::P2P).size()<<std::endl;
     std::vector<int> leaves = traverser.leaf_cell_idx;
     #pragma omp parallel for
     for(int i = 0; i < p2p_map.size(); i++)
     {
-        auto p2p = p2p_map.begin();
-        std::advance(p2p, i);
-        Cell3& ctar = cs[p2p->first];
+        Cell3& ctar = cs[leaves[i]];
         if(args.use_simd)
         {
             /*std::vector<std::pair<int, vec3r>> temp;
@@ -249,14 +249,14 @@ void rtfmm::LaplaceFMM::P2P()
                 temp.push_back(std::make_pair(leaves[j],vec3r(0,0,0)));
             }
             kernel.p2p_1toN_256(cs, temp, ctar);*/
-            kernel.p2p_1toN_256(cs, p2p->second, ctar);
+            kernel.p2p_1toN_256(cs, p2p_map[i], ctar);
         }
         else
         {
-            for(int j = 0; j < p2p->second.size(); j++)
+            for(int j = 0; j < p2p_map[i].size(); j++)
             {
-                Cell3& csrc = cs[p2p->second[j].first];
-                kernel.p2p(bs,bs,csrc,ctar,p2p->second[j].second, 0);
+                Cell3& csrc = cs[p2p_map[i][j].first];
+                kernel.p2p(bs,bs,csrc,ctar,p2p_map[i][j].second, 0);
             }
         }
     }
@@ -317,25 +317,76 @@ void rtfmm::LaplaceFMM::init_reg_body(Cells3& cells)
         printf("search 0,0,0\n");
         // search reg body in 0,0,0
         printf("~~~~~~~~~~ rega!\n");
-        for(int i = 0; i < bs.size(); i++)
+
+        std::vector<Indices> boundary_bodies_idxs(leaves.size());
+        // find weights for existing bodies within the same cell
+        for(int leaf_idx = 0; leaf_idx < leaves.size(); leaf_idx++)
         {
-            vec3r ploc = bs[i].x;
-            for(int leaf_idx = 0; leaf_idx < leaves.size(); leaf_idx++)
+            Cell3& cell = cells[leaves[leaf_idx]];
+            cell.weights.resize(cell.brange.number);
+            cell.bodies.resize(cell.brange.number);
+            int rx = 0;
+            for(int body_idx = cell.brange.offset; body_idx < cell.brange.offset + cell.brange.number; body_idx++)
             {
-                Cell3& cell = cells[leaves[leaf_idx]];
-                if(!(i >= cell.brange.offset && i < cell.brange.offset + cell.brange.number))
+                const Body3 &body = bs[body_idx];
+                const vec3r dx = body.x - cell.x;
+                const vec3r dx_simcenter =
+                    (body.x - args.x).abs() + args.rega;
+                vec3r ws = get_w_xyz(dx, cell.r, args.rega);
+
+                for (int d = 0; d <= 2; d++)
                 {
-                    vec3r dx = ploc - cell.x;
-                    real w = get_w_xyz(dx, cell.r, args.rega).mul();
-                    if(w > 0)
+                    if (dx_simcenter[d] >= args.r)
                     {
-                        cell.reg_body_idx.push_back(std::make_pair(i, vec3r(0,0,0)));
-                        //printf("push %d -> %d\n", i, leaf_idx);
+                        ws[d] = 1;
+                    }
+                }
+                const real w = ws.mul();
+
+                if (w < 1)
+                {
+                    boundary_bodies_idxs[leaf_idx].push_back(body_idx);
+                }
+
+                cell.bodies[rx] = body;
+                cell.weights[rx++] = w;
+            }
+        }
+
+
+
+        // cell.reg_body_idx
+        PeriodicInteractionMapP2P p2p_map = traverser.get_p2p_map();
+
+        for(int leaf_idx = 0; leaf_idx < leaves.size(); leaf_idx++)
+        {
+            Cell3& cell = cells[leaves[leaf_idx]];
+            const auto &aCells = p2p_map[cell.leaf_idx];
+            
+
+            // find out bodies from adjacent cells that are influencing this cell
+            for (size_t j = 0; j < aCells.size(); j++)
+            {
+                auto& adj_cell_info = aCells[j];
+                if (cell.x != cells[adj_cell_info.first].x)
+                {
+                    // check for regularization bodies from adjacent cells
+                    for (const int &body_idx : boundary_bodies_idxs[cells[adj_cell_info.first].leaf_idx])
+                    {
+
+                        const Body3 &body = bs[body_idx];
+                        const vec3r dx = body.x - cell.x;
+                        const real w = get_w_xyz(dx, cell.r, args.rega).mul();
+                        if (w > 0)
+                        {
+                            cell.reg_body_idx.push_back(std::make_pair(body_idx, vec3r(0,0,0)));
+                        }
                     }
                 }
             }
         }
-        printf("search except 0,0,0\n");
+
+         printf("search except 0,0,0\n");
 
         // search reg body except 0,0,0
         if(args.images > 0)
@@ -348,19 +399,36 @@ void rtfmm::LaplaceFMM::init_reg_body(Cells3& cells)
                     {
                         if(x == 0 && y == 0 && z == 0)
                             continue;
+
+
                         vec3r region_offset = vec3r(x,y,z) * args.cycle;
+
+                        
                         for(int leaf_idx = 0; leaf_idx < leaves.size(); leaf_idx++)
                         {
                             Cell3& cell = cells[leaves[leaf_idx]];
-                            for(int i = 0; i < bs.size(); i++)
+                            const auto &aCells = p2p_map[cell.leaf_idx];
+            
+
+                            // find out bodies from adjacent cells that are influencing this cell
+                            for (size_t j = 0; j < aCells.size(); j++)
                             {
-                                vec3r ploc = bs[i].x + region_offset;
-                                vec3r dx = ploc - cell.x;
-                                real w = get_w_xyz(dx, cell.r, args.rega).mul();
-                                if(w > 0)
+                                auto& adj_cell_info = aCells[j];
+                                if (cell.x != cells[adj_cell_info.first].x)
                                 {
-                                    cell.reg_body_idx.push_back(std::make_pair(i, region_offset));
-                                    printf("[%.2f] push %d,%d\n", real(leaf_idx) / leaves.size(), i, bs[i].idx);
+                                    // checkout for regularization bodies from adjacent cells
+                                    for (const int &body_idx : boundary_bodies_idxs[cells[adj_cell_info.first].leaf_idx])
+                                    {
+
+                                        const Body3 &body = bs[body_idx];
+                                        vec3r ploc = body.x + region_offset;
+                                        const vec3r dx = ploc - cell.x;
+                                        const real w = get_w_xyz(dx, cell.r, args.rega).mul();
+                                        if (w > 0)
+                                        {
+                                            cell.reg_body_idx.push_back(std::make_pair(body_idx, region_offset));
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -369,39 +437,13 @@ void rtfmm::LaplaceFMM::init_reg_body(Cells3& cells)
             }
         }
 
+
+
+        
         // compute weight and cache
         for(int leaf_idx = 0; leaf_idx < leaves.size(); leaf_idx++)
         {
             Cell3& cell = cells[leaves[leaf_idx]];
-            for(int i = cell.brange.offset; i < cell.brange.offset + cell.brange.number; i++)
-            {
-                Body3 body = bs[i];
-                vec3r dx = body.x - cell.x;
-
-                vec3r dx_simcenter = (body.x - args.x).abs() + args.rega;
-                vec3r ws = get_w_xyz(dx, cell.r, args.rega);
-                if(args.images == 0)
-                {
-                    for(int d = 0; d <= 2; d++)
-                    {
-                        if(dx_simcenter[d] >= args.r)
-                        {
-                            ws[d] = 1;
-                        }
-                    }
-                }
-                real w = ws.mul();
-                if(w > 0)
-                {
-                    if(w != 1)
-                    {
-                        //RTLOG("inside  %d, %.12f  %d\n", body.idx, w, cell.idx);
-                        std::cout<<"inside  "<<body.idx<<" "<<w<<"  "<<cell.idx<<"  "<<cell.x<<std::endl;
-                    }
-                    cell.bodies.push_back(body);
-                    cell.weights.push_back(w);
-                }
-            }
             for(int i = 0; i < cell.reg_body_idx.size(); i++)
             {
                 int bidx = cell.reg_body_idx[i].first;
@@ -423,8 +465,11 @@ void rtfmm::LaplaceFMM::init_reg_body(Cells3& cells)
                 real w = ws.mul();
                 if(w > 0)
                 {
-                    //RTLOG("outside %d, %.12f  %d\n", body.idx, w,cell.idx);
-                    std::cout<<"outside  "<<body.idx<<" "<<w<<"  "<<cell.idx<<"  "<<cell.x<<std::endl;
+                    if (verbose)
+                    {
+                        RTLOG("outside %d, %.12f  %d\n", body.idx, w,cell.idx);
+                        std::cout<<"outside  "<<body.idx<<" "<<w<<"  "<<cell.idx<<"  "<<cell.x<<std::endl;
+                    }
                     cell.bodies.push_back(body);
                     cell.weights.push_back(w);
                 }
@@ -441,10 +486,12 @@ void rtfmm::LaplaceFMM::init_reg_body(Cells3& cells)
                 Body3 body = bs[i];
                 cell.bodies.push_back(body);
                 cell.weights.push_back(1);
-
-                if(body.idx == 0)
+                if (verbose)
                 {
-                    std::cout<<body.x<<", "<<body.idx<<", "<<cell.idx<<std::endl;
+                    if(body.idx == 0)
+                    {
+                        std::cout<<body.x<<", "<<body.idx<<", "<<cell.idx<<std::endl;
+                    }
                 }
             }
         }

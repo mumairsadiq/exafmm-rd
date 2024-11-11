@@ -9,6 +9,7 @@ namespace rtfmm
 struct Cell3
 {
     int idx;
+    int leaf_idx; // if cell is leaf then a valid id otherwise -1
     /**
      * @brief octant relative to parent cell
      * @note 
@@ -35,6 +36,7 @@ struct Cell3
     {
         M = 0;
         L = 0;
+        leaf_idx = -1;
     }
 
     friend std::ostream &operator<<(std::ostream & os, const Cell3 & cell) 

@@ -10,6 +10,7 @@ using PeriodicInteractionPair = std::pair<int, std::pair<int, vec3r>>;
 using InteractionPairs = std::vector<InteractionPair>;
 using PeriodicInteractionPairs = std::vector<PeriodicInteractionPair>;
 
+using PeriodicInteractionMapP2P = std::vector<std::vector<std::pair<int, vec3r>>>;
 using PeriodicInteractionMap = std::map<int, std::vector<std::pair<int, vec3r>>>;
 
 
@@ -47,7 +48,9 @@ public:
 
     PeriodicInteractionPairs get_pairs(OperatorType type);
 
-    PeriodicInteractionMap get_map(OperatorType type);
+    rtfmm::PeriodicInteractionMap get_m2l_map();
+
+    rtfmm::PeriodicInteractionMapP2P get_p2p_map();
 
     PeriodicM2LMap get_M2L_parent_map();
 
@@ -97,7 +100,7 @@ public:
     PeriodicInteractionPairs P2L_pairs;
 
     PeriodicInteractionMap M2L_map;
-    PeriodicInteractionMap P2P_map;
+    PeriodicInteractionMapP2P P2P_map;
 
     //PeriodicInteractionMap M2L_parent_map;
     PeriodicM2LMap M2L_parent_map;

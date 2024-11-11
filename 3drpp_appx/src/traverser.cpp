@@ -21,6 +21,18 @@ void rtfmm::Traverser::traverse(Tree& tree, real cycle, int images, int P_)
 {
     P = P_;
     cells = tree.get_cells();
+    int leaf_id = 0;
+    for(int i = 0; i < cells.size(); i++)
+    {
+        if(cells[i].crange.number == 0)
+        {
+            leaf_cell_idx.push_back(i);
+            cells[i].leaf_idx = leaf_id;
+            leaf_id++;
+        }
+    }
+
+    P2P_map.resize(leaf_cell_idx.size());
     if(images == 0)
     {
         if(verbose) printf("horizontal_origin\n");
@@ -68,13 +80,8 @@ void rtfmm::Traverser::traverse(Tree& tree, real cycle, int images, int P_)
         }
     }
 
-    for(int i = 0; i < cells.size(); i++)
-    {
-        if(cells[i].crange.number == 0)
-        {
-            leaf_cell_idx.push_back(i);
-        }
-    }
+
+    
 }
 
 void rtfmm::Traverser::horizontal_origin(int tc, int sc, int tcp, int scp, vec3r offset)
@@ -86,7 +93,7 @@ void rtfmm::Traverser::horizontal_origin(int tc, int sc, int tcp, int scp, vec3r
         {
             if(is_leaf(sc) && cells[sc].bodies.size() <= get_surface_point_num(P))
             {
-                P2P_map[tc].push_back(std::make_pair(sc, offset));
+                P2P_map[cells[tc].leaf_idx].push_back(std::make_pair(sc, offset));
             }
             else
             {
@@ -98,7 +105,7 @@ void rtfmm::Traverser::horizontal_origin(int tc, int sc, int tcp, int scp, vec3r
         {
             if(is_leaf(tc) && cells[tc].bodies.size() <= get_surface_point_num(P))
             {
-                P2P_map[tc].push_back(std::make_pair(sc, offset));
+                P2P_map[cells[tc].leaf_idx].push_back(std::make_pair(sc, offset));
             }
             else
             {
@@ -113,11 +120,12 @@ void rtfmm::Traverser::horizontal_origin(int tc, int sc, int tcp, int scp, vec3r
         }
         else
         {
-            if(is_leaf(tc) && is_leaf(sc))
-            {
-                printf("here\n");
-            }
-            else if(!is_leaf(tc) && is_leaf(sc))
+            // if(is_leaf(tc) && is_leaf(sc))
+            // {
+            //     printf("here\n");
+            // }
+            // else
+            if(!is_leaf(tc) && is_leaf(sc))
             {
                 divide = 1;
             }
@@ -135,7 +143,7 @@ void rtfmm::Traverser::horizontal_origin(int tc, int sc, int tcp, int scp, vec3r
     {
         if(is_leaf(tc) && is_leaf(sc))
         {
-            P2P_map[tc].push_back(std::make_pair(sc, offset));
+            P2P_map[cells[tc].leaf_idx].push_back(std::make_pair(sc, offset));
         }
         else if(!is_leaf(tc) && is_leaf(sc))
         {
@@ -363,14 +371,14 @@ rtfmm::PeriodicInteractionPairs rtfmm::Traverser::get_pairs(OperatorType type)
     }
 }
 
-rtfmm::PeriodicInteractionMap rtfmm::Traverser::get_map(OperatorType type)
+rtfmm::PeriodicInteractionMap rtfmm::Traverser::get_m2l_map()
 {
-    switch(type)
-    {
-        case OperatorType::M2L : return M2L_map; break;
-        case OperatorType::P2P : return P2P_map; break;
-        default: return PeriodicInteractionMap();
-    }
+    return M2L_map;
+}
+
+rtfmm::PeriodicInteractionMapP2P rtfmm::Traverser::get_p2p_map()
+{
+    return P2P_map;
 }
 
 rtfmm::PeriodicM2LMap rtfmm::Traverser::get_M2L_parent_map()
