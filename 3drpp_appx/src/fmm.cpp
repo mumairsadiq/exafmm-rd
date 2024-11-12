@@ -356,9 +356,6 @@ void rtfmm::LaplaceFMM::init_reg_body(Cells3& cells)
             }
         }
 
-
-
-        // cell.reg_body_idx
         PeriodicInteractionMapP2P p2p_map = traverser.get_p2p_map();
 
         for(int leaf_idx = 0; leaf_idx < leaves.size(); leaf_idx++)
@@ -509,7 +506,6 @@ void rtfmm::LaplaceFMM::check_tree(const Cells3& cells)
 
 void rtfmm::LaplaceFMM::check_traverser(Traverser& traverser)
 {
-    std::cout << "I am doing it doesn't matter what\n";
     PeriodicInteractionPairs P2P_pairs = traverser.get_pairs(OperatorType::P2P);
     PeriodicInteractionPairs M2L_pairs = traverser.get_pairs(OperatorType::M2L);
     PeriodicInteractionPairs M2P_pairs = traverser.get_pairs(OperatorType::M2P);
