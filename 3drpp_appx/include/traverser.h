@@ -11,7 +11,7 @@ using InteractionPairs = std::vector<InteractionPair>;
 using PeriodicInteractionPairs = std::vector<PeriodicInteractionPair>;
 
 using PeriodicInteractionMapP2P = std::vector<std::vector<std::pair<int, vec3r>>>;
-using PeriodicInteractionMap = std::map<int, std::vector<std::pair<int, vec3r>>>;
+using PeriodicInteractionMapM2L = std::map<int, std::vector<std::pair<int, vec3r>>>;
 
 
 struct PeriodicParentSource
@@ -48,7 +48,7 @@ public:
 
     PeriodicInteractionPairs get_pairs(OperatorType type);
 
-    rtfmm::PeriodicInteractionMap get_m2l_map();
+    rtfmm::PeriodicInteractionMapM2L get_m2l_map();
 
     rtfmm::PeriodicInteractionMapP2P get_p2p_map();
 
@@ -56,7 +56,7 @@ public:
 
     Cells3 get_cells() {return cells;}
 
-    PeriodicInteractionMap get_m2l_map_from_m2l_parent_map();
+    PeriodicInteractionMapM2L get_m2l_map_from_m2l_parent_map();
 
 private:
     
@@ -99,10 +99,10 @@ public:
     PeriodicInteractionPairs M2P_pairs;
     PeriodicInteractionPairs P2L_pairs;
 
-    PeriodicInteractionMap M2L_map;
+    PeriodicInteractionMapM2L M2L_map;
     PeriodicInteractionMapP2P P2P_map;
 
-    //PeriodicInteractionMap M2L_parent_map;
+    //PeriodicInteractionMapM2L M2L_parent_map;
     PeriodicM2LMap M2L_parent_map;
 
     std::vector<int> leaf_cell_idx;

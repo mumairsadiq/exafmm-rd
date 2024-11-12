@@ -80,13 +80,13 @@ public:
      * we don't need to distinguish non-periodic/periodic cells in hadamard product stage(but the scale is different at the final store stage).
      * @note 2nd fast
     */
-    void m2l_fft_precompute_advanced2(int P, Cells3& cs, PeriodicInteractionMap& m2l_map);
+    void m2l_fft_precompute_advanced2(int P, Cells3& cs, PeriodicInteractionMapM2L& m2l_map);
 
     /**
      * @brief Hadamard transposed version of m2l_fft_precompute_advanced2, frequency-wise parallelization.
      * @note 3rd fast
     */
-    void m2l_fft_precompute_advanced3(int P, Cells3& cs, PeriodicInteractionMap& m2l_map, PeriodicInteractionPairs& m2l_pairs);
+    void m2l_fft_precompute_advanced3(int P, Cells3& cs, PeriodicInteractionMapM2L& m2l_map, PeriodicInteractionPairs& m2l_pairs);
 
     /**
      * @brief M2L with FFT like exafmm-t.
@@ -112,7 +112,7 @@ public:
 
     void precompute(int P, real r0, int images);
 
-    void precompute_m2l(int P, real r0, Cells3 cs, PeriodicInteractionMap m2l_map, int images);
+    void precompute_m2l(int P, real r0, Cells3 cs, PeriodicInteractionMapM2L m2l_map, int images);
 
     Matrix get_p2p_matrix(
         std::vector<vec3r>& x_src, 

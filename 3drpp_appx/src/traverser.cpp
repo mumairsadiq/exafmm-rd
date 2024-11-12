@@ -310,10 +310,10 @@ void rtfmm::Traverser::make_M2L_parent_map_i1(real cycle)
     }
 }
 
-rtfmm::PeriodicInteractionMap rtfmm::Traverser::get_m2l_map_from_m2l_parent_map()
+rtfmm::PeriodicInteractionMapM2L rtfmm::Traverser::get_m2l_map_from_m2l_parent_map()
 {
     std::cout<<M2L_parent_map.size()<<std::endl;
-    PeriodicInteractionMap res;
+    PeriodicInteractionMapM2L res;
     for(auto m2l_parent : M2L_parent_map)
     {
         Cell3& ctar = cells[m2l_parent.first];
@@ -371,7 +371,7 @@ rtfmm::PeriodicInteractionPairs rtfmm::Traverser::get_pairs(OperatorType type)
     }
 }
 
-rtfmm::PeriodicInteractionMap rtfmm::Traverser::get_m2l_map()
+rtfmm::PeriodicInteractionMapM2L rtfmm::Traverser::get_m2l_map()
 {
     return M2L_map;
 }

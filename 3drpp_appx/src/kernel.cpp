@@ -747,7 +747,7 @@ void rtfmm::LaplaceKernel::m2l_fft_precompute_advanced(int P, Cells3& cs, Period
     TIME_END(destroy_plan);
 }
 
-void rtfmm::LaplaceKernel::m2l_fft_precompute_advanced2(int P, Cells3& cs, PeriodicInteractionMap& m2l_map)
+void rtfmm::LaplaceKernel::m2l_fft_precompute_advanced2(int P, Cells3& cs, PeriodicInteractionMapM2L& m2l_map)
 {
     if(verbose)
     {
@@ -880,7 +880,7 @@ void rtfmm::LaplaceKernel::m2l_fft_precompute_advanced2(int P, Cells3& cs, Perio
     TIME_END(down);
 }
 
-void rtfmm::LaplaceKernel::m2l_fft_precompute_advanced3(int P, Cells3& cs, PeriodicInteractionMap& m2l_map, PeriodicInteractionPairs& m2l_pairs)
+void rtfmm::LaplaceKernel::m2l_fft_precompute_advanced3(int P, Cells3& cs, PeriodicInteractionMapM2L& m2l_map, PeriodicInteractionPairs& m2l_pairs)
 {
     if(verbose) printf("m2l_fft_precompute_advanced3\n");
     int num_src = m2l_srcs.size();
@@ -1719,7 +1719,7 @@ void rtfmm::LaplaceKernel::precompute(int P, real r0, int images)
     VSinvUT_l2p_precompute = mat_mat_mul(VSinv_l2p_precompute, UT_l2p_precompute);
 }
 
-void rtfmm::LaplaceKernel::precompute_m2l(int P, real r0, Cells3 cs, PeriodicInteractionMap m2l_map, int images)
+void rtfmm::LaplaceKernel::precompute_m2l(int P, real r0, Cells3 cs, PeriodicInteractionMapM2L m2l_map, int images)
 {
     // for advanced2 and 3
     std::set<int> m2l_tar_set, m2l_src_set;
