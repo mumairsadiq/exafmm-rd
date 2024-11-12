@@ -143,9 +143,9 @@ void rtfmm::LaplaceFMM::M2L()
 {
     TIME_BEGIN(M2L);
     //PeriodicInteractionPairs m2l_pairs = traverser.get_pairs(OperatorType::M2L);
-    //PeriodicInteractionMap m2l_map = traverser.get_map(OperatorType::M2L);
+    //PeriodicInteractionMapM2L m2l_map = traverser.get_map(OperatorType::M2L);
     PeriodicM2LMap m2l_parent_map = traverser.get_M2L_parent_map();
-    //PeriodicInteractionMap m2l_map2 = traverser.get_m2l_map_from_m2l_parent_map();
+    //PeriodicInteractionMapM2L m2l_map2 = traverser.get_m2l_map_from_m2l_parent_map();
     if(args.use_precompute)
     {
         //kernel.m2l_fft_precompute_advanced2(args.P, cs, m2l_map2);
@@ -155,7 +155,7 @@ void rtfmm::LaplaceFMM::M2L()
     }
     else
     {
-        PeriodicInteractionMap m2l_map = traverser.get_m2l_map();
+        PeriodicInteractionMapM2L m2l_map = traverser.get_m2l_map();
         for(int i = 0; i < m2l_map.size(); i++)
         {
             auto m2l_list = m2l_map.begin();
@@ -356,9 +356,6 @@ void rtfmm::LaplaceFMM::init_reg_body(Cells3& cells)
             }
         }
 
-
-
-        // cell.reg_body_idx
         PeriodicInteractionMapP2P p2p_map = traverser.get_p2p_map();
 
         for(int leaf_idx = 0; leaf_idx < leaves.size(); leaf_idx++)
@@ -371,77 +368,24 @@ void rtfmm::LaplaceFMM::init_reg_body(Cells3& cells)
             for (size_t j = 0; j < aCells.size(); j++)
             {
                 auto& adj_cell_info = aCells[j];
-                if (cell.x != cells[adj_cell_info.first].x)
+                if (cell.idx != cells[adj_cell_info.first].idx)
                 {
                     // check for regularization bodies from adjacent cells
                     for (const int &body_idx : boundary_bodies_idxs[cells[adj_cell_info.first].leaf_idx])
                     {
 
                         const Body3 &body = bs[body_idx];
-                        const vec3r dx = body.x - cell.x;
+                        const vec3r dx = body.x + adj_cell_info.second - cell.x;
                         const real w = get_w_xyz(dx, cell.r, args.rega).mul();
+
                         if (w > 0)
                         {
-                            cell.reg_body_idx.push_back(std::make_pair(body_idx, vec3r(0,0,0)));
+                            cell.reg_body_idx.push_back(std::make_pair(body_idx, adj_cell_info.second));
                         }
                     }
                 }
             }
         }
-
-         printf("search except 0,0,0\n");
-
-        // search reg body except 0,0,0
-        if(args.images > 0)
-        {
-            for(int x = -1; x <= 1; x++)
-            {
-                for(int y = -1; y <= 1; y++)
-                {
-                    for(int z = -1; z <= 1; z++)
-                    {
-                        if(x == 0 && y == 0 && z == 0)
-                            continue;
-
-
-                        vec3r region_offset = vec3r(x,y,z) * args.cycle;
-
-                        
-                        for(int leaf_idx = 0; leaf_idx < leaves.size(); leaf_idx++)
-                        {
-                            Cell3& cell = cells[leaves[leaf_idx]];
-                            const auto &aCells = p2p_map[cell.leaf_idx];
-            
-
-                            // find out bodies from adjacent cells that are influencing this cell
-                            for (size_t j = 0; j < aCells.size(); j++)
-                            {
-                                auto& adj_cell_info = aCells[j];
-                                if (cell.x != cells[adj_cell_info.first].x)
-                                {
-                                    // checkout for regularization bodies from adjacent cells
-                                    for (const int &body_idx : boundary_bodies_idxs[cells[adj_cell_info.first].leaf_idx])
-                                    {
-
-                                        const Body3 &body = bs[body_idx];
-                                        vec3r ploc = body.x + region_offset;
-                                        const vec3r dx = ploc - cell.x;
-                                        const real w = get_w_xyz(dx, cell.r, args.rega).mul();
-                                        if (w > 0)
-                                        {
-                                            cell.reg_body_idx.push_back(std::make_pair(body_idx, region_offset));
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-
-
         
         // compute weight and cache
         for(int leaf_idx = 0; leaf_idx < leaves.size(); leaf_idx++)
