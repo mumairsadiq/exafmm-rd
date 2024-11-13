@@ -24,7 +24,7 @@ void rtfmm::Traverser::traverse(Tree& tree, real cycle, int images, int P_)
     int leaf_id = 0;
     for(int i = 0; i < cells.size(); i++)
     {
-        if(cells[i].crange.number == 0)
+        if(cells[i].isLeaf())
         {
             leaf_cell_idx.push_back(i);
             cells[i].leaf_idx = leaf_id;
@@ -98,7 +98,7 @@ void rtfmm::Traverser::horizontal_origin(int tc, int sc, int tcp, int scp, vec3r
             else
             {
                 M2P_pairs.push_back(make_pair(tc, sc, offset));
-                std::cout<<"M2P"<<std::endl;
+                if(verbose) std::cout<<"M2P"<<std::endl;
             }
         }
         else if(adjacent(tcp, sc, offset) && is_leaf(sc) && cells[tcp].depth >= cells[sc].depth)
@@ -110,7 +110,7 @@ void rtfmm::Traverser::horizontal_origin(int tc, int sc, int tcp, int scp, vec3r
             else
             {
                 P2L_pairs.push_back(make_pair(tc, sc, offset));
-                std::cout<<"P2L"<<std::endl;
+                if(verbose) std::cout<<"P2L"<<std::endl;
             }
         }
         else if(neighbour(tcp, scp, offset))
@@ -120,11 +120,6 @@ void rtfmm::Traverser::horizontal_origin(int tc, int sc, int tcp, int scp, vec3r
         }
         else
         {
-            // if(is_leaf(tc) && is_leaf(sc))
-            // {
-            //     printf("here\n");
-            // }
-            // else
             if(!is_leaf(tc) && is_leaf(sc))
             {
                 divide = 1;
@@ -312,7 +307,7 @@ void rtfmm::Traverser::make_M2L_parent_map_i1(real cycle)
 
 rtfmm::PeriodicInteractionMapM2L rtfmm::Traverser::get_m2l_map_from_m2l_parent_map()
 {
-    std::cout<<M2L_parent_map.size()<<std::endl;
+    if(verbose) std::cout<< "M2L_parent_map_size: " << M2L_parent_map.size()<<std::endl;
     PeriodicInteractionMapM2L res;
     for(auto m2l_parent : M2L_parent_map)
     {
@@ -363,7 +358,6 @@ rtfmm::PeriodicInteractionPairs rtfmm::Traverser::get_pairs(OperatorType type)
 {
     switch(type)
     {
-        case OperatorType::P2P : return P2P_pairs; break;
         case OperatorType::M2L : return M2L_pairs; break;
         case OperatorType::M2P : return M2P_pairs; break;
         case OperatorType::P2L : return P2L_pairs; break;
