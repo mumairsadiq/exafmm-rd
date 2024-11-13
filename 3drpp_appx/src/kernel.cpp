@@ -359,7 +359,8 @@ void rtfmm::LaplaceKernel::p2m_precompute(int P, Cell3& cell_src)
         real* wi = &cell_src.weights[0];
         for(int i = 0; i < cell_src.bodies.size(); i++)
         {
-            if(bi->idx == 0 && j == 0)
+
+            if(verbose && bi->idx == 0 && j == 0)
             {
                 std::cout<<"P2M "<<cell_src<<" has body0, q="<<bi->q<<",weight = "<<*wi<<std::endl; 
             }
@@ -1514,9 +1515,12 @@ void rtfmm::LaplaceKernel::l2p_precompute(int P, Cell3& cell_tar)
         }
         for(int idx = 0; idx < 4 - padding; idx++)
         {
-            if(cell_tar.bodies[j + idx].idx == 0)
+            if(verbose)
             {
-                std::cout<<"L2P cell "<<cell_tar.idx<<" has body "<<cell_tar.bodies[j + idx].q<<", "<<cell_tar.weights[j + idx]<<std::endl;
+                if(cell_tar.bodies[j + idx].idx == 0)
+                {
+                    std::cout<<"L2P cell "<<cell_tar.idx<<" has body "<<cell_tar.bodies[j + idx].q<<", "<<cell_tar.weights[j + idx]<<std::endl;
+                }
             }
             cell_tar.bodies[j + idx].p += cell_tar.weights[j + idx] * pj[idx];
             cell_tar.bodies[j + idx].f[0] -= cell_tar.weights[j + idx] * fxj[idx];

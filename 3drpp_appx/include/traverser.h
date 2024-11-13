@@ -32,7 +32,6 @@ PeriodicInteractionPair make_pair(int tar, int src, vec3r offset);
 
 enum class OperatorType
 {
-    P2P,
     M2L,
     M2P,
     P2L
@@ -94,7 +93,6 @@ private:
     int P;
 
 public:
-    PeriodicInteractionPairs P2P_pairs;
     PeriodicInteractionPairs M2L_pairs;
     PeriodicInteractionPairs M2P_pairs;
     PeriodicInteractionPairs P2L_pairs;

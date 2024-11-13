@@ -16,8 +16,8 @@ rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
     tbegin(build_and_traverse);
     tbegin(build_tree);
     Tree tree;
-    tree.build(bs, args.x, args.r, args.ncrit, Tree::TreeType::nonuniform);
-    // tree.build(bs, args.x, args.r, 3, Tree::TreeType::uniform);
+    // tree.build(bs, args.x, args.r, args.ncrit, Tree::TreeType::nonuniform);
+    tree.build(bs, args.x, args.r, 3, Tree::TreeType::uniform);
     cs = tree.get_cells();
     if(verbose && args.check_tree) check_tree(cs);
     tend(build_tree);
@@ -34,12 +34,13 @@ rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
     tend(traverse);
     tend(build_and_traverse);
 
-    tbegin(init_cell_matrix);
+    tbegin(init_cell_matrix_func);
     init_cell_matrix(cs);
+    tend(init_cell_matrix_func);
     tbegin(init_reg_body_func);
-    init_reg_body(cs); // init body index in image-1 cells
+    init_reg_body(cs);
     tend(init_reg_body_func);
-    tend(init_cell_matrix);
+    
 
     if(args.use_precompute)
     {
@@ -235,7 +236,6 @@ void rtfmm::LaplaceFMM::P2P()
 {
     TIME_BEGIN(P2P);
     PeriodicInteractionMapP2P p2p_map = traverser.get_p2p_map();
-    if(verbose) std::cout<<"p2p_pair.size() = "<<traverser.get_pairs(OperatorType::P2P).size()<<std::endl;
     std::vector<int> leaves = traverser.leaf_cell_idx;
     #pragma omp parallel for
     for(int i = 0; i < p2p_map.size(); i++)
@@ -320,6 +320,7 @@ void rtfmm::LaplaceFMM::init_reg_body(Cells3& cells)
 
         std::vector<Indices> boundary_bodies_idxs(leaves.size());
         // find weights for existing bodies within the same cell
+        #pragma omp parallel for
         for(int leaf_idx = 0; leaf_idx < leaves.size(); leaf_idx++)
         {
             Cell3& cell = cells[leaves[leaf_idx]];
@@ -358,6 +359,7 @@ void rtfmm::LaplaceFMM::init_reg_body(Cells3& cells)
 
         PeriodicInteractionMapP2P p2p_map = traverser.get_p2p_map();
 
+        #pragma omp parallel for
         for(int leaf_idx = 0; leaf_idx < leaves.size(); leaf_idx++)
         {
             Cell3& cell = cells[leaves[leaf_idx]];
@@ -388,6 +390,7 @@ void rtfmm::LaplaceFMM::init_reg_body(Cells3& cells)
         }
         
         // compute weight and cache
+        #pragma omp parallel for
         for(int leaf_idx = 0; leaf_idx < leaves.size(); leaf_idx++)
         {
             Cell3& cell = cells[leaves[leaf_idx]];
@@ -412,11 +415,6 @@ void rtfmm::LaplaceFMM::init_reg_body(Cells3& cells)
                 real w = ws.mul();
                 if(w > 0)
                 {
-                    if (verbose)
-                    {
-                        RTLOG("outside %d, %.12f  %d\n", body.idx, w,cell.idx);
-                        std::cout<<"outside  "<<body.idx<<" "<<w<<"  "<<cell.idx<<"  "<<cell.x<<std::endl;
-                    }
                     cell.bodies.push_back(body);
                     cell.weights.push_back(w);
                 }
@@ -425,6 +423,7 @@ void rtfmm::LaplaceFMM::init_reg_body(Cells3& cells)
     }
     else
     {
+        #pragma omp parallel for
         for(int leaf_idx = 0; leaf_idx < leaves.size(); leaf_idx++)
         {
             Cell3& cell = cells[leaves[leaf_idx]];
@@ -506,38 +505,22 @@ void rtfmm::LaplaceFMM::check_tree(const Cells3& cells)
 
 void rtfmm::LaplaceFMM::check_traverser(Traverser& traverser)
 {
-    PeriodicInteractionPairs P2P_pairs = traverser.get_pairs(OperatorType::P2P);
     PeriodicInteractionPairs M2L_pairs = traverser.get_pairs(OperatorType::M2L);
     PeriodicInteractionPairs M2P_pairs = traverser.get_pairs(OperatorType::M2P);
     PeriodicInteractionPairs P2L_pairs = traverser.get_pairs(OperatorType::P2L);
 
-    int p2p_num = P2P_pairs.size();
     int m2l_num = M2L_pairs.size();
     int m2p_num = M2P_pairs.size();
     int p2l_num = P2L_pairs.size();
 
-    std::cout<<"P2P_pair# : "<<p2p_num<<std::endl;
-    std::cout<<"M2L_pair# : "<<m2l_num<<std::endl;
-    std::cout<<"M2P_pair# : "<<m2p_num<<std::endl;
-    std::cout<<"P2L_pair# : "<<p2l_num<<std::endl;
-    std::cout<<"sum# : "<<p2p_num+m2l_num+m2p_num+p2l_num<<std::endl;
+    if(verbose) std::cout<<"M2L_pair# : "<<m2l_num<<std::endl;
+    if(verbose) std::cout<<"M2P_pair# : "<<m2p_num<<std::endl;
+    if(verbose) std::cout<<"P2L_pair# : "<<p2l_num<<std::endl;
+    if(verbose) std::cout<<"sum# : "<<m2l_num+m2p_num+p2l_num<<std::endl;
 
     // check pairs
     if(args.images == 0)
     {
-        for(auto p2p : P2P_pairs)
-        {
-            int found = 0;
-            for(auto p2p2 : P2P_pairs)
-            {
-                if(p2p.first == p2p2.second.first && p2p.second.first == p2p2.first)
-                {
-                    found++;
-                }
-            }
-            assert_exit(found == 1, "treep p2p error");
-        }
-        std::cout<<"p2p check ok"<<std::endl;
         for(auto m2l : M2L_pairs)
         {
             int found = 0;

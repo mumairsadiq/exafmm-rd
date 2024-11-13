@@ -50,6 +50,8 @@ struct Cell3
         << ",brange=" << cell.brange;
         return os;
     }
+
+    inline bool isLeaf() const { return crange.number == 0; }
 };
 
 using Cells3 = std::vector<Cell3>;
