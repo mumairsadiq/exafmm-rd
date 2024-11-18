@@ -3,6 +3,7 @@
 #include "mathfunc.h"
 #include <omp.h>
 #include "surface.h"
+#include "direct/fmm.h"
 
 rtfmm::LaplaceFMM::LaplaceFMM(const Bodies3& bs_, const Argument& args_) 
     : bs(bs_), args(args_)
@@ -16,8 +17,8 @@ rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
     tbegin(build_and_traverse);
     tbegin(build_tree);
     Tree tree;
-    // tree.build(bs, args.x, args.r, args.ncrit, Tree::TreeType::nonuniform);
-    tree.build(bs, args.x, args.r, 3, Tree::TreeType::uniform);
+    tree.build(bs, args.x, args.r, args.ncrit, Tree::TreeType::nonuniform);
+    // tree.build(bs, args.x, args.r, 3, Tree::TreeType::uniform);
     cs = tree.get_cells();
     if(verbose && args.check_tree) check_tree(cs);
     tend(build_tree);
@@ -62,7 +63,29 @@ rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
     L2L();
     L2P();
     M2P();
-    P2P();
+    // P2P();
+
+
+    TIME_BEGIN(fmm_p2p_standalone);
+    std::vector<gmx::RVec> coordinates;
+    std::vector<gmx::real> charges;
+
+    for (int i = 0; i < bs.size(); i++)
+    {
+        coordinates.push_back(bs[i].x);
+        charges.push_back(bs[i].q);
+    }
+
+    gmx::fmm::FMMDirectInteractions fmm_direct_inters(coordinates, charges, args.x, args.r, args.ncrit, args.rega);
+    auto forces_and_potentials = fmm_direct_inters.execute_direct_kernel();
+
+    for (int i = 0; i < bs.size(); i++)
+    {
+        bs[i].f += forces_and_potentials[i].first;
+        bs[i].p += forces_and_potentials[i].second;
+    }
+    TIME_END(fmm_p2p_standalone);
+
     bs = sort_bodies_by_idx(bs);
     for(int i = 0; i < traverser.leaf_cell_idx.size(); i++)
     {
