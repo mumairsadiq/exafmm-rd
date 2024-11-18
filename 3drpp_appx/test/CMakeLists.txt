@@ -2,6 +2,14 @@ cmake_minimum_required(VERSION 3.20)
 
 message("configure test")
 
+set(CBLAS_DIR "/opt/tcbsys/lapack/3.8.0/lib/cmake/cblas-3.8.0/")
+find_package(CBLAS REQUIRED)
+message(STATUS "CBLAS found: ${CBLAS_LIBRARIES}")
+
+find_package(LAPACK REQUIRED)
+
+find_package(BLAS REQUIRED)
+
 set(exec
     test_body
     test_surface
@@ -38,5 +46,8 @@ foreach(filename IN LISTS exec)
     target_link_libraries(${filename} 
         core
         fftw3
+        blas
+        cblas
+        lapack
     )
 endforeach()
