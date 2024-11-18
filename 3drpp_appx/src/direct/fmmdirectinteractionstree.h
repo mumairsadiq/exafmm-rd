@@ -1,0 +1,43 @@
+
+
+#ifndef GMX_FMM_DIRECT_TREE_H
+#define GMX_FMM_DIRECT_TREE_H
+
+#include "fmmtree.h"
+#include "fmmweight_evaluator.h"
+
+namespace gmx
+{
+namespace fmm
+{
+
+class FMMDirectInteractionsTree : public FMMTree
+{
+  public:
+    FMMDirectInteractionsTree(const FBodies &bodies, const RVec box_center,
+                              const real box_radius,
+                              const size_t max_particles_per_cell,
+                              const real reg_alpha);
+
+    // New methods specific to direct interactions
+    FPIndices &get_adjacent_cells(size_t i);
+
+    void recompute_weights();
+
+    void rebuild_and_reprocess_tree();
+
+  private:
+    void process_tree_();
+    void find_all_adjacent_cells_();
+    void compute_weights_();
+    int check_adjacent_parent_(int ca_idx, int cb_idx);
+
+    // Data members
+    FMMWeightEvaluator fmm_weights_eval_;
+    std::vector<FPIndices> adjacent_cells_info_;
+};
+
+} // namespace fmm
+} // namespace gmx
+
+#endif
