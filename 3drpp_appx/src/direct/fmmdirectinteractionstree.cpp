@@ -16,7 +16,7 @@ void gmx::fmm::FMMDirectInteractionsTree::recompute_weights()
     for (size_t i = 0; i < fmm_cells_.size(); i++)
     {
         fmm_cells_[i].bodiesIndicesRegularized.clear();
-        fmm_cells_[i].weightsBodiesAll.clear();
+        fmm_cells_[i].weightsBodiesRegularized.clear();
     }
     this->compute_weights_();
 }
@@ -257,16 +257,10 @@ void gmx::fmm::FMMDirectInteractionsTree::compute_weights_()
     for (size_t k = 0; k < fmm_cells_.size(); k++)
     {
         FMMCell &cell = fmm_cells_[k];
-        cell.weightsBodiesAll.resize(cell.bodiesIndices.size());
-        cell.bodiesIndicesRegularized.resize(cell.bodiesIndices.size());
-        auto &weightsAll = cell.weightsBodiesAll;
-        auto &bodiesAll = cell.bodiesIndicesRegularized;
-        int rx = 0;
         for (const int &body_idx : cell.bodiesIndices)
         {
             const FBody &body = bodies_[body_idx];
             const RVec dx = body.x - cell.center;
-
             RVec dx_simcenter_inter = body.x - box_center_;
             dx_simcenter_inter[0] = fabs(dx_simcenter_inter[0]);
             dx_simcenter_inter[1] = fabs(dx_simcenter_inter[1]);
@@ -291,9 +285,6 @@ void gmx::fmm::FMMDirectInteractionsTree::compute_weights_()
             {
                 boundary_bodies_idxs[k].push_back(body_idx);
             }
-
-            bodiesAll[rx] = body_idx;
-            weightsAll[rx++] = w;
         }
     }
 
@@ -301,41 +292,48 @@ void gmx::fmm::FMMDirectInteractionsTree::compute_weights_()
     {
 
         FMMCell &cell = fmm_cells_[k];
-        // find weights for existing bodies within the same cell
-        auto &weightsAll = cell.weightsBodiesAll;
-        auto &bodiesAll = cell.bodiesIndicesRegularized;
-
-        const auto &aCells = adjacent_cells_info_[k];
-        std::vector<int> reg_body_idxs;
-
+        std::unordered_set<int> reg_body_idxs;
+        const auto &adj_cells = adjacent_cells_info_[k];
         // find out bodies from adjacent cells that are influencing this cell
-        for (size_t j = 0; j < aCells.size(); j++)
+        for (size_t j = 0; j < adj_cells.size(); j++)
         {
-            const int adj_cell_idx = aCells[j];
-            if (cell.center != fmm_cells_[adj_cell_idx].center)
-            {
-                // checkout for regularization boundary bodies from adjacent
-                // cells having weight less than one in their cell
-                for (const int &body_idx : boundary_bodies_idxs[adj_cell_idx])
-                {
+            const int adj_cell_idx = adj_cells[j];
+            FMMCell &adj_cell = fmm_cells_[adj_cell_idx];
 
-                    const FBody &body = bodies_[body_idx];
-                    const RVec dx = body.x - cell.center;
-                    const RVec w_inter =
-                        fmm_weights_eval_.compute_w_xyz(dx, cell.radius);
-                    const real w = w_inter[0] * w_inter[1] * w_inter[2];
-                    if (w > 0)
+            if (adj_cell_idx != cell.index)
+            {
+                FPIndices &adj_adj_cells = adjacent_cells_info_[adj_cell_idx];
+                for (size_t l = 0; l < adj_adj_cells.size(); l++)
+                {
+                    const int adj_adj_cell_idx = adj_adj_cells[l];
+                    FMMCell &adj_adj_cell = fmm_cells_[adj_adj_cell_idx];
+                    if (cell.index != adj_adj_cell_idx)
                     {
-                        reg_body_idxs.push_back(body_idx);
+                        // checkout for regularization boundary bodies from
+                        // adjacent cells having weight less than one in their
+                        // cell
+                        for (const int &body_idx : boundary_bodies_idxs[adj_adj_cell_idx])
+                        {
+                            const FBody &body = bodies_[body_idx];
+                            const RVec dx = body.x - cell.center;
+                            const RVec w_inter =
+                                fmm_weights_eval_.compute_w_xyz(dx,
+                                                                cell.radius);
+                            const real w = w_inter[0] * w_inter[1] * w_inter[2];
+                            if (w > 0)
+                            {
+                                reg_body_idxs.insert(body_idx);
+                            }
+                        }
                     }
                 }
             }
         }
 
+        // find weights for existing bodies within the same cell
         // Compute weights for bodies from adjacent cells
-        for (size_t i = 0; i < reg_body_idxs.size(); i++)
+        for (const int& body_idx:  reg_body_idxs)
         {
-            const int &body_idx = reg_body_idxs[i];
             const FBody &body = bodies_[body_idx];
             RVec body_x = body.x;
             const RVec dx = body_x - cell.center;
@@ -359,8 +357,8 @@ void gmx::fmm::FMMDirectInteractionsTree::compute_weights_()
             const real w = ws[0] * ws[1] * ws[2];
             if (w > 0)
             {
-                bodiesAll.push_back(body_idx);
-                weightsAll.push_back(w);
+                cell.bodiesIndicesRegularized.push_back(body_idx);
+                cell.weightsBodiesRegularized.push_back(w);
             }
         }
     }
