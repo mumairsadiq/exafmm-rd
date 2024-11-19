@@ -29,11 +29,10 @@ class FMMDirectInteractionsTree : public FMMTree
   private:
     void process_tree_();
     void find_all_adjacent_cells_();
-    void compute_weights_();
     int check_adjacent_parent_(int ca_idx, int cb_idx);
 
     // Data members
-    FMMWeightEvaluator fmm_weights_eval_;
+
     std::vector<FPIndices> adjacent_cells_info_;
 };
 

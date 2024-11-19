@@ -1,5 +1,3 @@
-
-
 #ifndef GMX_FMM_H
 #define GMX_FMM_H
 
@@ -19,6 +17,8 @@ class FMMDirectInteractions
                           const size_t max_particles_per_cell,
                           const real reg_alpha);
 
+    void compute_weights_();
+
     // returns forces and potentials pair
     std::vector<std::pair<RVec, real>> execute_direct_kernel();
 
@@ -31,7 +31,7 @@ class FMMDirectInteractions
 
   private:
     FBodies bodies_all_;
-
+    FMMWeightEvaluator fmm_weights_eval_;
     FMMDirectInteractionsTree fmm_direct_interactions_tree_;
 };
 

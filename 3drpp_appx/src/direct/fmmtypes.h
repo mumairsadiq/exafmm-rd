@@ -84,10 +84,7 @@ struct FMMCell
     Range crange;      // Children information of the cell
     real radiusParent; // Radius of parent of cell
     RVec centerParent; // Center coordinates of the parent of the cell
-    std::vector<real> weightsBodiesRegularized; // Weights associated with the cell
-    FPIndices bodiesIndices;            // Indices of bodies in the cell
-    FPIndices bodiesIndicesRegularized; // Indices of bodies in the cell
-                                        // including regularized ones
+    FPIndices bodiesIndices; // Indices of bodies in the cell
 
     // Constructors
     FMMCell()
