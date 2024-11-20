@@ -33,7 +33,8 @@ class FMMDirectInteractions
     FMMDirectInteractionsTree fmm_direct_interactions_tree_;
 
     std::vector<std::vector<int>> atoms_interactions_list;
-    std::vector<std::vector<real>> atoms_interactions_weights;
+    std::vector<std::vector<real>> atoms_interactions_weights_src;
+    std::vector<std::vector<real>> atoms_interactions_weights_tar;
 
     void compute_weights_();
 };

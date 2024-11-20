@@ -16,7 +16,8 @@ class FMMWeightEvaluator
   public:
     /**
      * Constructor
-     * @param reg_alpha A regularization parameter that determines the smoothness of the weight function.
+     * @param reg_alpha A regularization parameter that determines the
+     * smoothness of the weight function.
      */
     FMMWeightEvaluator(const real reg_alpha) : reg_alpha_(reg_alpha) {}
 
@@ -36,16 +37,17 @@ class FMMWeightEvaluator
      */
     inline real compute_w_single(real dx, real R)
     {
-        // Calculate the relative distance from the boundary of the interaction region.
+        // Calculate the relative distance from the boundary of the interaction
+        // region.
         real r = std::abs(dx) - R + reg_alpha_;
         real x;
 
         // Determine the value of `x` based on the distance `r`.
-        if (r <= 0)         // Inside the interaction region.
+        if (r <= 0) // Inside the interaction region.
             x = 1;
         else if (r > 2 * reg_alpha_) // Far outside the interaction region.
             x = -1;
-        else                // Smooth transition in the regularization zone.
+        else // Smooth transition in the regularization zone.
             x = 1 - r / reg_alpha_;
 
         // Compute the regularization weight using `x`.
@@ -61,7 +63,7 @@ class FMMWeightEvaluator
      */
     inline real compute_w(RVec dx, real R)
     {
-        real w = 1; // Start with a weight of 1.
+        real w = 1;                 // Start with a weight of 1.
         for (int d = 0; d < 3; d++) // Multiply the weights from each dimension.
         {
             w *= compute_w_single(dx[d], R);
@@ -80,7 +82,8 @@ class FMMWeightEvaluator
         RVec res; // Result vector to store weights for each dimension.
         for (int d = 0; d < 3; d++)
         {
-            res[d] = compute_w_single(dx[d], R); // Compute weight for dimension `d`.
+            res[d] =
+                compute_w_single(dx[d], R); // Compute weight for dimension `d`.
         }
         return res; // Return the vector of weights.
     }
@@ -92,7 +95,8 @@ class FMMWeightEvaluator
     inline const real &getRegAlpha() const { return this->reg_alpha_; }
 
   private:
-    const real reg_alpha_; // Regularization parameter for smooth weight transitions.
+    const real
+        reg_alpha_; // Regularization parameter for smooth weight transitions.
 };
 } // namespace fmm
 } // namespace gmx
