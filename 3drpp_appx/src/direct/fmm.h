@@ -17,8 +17,6 @@ class FMMDirectInteractions
                           const size_t max_particles_per_cell,
                           const real reg_alpha);
 
-    void compute_weights_();
-
     // returns forces and potentials pair
     std::vector<std::pair<RVec, real>> execute_direct_kernel();
 
@@ -33,6 +31,11 @@ class FMMDirectInteractions
     FBodies bodies_all_;
     FMMWeightEvaluator fmm_weights_eval_;
     FMMDirectInteractionsTree fmm_direct_interactions_tree_;
+
+    std::vector<std::vector<int>> atoms_interactions_list;
+    std::vector<std::vector<real>> atoms_interactions_weights;
+
+    void compute_weights_();
 };
 
 } // namespace fmm

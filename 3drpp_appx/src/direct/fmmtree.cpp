@@ -185,3 +185,7 @@ gmx::fmm::FMMCells gmx::fmm::FMMTree::getLeaves()
 
     return leaf_cells;
 }
+
+gmx::RVec gmx::fmm::FMMTree::get_box_center() const { return box_center_; }
+
+gmx::real gmx::fmm::FMMTree::get_box_radius() const { return box_radius_; }

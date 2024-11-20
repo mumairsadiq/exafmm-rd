@@ -26,6 +26,11 @@ class FMMTree : public IFMMTree
     // Overriding methods from IFMMTree
     FMMCells &get_cells() override;
     FMMCells getLeaves();
+
+    gmx::RVec get_box_center() const;
+
+    gmx::real get_box_radius() const;
+
     void find_min_max_level() override;
 
   private:
@@ -41,6 +46,7 @@ class FMMTree : public IFMMTree
 
     const RVec box_center_;
     const real box_radius_;
+
     const size_t max_particles_per_cell_;
 
     // methods

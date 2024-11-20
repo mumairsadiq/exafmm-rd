@@ -16,13 +16,10 @@ class FMMDirectInteractionsTree : public FMMTree
   public:
     FMMDirectInteractionsTree(const FBodies &bodies, const RVec box_center,
                               const real box_radius,
-                              const size_t max_particles_per_cell,
-                              const real reg_alpha);
+                              const size_t max_particles_per_cell);
 
     // New methods specific to direct interactions
     FPIndices &get_adjacent_cells(size_t i);
-
-    void recompute_weights();
 
     void rebuild_and_reprocess_tree();
 

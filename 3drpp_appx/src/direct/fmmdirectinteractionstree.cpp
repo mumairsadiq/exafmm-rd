@@ -12,8 +12,6 @@ gmx::fmm::FMMDirectInteractionsTree::get_adjacent_cells(size_t i)
     return this->adjacent_cells_info_[i];
 }
 
-
-
 void gmx::fmm::FMMDirectInteractionsTree::rebuild_and_reprocess_tree()
 {
     fmm_cells_.clear();
@@ -241,10 +239,9 @@ void gmx::fmm::FMMDirectInteractionsTree::find_all_adjacent_cells_()
     // fout_adj.
 }
 
-
 gmx::fmm::FMMDirectInteractionsTree::FMMDirectInteractionsTree(
     const FBodies &bodies, const RVec box_center, const real box_radius,
-    const size_t max_particles_per_cell, const real reg_alpha)
+    const size_t max_particles_per_cell)
     : FMMTree(bodies, box_center, box_radius, max_particles_per_cell)
 {
     this->process_tree_();
