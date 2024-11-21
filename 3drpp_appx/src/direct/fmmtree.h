@@ -21,7 +21,7 @@ class FMMTree : public IFMMTree
 {
   public:
     FMMTree(const FBodies &bodies, const RVec box_center, const real box_radius,
-            const size_t max_particles_per_cell);
+            const size_t max_cell_param, const bool is_tree_uniform = true);
 
     // Overriding methods from IFMMTree
     FMMCells &get_cells() override;
@@ -47,10 +47,11 @@ class FMMTree : public IFMMTree
     const RVec box_center_;
     const real box_radius_;
 
-    const size_t max_particles_per_cell_;
+    const size_t cell_limit_param_;
 
     // methods
-    void build_tree();
+    void build_tree_non_uniform();
+    void build_tree_uniform();
 };
 
 } // namespace fmm

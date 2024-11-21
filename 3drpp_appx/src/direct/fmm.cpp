@@ -4,14 +4,29 @@
 // assuming coordinates are simd packed (like xxx..yyy..zzz.. as per simd width)
 gmx::fmm::FMMDirectInteractions::FMMDirectInteractions(
     const std::vector<RVec> coordinates, const std::vector<real> charges,
-    const RVec box_center, const real box_radius,
-    const size_t max_particles_per_cell, const real reg_alpha)
+    const RVec box_center, const real box_radius, const size_t cell_limit_param,
+    const real reg_alpha)
     : bodies_all_(coordinates, charges), fmm_weights_eval_(reg_alpha),
       fmm_direct_interactions_tree_(bodies_all_, box_center, box_radius,
-                                    max_particles_per_cell)
+                                    cell_limit_param, true)
 {
     compute_weights_();
 }
+
+bool gmx::fmm::FMMDirectInteractions::is_point_within_radius(const RVec &point1,
+                                                             const RVec &point2,
+                                                             double radius)
+{
+    double dx = point1[0] - point2[0];
+    double dy = point1[1] - point2[1];
+    double dz = point1[2] - point2[2];
+    double squared_distance = dx * dx + dy * dy + dz * dz;
+    double adjusted_radius = radius;
+    double squared_radius = adjusted_radius * adjusted_radius;
+
+    return squared_distance <= squared_radius;
+}
+
 
 void gmx::fmm::FMMDirectInteractions::compute_weights_()
 {
@@ -26,12 +41,37 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
 
     const FMMCells &fmm_cells = fmm_direct_interactions_tree_.get_cells();
 
+    // interactions within same cell for each body
+    for (size_t k = 0; k < fmm_cells.size(); k++)
+    {
+        const FMMCell &cell = fmm_cells[k];
+        std::cout << cell.center << "\t" << cell.radius << "\n";
+        for (const int &body_idx_tar : cell.bodiesIndices)
+        {
+            
+            const FBody &body_tar = bodies_all_[body_idx_tar];
+            for (const int body_idx_src : cell.bodiesIndices)
+            {
+                if (body_idx_tar != body_idx_src)
+                {
+                    atoms_interactions_list[body_idx_tar].push_back(
+                        body_idx_src);
+                    atoms_interactions_weights_src[body_idx_tar].push_back(1);
+                    atoms_interactions_weights_tar[body_idx_tar].push_back(1);
+                }
+            }
+        }
+    }
+
     std::vector<FPIndices> boundary_bodies_idxs(fmm_cells.size());
+    std::vector<std::vector<real>> bodies_weights(fmm_cells.size());
 
     // find weights for existing boundary bodies within the same cell
     for (size_t k = 0; k < fmm_cells.size(); k++)
     {
         const FMMCell &cell = fmm_cells[k];
+        bodies_weights[k].resize(cell.bodiesIndices.size());
+        int ix = 0;
         for (const int &body_idx : cell.bodiesIndices)
         {
             const FBody &body = bodies_all_[body_idx];
@@ -58,11 +98,13 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                 }
             }
             const real w = ws[0] * ws[1] * ws[2];
+            bodies_weights[k][ix] = w;
 
             if (w < 1)
             {
                 boundary_bodies_idxs[k].push_back(body_idx);
             }
+            ix++;
         }
     }
 
@@ -140,6 +182,7 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
     for (size_t k = 0; k < fmm_cells.size(); k++)
     {
         const FMMCell &cell = fmm_cells[k];
+        int iz = 0;
         for (const int &body_idx_tar : cell.bodiesIndices)
         {
             const FBody &body_tar = bodies_all_[body_idx_tar];
@@ -151,25 +194,41 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                 const int adj_cell_idx = adj_cells[j];
                 const FMMCell &adj_cell = fmm_cells[adj_cell_idx];
 
-                for (const int body_idx_src : adj_cell.bodiesIndices)
+                if (adj_cell.index != cell.index)
                 {
-                    if (body_idx_tar != body_idx_src)
+
+                    for (const int body_idx_src : adj_cell.bodiesIndices)
                     {
+                        const FBody &body_src = bodies_all_[body_idx_src];
                         atoms_interactions_list[body_idx_tar].push_back(
                             body_idx_src);
-                        atoms_interactions_weights_src[body_idx_tar].push_back(
-                            1);
-                        atoms_interactions_weights_tar[body_idx_tar].push_back(
-                            1);
+
+                        if (is_point_within_radius(body_tar.x, body_src.x,
+                                                   cell.radius))
+                        {
+                            atoms_interactions_weights_src[body_idx_tar]
+                                .push_back(1);
+                            atoms_interactions_weights_tar[body_idx_tar]
+                                .push_back(1);
+                        }
+                        else
+                        {
+                            atoms_interactions_weights_src[body_idx_tar]
+                                .push_back(1);
+                            atoms_interactions_weights_tar[body_idx_tar]
+                                .push_back(bodies_weights[k][iz]);
+                        }
                     }
                 }
             }
+            iz++;
         }
     }
 
     for (size_t k = 0; k < fmm_cells.size(); k++)
     {
         const FMMCell &cell = fmm_cells[k];
+        int iy = 0;
         for (const int &body_idx_tar : cell.bodiesIndices)
         {
             const FBody &body_tar = bodies_all_[body_idx_tar];
@@ -187,6 +246,7 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                     {
                         if (body_idx_tar != body_idx_src)
                         {
+                            const FBody &body_src = bodies_all_[body_idx_src];
                             bool is_interaction_by_w_one = false;
                             for (int tt = 0;
                                  tt <
@@ -212,21 +272,44 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                     body_idx_src);
                                 atoms_interactions_weights_src[body_idx_tar]
                                     .push_back(weights[adj_cell_idx][ix]);
-                                atoms_interactions_weights_tar[body_idx_tar]
-                                    .push_back(1);
 
-                                atoms_interactions_list[body_idx_src].push_back(
-                                    body_idx_tar);
-                                atoms_interactions_weights_tar[body_idx_src]
-                                    .push_back(weights[adj_cell_idx][ix]);
-                                atoms_interactions_weights_src[body_idx_src]
-                                    .push_back(1);
+                                RVec dx = body_tar.x - body_src.x;
+                                dx[0] = fabs(dx[0]);
+                                dx[1] = fabs(dx[1]);
+                                dx[2] = fabs(dx[2]);
+
+                                if (is_point_within_radius(
+                                        body_tar.x, body_src.x, cell.radius))
+                                {
+                                    atoms_interactions_weights_tar[body_idx_tar]
+                                        .push_back(1);
+
+                                    atoms_interactions_list[body_idx_src]
+                                        .push_back(body_idx_tar);
+                                    atoms_interactions_weights_tar[body_idx_src]
+                                        .push_back(weights[adj_cell_idx][ix]);
+                                    atoms_interactions_weights_src[body_idx_src]
+                                        .push_back(1);
+                                }
+                                else
+                                {
+                                    atoms_interactions_weights_tar[body_idx_tar]
+                                        .push_back(bodies_weights[k][iy]);
+
+                                    atoms_interactions_list[body_idx_src]
+                                        .push_back(body_idx_tar);
+                                    atoms_interactions_weights_tar[body_idx_src]
+                                        .push_back(weights[adj_cell_idx][ix]);
+                                    atoms_interactions_weights_src[body_idx_src]
+                                        .push_back(bodies_weights[k][iy]);
+                                }
                             }
                         }
                         ix++;
                     }
                 }
             }
+            iy++;
         }
     }
 
@@ -256,8 +339,8 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
             //             atoms_interactions_weights[target][i]
             //             << "\n";
 
-            if (!(atoms_interactions_weights_src[target][i] == 1 &&
-                atoms_interactions_weights_tar[target][i] == 1))
+            // if (!(atoms_interactions_weights_src[target][i] == 1 &&
+            //       atoms_interactions_weights_tar[target][i] == 1))
             {
                 const int body_src_idx = atoms_interactions_list[target][i];
                 output_file << bodies_all_[body_src_idx].x << "--"

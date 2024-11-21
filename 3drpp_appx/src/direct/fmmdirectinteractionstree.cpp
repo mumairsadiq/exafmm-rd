@@ -15,7 +15,7 @@ gmx::fmm::FMMDirectInteractionsTree::get_adjacent_cells(size_t i)
 void gmx::fmm::FMMDirectInteractionsTree::rebuild_and_reprocess_tree()
 {
     fmm_cells_.clear();
-    FMMTree::build_tree();
+    FMMTree::build_tree_non_uniform();
     find_all_adjacent_cells_();
 }
 
@@ -34,7 +34,8 @@ gmx::fmm::FMMDirectInteractionsTree::check_adjacent_parent_(int ca_idx,
     dx[0] = fabs(dx[0]);
     dx[1] = fabs(dx[1]);
     dx[2] = fabs(dx[2]);
-    real dist = (ca.radius + cb.radiusParent) *
+    real neighbour_factor = (num_neighbours - 1) * 2;
+    real dist = (ca.radius + cb.radiusParent + (ca.radius * neighbour_factor)) *
                 1.001; // warning : DO NOT ignore the float error
     return dx[0] <= dist && dx[1] <= dist && dx[2] <= dist;
 }
@@ -130,11 +131,13 @@ void gmx::fmm::FMMDirectInteractionsTree::find_all_adjacent_cells_()
             if (target_cell.isLeaf())
             {
                 real ddistance = target_cell.radius * 2;
-                for (int dz = -1; dz <= 1; dz++)
+                for (int dz = -1 * num_neighbours; dz <= num_neighbours; dz++)
                 {
-                    for (int dy = -1; dy <= 1; dy++)
+                    for (int dy = -1 * num_neighbours; dy <= num_neighbours;
+                         dy++)
                     {
-                        for (int dx = -1; dx <= 1; dx++)
+                        for (int dx = -1 * num_neighbours; dx <= num_neighbours;
+                             dx++)
                         {
                             // Skip the current cell (dx == 0, dy == 0, dz == 0)
                             if (dx == 0 && dy == 0 && dz == 0)
@@ -241,8 +244,10 @@ void gmx::fmm::FMMDirectInteractionsTree::find_all_adjacent_cells_()
 
 gmx::fmm::FMMDirectInteractionsTree::FMMDirectInteractionsTree(
     const FBodies &bodies, const RVec box_center, const real box_radius,
-    const size_t max_particles_per_cell)
-    : FMMTree(bodies, box_center, box_radius, max_particles_per_cell)
+    const size_t cell_limit_param, const bool is_tree_uniform)
+    : FMMTree(bodies, box_center, box_radius, cell_limit_param,
+              is_tree_uniform),
+      num_neighbours(1)
 {
     this->process_tree_();
 }

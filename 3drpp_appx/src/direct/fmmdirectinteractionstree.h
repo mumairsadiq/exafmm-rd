@@ -16,7 +16,8 @@ class FMMDirectInteractionsTree : public FMMTree
   public:
     FMMDirectInteractionsTree(const FBodies &bodies, const RVec box_center,
                               const real box_radius,
-                              const size_t max_particles_per_cell);
+                              const size_t cell_limit_param,
+                              const bool is_tree_uniform = true);
 
     // New methods specific to direct interactions
     FPIndices &get_adjacent_cells(size_t i);
@@ -31,6 +32,7 @@ class FMMDirectInteractionsTree : public FMMTree
     // Data members
 
     std::vector<FPIndices> adjacent_cells_info_;
+    const int num_neighbours;
 };
 
 } // namespace fmm
