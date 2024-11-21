@@ -88,6 +88,17 @@ class FMMWeightEvaluator
         return res; // Return the vector of weights.
     }
 
+    inline RVec compute_w_xyz(RVec dx, real R)
+    {
+        RVec res; // Result vector to store weights for each dimension.
+        for (int d = 0; d < 3; d++)
+        {
+            res[d] =
+                compute_w_single(dx[d], R); // Compute weight for dimension `d`.
+        }
+        return res; // Return the vector of weights.
+    }
+
     /**
      * Get the regularization parameter (reg_alpha).
      * @return The value of reg_alpha used in the calculations.

@@ -143,6 +143,16 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                             atoms_interactions_weights_tar[body_idx_tar]
                                 .push_back(1);
                         }
+
+                        // todo tomorrow, eveything relevant to weights should be shifted in its own class too
+                        if (is_part_of_reg_region[k][bdx] == true)
+                        {
+                            // combine influence of current body in both cells that is the weight
+                        }
+                        else if (is_part_of_reg_region[k][bidxs])
+                        {
+                            // combine influence of current body in both cells that is the weight
+                        }
                         // else
                         // {
                         //     atoms_interactions_weights_src[body_idx_tar]
