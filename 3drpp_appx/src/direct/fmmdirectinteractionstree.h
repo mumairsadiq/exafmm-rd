@@ -20,7 +20,9 @@ class FMMDirectInteractionsTree : public FMMTree
                               const bool is_tree_uniform = true);
 
     // New methods specific to direct interactions
-    FPIndices &get_adjacent_cells(size_t i);
+    const FPIndices &get_adjacent_cells(size_t i) const;
+
+    const std::unordered_set<int> &get_adjacent_cells_set(size_t i) const;
 
     void rebuild_and_reprocess_tree();
 
@@ -32,6 +34,7 @@ class FMMDirectInteractionsTree : public FMMTree
     // Data members
 
     std::vector<FPIndices> adjacent_cells_info_;
+    std::vector<std::unordered_set<int>> adjacent_cells_info_set_;
     const int num_neighbours;
 };
 

@@ -114,8 +114,6 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
 
                         if (is_part_of_reg_region[k][bidxt] == true)
                         {
-                            const real w1 = fmm_weights_eval_.compute_weight(
-                                body_tar.x, cell.center, cell.radius, false);
                             const real w2 = fmm_weights_eval_.compute_weight(
                                 body_tar.x, adj_cell.center, adj_cell.radius,
                                 false);
@@ -127,8 +125,30 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                             }
                             else
                             {
+                                // needs optimization, this is brute force
+                                // approach to compute w_total
+                                real w_total = 0;
+                                const std::unordered_set<int>
+                                    &adj_cells_src_set =
+                                        fmm_direct_interactions_tree_
+                                            .get_adjacent_cells_set(
+                                                adj_cell_idx);
+                                for (size_t l = 0; l < adj_cells.size(); l++)
+                                {
+                                    if (adj_cells_src_set.find(adj_cells[l]) !=
+                                        adj_cells_src_set.end())
+                                    {
+                                        const real w_temp =
+                                            fmm_weights_eval_.compute_weight(
+                                                body_tar.x,
+                                                fmm_cells[adj_cells[l]].center,
+                                                fmm_cells[adj_cells[l]].radius,
+                                                false);
+                                        w_total += w_temp;
+                                    }
+                                }
                                 atoms_interactions_weights_tar[body_idx_tar]
-                                    .push_back(w1); // needs correction
+                                    .push_back(w_total);
                             }
                         }
                         else
@@ -141,9 +161,6 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                         {
                             const real w1 = fmm_weights_eval_.compute_weight(
                                 body_src.x, cell.center, cell.radius, false);
-                            const real w2 = fmm_weights_eval_.compute_weight(
-                                body_src.x, adj_cell.center, adj_cell.radius,
-                                false);
 
                             if (w1 != 0)
                             {
@@ -152,8 +169,36 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                             }
                             else
                             {
+                                // needs optimization, this is brute force
+                                // approach to compute w_total
+                                real w_total = 0;
+                                const std::unordered_set<int>
+                                    &adj_cells_tar_set =
+                                        fmm_direct_interactions_tree_
+                                            .get_adjacent_cells_set(k);
+                                const FPIndices &adj_cells_src =
+                                    fmm_direct_interactions_tree_
+                                        .get_adjacent_cells(adj_cell_idx);
+                                for (size_t l = 0; l < adj_cells_src.size();
+                                     l++)
+                                {
+                                    if (adj_cells_tar_set.find(
+                                            adj_cells_src[l]) !=
+                                        adj_cells_tar_set.end())
+                                    {
+                                        const real w_temp =
+                                            fmm_weights_eval_.compute_weight(
+                                                body_src.x,
+                                                fmm_cells[adj_cells_src[l]]
+                                                    .center,
+                                                fmm_cells[adj_cells_src[l]]
+                                                    .radius,
+                                                false);
+                                        w_total += w_temp;
+                                    }
+                                }
                                 atoms_interactions_weights_src[body_idx_tar]
-                                    .push_back(w2); // needs correction
+                                    .push_back(w_total);
                             }
                         }
                         else

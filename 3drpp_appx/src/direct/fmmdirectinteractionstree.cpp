@@ -2,19 +2,31 @@
 #include "fmmdirectinteractionstree.h"
 #include <fstream>
 
-gmx::fmm::FPIndices &
-gmx::fmm::FMMDirectInteractionsTree::get_adjacent_cells(size_t i)
+const gmx::fmm::FPIndices &
+gmx::fmm::FMMDirectInteractionsTree::get_adjacent_cells(size_t i) const
 {
     if (i >= fmm_cells_.size())
     {
         exit(-1);
     }
-    return this->adjacent_cells_info_[i];
+    return adjacent_cells_info_[i];
+}
+
+const std::unordered_set<int> &
+gmx::fmm::FMMDirectInteractionsTree::get_adjacent_cells_set(size_t i) const
+{
+    if (i >= fmm_cells_.size())
+    {
+        exit(-1);
+    }
+    return adjacent_cells_info_set_[i];
 }
 
 void gmx::fmm::FMMDirectInteractionsTree::rebuild_and_reprocess_tree()
 {
     fmm_cells_.clear();
+    adjacent_cells_info_.clear();
+    adjacent_cells_info_set_.clear();
     FMMTree::build_tree_non_uniform();
     find_all_adjacent_cells_();
 }
@@ -255,4 +267,11 @@ gmx::fmm::FMMDirectInteractionsTree::FMMDirectInteractionsTree(
 void gmx::fmm::FMMDirectInteractionsTree::process_tree_()
 {
     find_all_adjacent_cells_();
+    adjacent_cells_info_set_.resize(adjacent_cells_info_.size());
+
+    for (size_t i = 0; i < adjacent_cells_info_.size(); i++)
+    {
+        adjacent_cells_info_set_[i].insert(adjacent_cells_info_[i].begin(),
+                                           adjacent_cells_info_[i].end());
+    }
 }
