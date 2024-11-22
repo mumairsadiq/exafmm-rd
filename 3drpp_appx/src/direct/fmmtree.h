@@ -47,6 +47,9 @@ class FMMTree : public IFMMTree
     const RVec box_center_;
     const real box_radius_;
 
+    // Determines the cell subdivision parameter: it represents
+    // - If using a uniform tree:  then maximum depth of the tree.
+    // - If using an adaptive tree: then maximum number of particles per cell
     const size_t cell_limit_param_;
 
     // methods

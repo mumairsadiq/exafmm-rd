@@ -13,62 +13,46 @@ namespace fmm
  */
 class FMMWeightEvaluator
 {
+
+  private:
+    inline real compute_reg_w(real x) { return 0.25 * (2 + 3 * x - x * x * x); }
+
+    inline real compute_w_single(real dx, real R)
+    {
+        real r = std::abs(dx) - R + reg_alpha_;
+        real x;
+
+        if (r <= 0)
+            x = 1;
+        else if (r > 2 * reg_alpha_)
+            x = -1;
+        else
+            x = 1 - r / reg_alpha_;
+
+        return compute_reg_w(x);
+    }
+
+    inline real compute_w(RVec dx, real R)
+    {
+        real w = 1;
+        for (int d = 0; d < 3; d++)
+        {
+            w *= compute_w_single(dx[d], R);
+        }
+        return w;
+    }
+
   public:
     /**
      * Constructor
      * @param reg_alpha A regularization parameter that determines the
      * smoothness of the weight function.
      */
-    FMMWeightEvaluator(const real reg_alpha) : reg_alpha_(reg_alpha) {}
-
-    /**
-     * Compute the regularization weight function for a given value.
-     * This function defines how the weight decays as the distance increases.
-     * @param x Input value for the weight function.
-     * @return Computed weight based on the regularization formula.
-     */
-    inline real compute_reg_w(real x) { return 0.25 * (2 + 3 * x - x * x * x); }
-
-    /**
-     * Compute the weight for a single dimension (1D).
-     * @param dx The distance in one dimension.
-     * @param R The radius of the interaction region.
-     * @return Weight for the given dimension based on the distance.
-     */
-    inline real compute_w_single(real dx, real R)
+    FMMWeightEvaluator(const RVec box_center, const real box_radius,
+                       const real reg_alpha)
+        : box_center_(box_center), box_radius_(box_radius),
+          reg_alpha_(reg_alpha)
     {
-        // Calculate the relative distance from the boundary of the interaction
-        // region.
-        real r = std::abs(dx) - R + reg_alpha_;
-        real x;
-
-        // Determine the value of `x` based on the distance `r`.
-        if (r <= 0) // Inside the interaction region.
-            x = 1;
-        else if (r > 2 * reg_alpha_) // Far outside the interaction region.
-            x = -1;
-        else // Smooth transition in the regularization zone.
-            x = 1 - r / reg_alpha_;
-
-        // Compute the regularization weight using `x`.
-        return compute_reg_w(x);
-    }
-
-    /**
-     * Compute the overall weight for a 3D vector.
-     * This combines weights from all three dimensions.
-     * @param dx The distance vector (x, y, z).
-     * @param R The radius of the interaction region.
-     * @return The overall weight based on the 3D distance.
-     */
-    inline real compute_w(RVec dx, real R)
-    {
-        real w = 1;                 // Start with a weight of 1.
-        for (int d = 0; d < 3; d++) // Multiply the weights from each dimension.
-        {
-            w *= compute_w_single(dx[d], R);
-        }
-        return w; // Return the final weight.
     }
 
     /**
@@ -79,35 +63,48 @@ class FMMWeightEvaluator
      */
     inline RVec compute_w_xyz(RVec dx, real R)
     {
-        RVec res; // Result vector to store weights for each dimension.
+        RVec ws; // Result vector to store weights for each dimension.
         for (int d = 0; d < 3; d++)
         {
-            res[d] =
+            ws[d] =
                 compute_w_single(dx[d], R); // Compute weight for dimension `d`.
         }
-        return res; // Return the vector of weights.
+        return ws; // Return the vector of weights.
     }
 
-    inline RVec compute_w_xyz(RVec dx, real R)
+    inline real compute_weight(RVec body_x, RVec center, real radius,
+                               bool is_periodic = false)
     {
-        RVec res; // Result vector to store weights for each dimension.
-        for (int d = 0; d < 3; d++)
+
+        const RVec dx = body_x - center;
+        RVec ws = compute_w_xyz(dx, radius);
+        if (is_periodic == false)
         {
-            res[d] =
-                compute_w_single(dx[d], R); // Compute weight for dimension `d`.
+            RVec dx_simcenter_inter = body_x - box_center_;
+            dx_simcenter_inter[0] = fabs(dx_simcenter_inter[0]);
+            dx_simcenter_inter[1] = fabs(dx_simcenter_inter[1]);
+            dx_simcenter_inter[2] = fabs(dx_simcenter_inter[2]);
+            const RVec dx_simcenter(dx_simcenter_inter[0] + reg_alpha_,
+                                    dx_simcenter_inter[1] + reg_alpha_,
+                                    dx_simcenter_inter[2] + reg_alpha_);
+
+            for (int d = 0; d <= 2; d++)
+            {
+                if (dx_simcenter[d] >= box_radius_)
+                {
+                    ws[d] = 1;
+                }
+            }
         }
-        return res; // Return the vector of weights.
+        return ws[0] * ws[1] * ws[2]; // Return the weight
     }
 
-    /**
-     * Get the regularization parameter (reg_alpha).
-     * @return The value of reg_alpha used in the calculations.
-     */
     inline const real &getRegAlpha() const { return this->reg_alpha_; }
 
   private:
-    const real
-        reg_alpha_; // Regularization parameter for smooth weight transitions.
+    const RVec box_center_;
+    const real box_radius_;
+    const real reg_alpha_;
 };
 } // namespace fmm
 } // namespace gmx

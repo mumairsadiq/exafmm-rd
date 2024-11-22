@@ -6,7 +6,8 @@ gmx::fmm::FMMDirectInteractions::FMMDirectInteractions(
     const std::vector<RVec> coordinates, const std::vector<real> charges,
     const RVec box_center, const real box_radius, const size_t cell_limit_param,
     const real reg_alpha)
-    : bodies_all_(coordinates, charges), fmm_weights_eval_(reg_alpha),
+    : bodies_all_(coordinates, charges),
+      fmm_weights_eval_(box_center, box_radius, reg_alpha),
       fmm_direct_interactions_tree_(bodies_all_, box_center, box_radius,
                                     cell_limit_param, true)
 {
@@ -21,8 +22,6 @@ bool gmx::fmm::FMMDirectInteractions::is_point_within_radius(const RVec &point1,
                point1[2] - point2[2]};
     double distance_squared = dx[0] * dx[0] + dx[1] * dx[1] + dx[2] * dx[2];
     double radius_squared = radius * radius;
-
-    // Add epsilon tolerance to radius comparison
     return distance_squared <= radius_squared;
 }
 
@@ -51,10 +50,10 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
             {
                 if (body_idx_tar != body_idx_src)
                 {
-                    // atoms_interactions_list[body_idx_tar].push_back(
-                    //     body_idx_src);
-                    // atoms_interactions_weights_src[body_idx_tar].push_back(1);
-                    // atoms_interactions_weights_tar[body_idx_tar].push_back(1);
+                    atoms_interactions_list[body_idx_tar].push_back(
+                        body_idx_src);
+                    atoms_interactions_weights_src[body_idx_tar].push_back(1);
+                    atoms_interactions_weights_tar[body_idx_tar].push_back(1);
                 }
             }
         }
@@ -72,29 +71,8 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
         for (const int &body_idx : cell.bodiesIndices)
         {
             const FBody &body = bodies_all_[body_idx];
-            const RVec dx = body.x - cell.center;
-
-            RVec dx_simcenter_inter =
-                body.x - fmm_direct_interactions_tree_.get_box_center();
-            dx_simcenter_inter[0] = fabs(dx_simcenter_inter[0]);
-            dx_simcenter_inter[1] = fabs(dx_simcenter_inter[1]);
-            dx_simcenter_inter[2] = fabs(dx_simcenter_inter[2]);
-            const RVec dx_simcenter(
-                dx_simcenter_inter[0] + fmm_weights_eval_.getRegAlpha(),
-                dx_simcenter_inter[1] + fmm_weights_eval_.getRegAlpha(),
-                dx_simcenter_inter[2] + fmm_weights_eval_.getRegAlpha());
-
-            RVec ws = fmm_weights_eval_.compute_w_xyz(dx, cell.radius);
-
-            for (int d = 0; d <= 2; d++)
-            {
-                if (dx_simcenter[d] >=
-                    fmm_direct_interactions_tree_.get_box_radius())
-                {
-                    ws[d] = 1;
-                }
-            }
-            const real w = ws[0] * ws[1] * ws[2];
+            const real w = fmm_weights_eval_.compute_weight(body.x, cell.center,
+                                                            cell.radius, false);
 
             if (w < 1)
             {
@@ -109,11 +87,10 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
         }
     }
 
-    // find weights for existing bodies within the same cell
     for (size_t k = 0; k < fmm_cells.size(); k++)
     {
         const FMMCell &cell = fmm_cells[k];
-        int bdx = 0;
+        int bidxt = 0;
         for (const int &body_idx_tar : cell.bodiesIndices)
         {
             const FBody &body_tar = bodies_all_[body_idx_tar];
@@ -132,40 +109,64 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                     for (const int body_idx_src : adj_cell.bodiesIndices)
                     {
                         const FBody &body_src = bodies_all_[body_idx_src];
+                        atoms_interactions_list[body_idx_tar].push_back(
+                            body_idx_src);
 
-                        if (is_part_of_reg_region[k][bdx] == false &&
-                            is_part_of_reg_region[adj_cell_idx][bidxs] == false)
+                        if (is_part_of_reg_region[k][bidxt] == true)
                         {
-                            atoms_interactions_list[body_idx_tar].push_back(
-                                body_idx_src);
-                            atoms_interactions_weights_src[body_idx_tar]
-                                .push_back(1);
+                            const real w1 = fmm_weights_eval_.compute_weight(
+                                body_tar.x, cell.center, cell.radius, false);
+                            const real w2 = fmm_weights_eval_.compute_weight(
+                                body_tar.x, adj_cell.center, adj_cell.radius,
+                                false);
+
+                            if (w2 != 0)
+                            {
+                                atoms_interactions_weights_tar[body_idx_tar]
+                                    .push_back(1);
+                            }
+                            else
+                            {
+                                atoms_interactions_weights_tar[body_idx_tar]
+                                    .push_back(w1); // needs correction
+                            }
+                        }
+                        else
+                        {
                             atoms_interactions_weights_tar[body_idx_tar]
                                 .push_back(1);
                         }
 
-                        // todo tomorrow, eveything relevant to weights should be shifted in its own class too
-                        if (is_part_of_reg_region[k][bdx] == true)
+                        if (is_part_of_reg_region[adj_cell_idx][bidxs] == true)
                         {
-                            // combine influence of current body in both cells that is the weight
+                            const real w1 = fmm_weights_eval_.compute_weight(
+                                body_src.x, cell.center, cell.radius, false);
+                            const real w2 = fmm_weights_eval_.compute_weight(
+                                body_src.x, adj_cell.center, adj_cell.radius,
+                                false);
+
+                            if (w1 != 0)
+                            {
+                                atoms_interactions_weights_src[body_idx_tar]
+                                    .push_back(1);
+                            }
+                            else
+                            {
+                                atoms_interactions_weights_src[body_idx_tar]
+                                    .push_back(w2); // needs correction
+                            }
                         }
-                        else if (is_part_of_reg_region[k][bidxs])
+                        else
                         {
-                            // combine influence of current body in both cells that is the weight
+                            atoms_interactions_weights_src[body_idx_tar]
+                                .push_back(1);
                         }
-                        // else
-                        // {
-                        //     atoms_interactions_weights_src[body_idx_tar]
-                        //         .push_back(1);
-                        //     atoms_interactions_weights_tar[body_idx_tar]
-                        //         .push_back(bodies_weights[k][iz]);
-                        // }
 
                         bidxs++;
                     }
                 }
             }
-            bdx++;
+            bidxt++;
         }
     }
 
