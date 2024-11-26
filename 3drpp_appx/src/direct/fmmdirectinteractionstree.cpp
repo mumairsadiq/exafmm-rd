@@ -31,9 +31,8 @@ void gmx::fmm::FMMDirectInteractionsTree::rebuild_and_reprocess_tree()
     find_all_adjacent_cells_();
 }
 
-inline int
-gmx::fmm::FMMDirectInteractionsTree::check_adjacent_parent_(int ca_idx,
-                                                            int cb_idx)
+int gmx::fmm::FMMDirectInteractionsTree::check_adjacent_parent_(int ca_idx,
+                                                                int cb_idx)
 {
     const FMMCell &ca = fmm_cells_[ca_idx];
     const FMMCell &cb = fmm_cells_[cb_idx];
@@ -48,6 +47,19 @@ gmx::fmm::FMMDirectInteractionsTree::check_adjacent_parent_(int ca_idx,
     dx[2] = fabs(dx[2]);
     real neighbour_factor = (num_neighbours - 1) * 2;
     real dist = (ca.radius + cb.radiusParent + (ca.radius * neighbour_factor)) *
+                1.001; // warning : DO NOT ignore the float error
+    return dx[0] <= dist && dx[1] <= dist && dx[2] <= dist;
+}
+
+int gmx::fmm::FMMDirectInteractionsTree::check_adjacent(int ca_idx, int cb_idx)
+{
+    const FMMCell &ca = fmm_cells_[ca_idx];
+    const FMMCell &cb = fmm_cells_[cb_idx];
+    RVec dx = ca.center - cb.center;
+    dx[0] = fabs(dx[0]);
+    dx[1] = fabs(dx[1]);
+    dx[2] = fabs(dx[2]);
+    real dist = (ca.radius + cb.radius) *
                 1.001; // warning : DO NOT ignore the float error
     return dx[0] <= dist && dx[1] <= dist && dx[2] <= dist;
 }

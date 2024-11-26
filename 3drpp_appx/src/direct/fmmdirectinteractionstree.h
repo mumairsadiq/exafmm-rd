@@ -26,8 +26,11 @@ class FMMDirectInteractionsTree : public FMMTree
 
     void rebuild_and_reprocess_tree();
 
+    int check_adjacent(int ca_idx, int cb_idx);
+
   private:
     void process_tree_();
+
     void find_all_adjacent_cells_();
     int check_adjacent_parent_(int ca_idx, int cb_idx);
 

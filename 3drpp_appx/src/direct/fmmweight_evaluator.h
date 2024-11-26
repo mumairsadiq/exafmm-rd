@@ -99,6 +99,14 @@ class FMMWeightEvaluator
         return ws[0] * ws[1] * ws[2]; // Return the weight
     }
 
+    inline real compute_ac_weight(RVec body_x, RVec center, real radius)
+    {
+
+        const RVec dx = body_x - center;
+        RVec ws = compute_w_xyz(dx, radius);
+        return ws[0] * ws[1] * ws[2]; // Return the weight
+    }
+
     inline const real &getRegAlpha() const { return this->reg_alpha_; }
 
   private:
