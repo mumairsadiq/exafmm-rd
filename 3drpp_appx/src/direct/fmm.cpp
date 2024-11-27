@@ -108,6 +108,58 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
         }
     }
 
+    std::vector<FPIndices> reg_bodies_cell(fmm_cells.size());
+    std::vector<std::vector<real>> reg_weights_cell(fmm_cells.size());
+    for (size_t k = 0; k < fmm_cells.size(); k++)
+    {
+
+        const FMMCell &cell = fmm_cells[k];
+
+        const auto &aCells =
+            fmm_direct_interactions_tree_.get_adjacent_cells(k);
+        std::vector<int> reg_body_idxs;
+
+        // find out bodies from adjacent cells that are influencing this cell
+        for (size_t j = 0; j < aCells.size(); j++)
+        {
+            const int adj_cell_idx = aCells[j];
+            if (cell.index != adj_cell_idx)
+            {
+                // checkout for regularization boundary bodies from adjacent
+                // cells having weight less than one in their cell
+                for (const int &body_idx : boundary_bodies_idxs[adj_cell_idx])
+                {
+
+                    const FBody &body = bodies_all_[body_idx];
+                    const RVec dx = body.x - cell.center;
+                    const RVec w_inter =
+                        fmm_weights_eval_.compute_w_xyz(dx, cell.radius);
+                    const real w = w_inter[0] * w_inter[1] * w_inter[2];
+                    if (w > 0)
+                    {
+                        reg_body_idxs.push_back(body_idx);
+                    }
+                }
+            }
+        }
+
+        // Compute weights for bodies from adjacent cells
+        for (size_t i = 0; i < reg_body_idxs.size(); i++)
+        {
+            const int &body_idx = reg_body_idxs[i];
+            const FBody &body = bodies_all_[body_idx];
+
+            const real w = fmm_weights_eval_.compute_weight(body.x, cell.center,
+                                                            cell.radius, false);
+
+            if (w > 0)
+            {
+                reg_bodies_cell[k].push_back(body_idx);
+                reg_weights_cell[k].push_back(w);
+            }
+        }
+    }
+
     for (size_t k = 0; k < fmm_cells.size(); k++)
     {
         const FMMCell &cell = fmm_cells[k];
@@ -214,29 +266,23 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
         for (const int &body_idx_tar : cell.bodiesIndices)
         {
             const FBody &body_tar = bodies_all_[body_idx_tar];
+
             for (size_t j = 0; j < adj1_cells_indices.size(); j++)
             {
                 const int adj1_cell_idx = adj1_cells_indices[j];
+                const FMMCell &adj1_cell = fmm_cells[adj1_cell_idx];
+
                 if (adj1_cell_idx != cell.index)
                 {
-                    const FMMCell &adj1_cell = fmm_cells[adj1_cell_idx];
-                    // const real w = fmm_weights_eval_.compute_weight(
-                    //     body_tar.x, adj1_cell.center, adj1_cell.radius,
-                    //     false);
+                    const real wtar_in_original =
+                        fmm_weights_eval_.compute_weight(
+                            body_tar.x, cell.center, cell.radius, false);
 
-                    real wtar = 0;
+                    const real wtar = fmm_weights_eval_.compute_weight(
+                        body_tar.x, adj1_cell.center, adj1_cell.radius, false);
 
-                    if (bodies_weights_to_adj_cells[body_idx_tar].find(
-                            adj1_cell_idx) !=
-                        bodies_weights_to_adj_cells[body_idx_tar].end())
+                    if (wtar > 0 && wtar_in_original < 1)
                     {
-                        wtar = bodies_weights_to_adj_cells[body_idx_tar]
-                                                          [adj1_cell_idx];
-                    }
-
-                    if (wtar != 0)
-                    {
-
                         const auto &adj2_cells_indices =
                             fmm_direct_interactions_tree_.get_adjacent_cells(
                                 adj1_cell_idx);
@@ -250,18 +296,17 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                             {
                                 const FMMCell &adj2_cell =
                                     fmm_cells[adj2_cell_idx];
+
                                 for (const int body_idx_src :
                                      adj2_cell.bodiesIndices)
                                 {
                                     const FBody &body_src =
                                         bodies_all_[body_idx_src];
 
-                                    real wsrc =
-                                        fmm_weights_eval_.compute_weight(
-                                            body_src.x, adj1_cell.center,
-                                            adj1_cell.radius, false);
+                                    real wsrc = bodies_weights_to_adj_cells
+                                        [body_idx_src][adj1_cell_idx];
 
-                                    if (wsrc != 0)
+                                    if (wsrc > 0)
                                     {
                                         atoms_interactions_list[body_idx_tar]
                                             .push_back(body_idx_src);
@@ -269,35 +314,39 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                         atoms_interactions_weights_tar
                                             [body_idx_tar]
                                                 .push_back(wtar);
+
                                         atoms_interactions_weights_src
                                             [body_idx_tar]
                                                 .push_back(wsrc);
-
-                                        real wsrc_rem =
-                                            bodies_weights_to_adj_cells
-                                                [body_idx_src][adj1_cell_idx] -
-                                            wsrc;
-
-                                        real wtar2 =
-                                            fmm_weights_eval_.compute_weight(
-                                                body_tar.x, adj1_cell.center,
-                                                adj1_cell.radius, false);
-
-                                        if (wtar2 != 0 && wsrc_rem != 0)
-                                        {
-                                            atoms_interactions_list
-                                                [body_idx_tar]
-                                                    .push_back(body_idx_src);
-
-                                            atoms_interactions_weights_tar
-                                                [body_idx_tar]
-                                                    .push_back(wtar2);
-                                            atoms_interactions_weights_src
-                                                [body_idx_tar]
-                                                    .push_back(wsrc_rem);
-                                            
-                                        }
                                     }
+                                }
+
+                                int bx = 0;
+                                for (const int body_idx_src :
+                                     reg_bodies_cell[adj2_cell_idx])
+                                {
+                                    const FBody &body_src =
+                                        bodies_all_[body_idx_src];
+
+                                    if (bodies_weights_to_adj_cells
+                                            [body_idx_src][adj1_cell_idx] < 1)
+                                    {
+                                        real wsrc =
+                                            reg_weights_cell[adj2_cell_idx][bx];
+
+                                        atoms_interactions_list[body_idx_tar]
+                                            .push_back(body_idx_src);
+
+                                        atoms_interactions_weights_tar
+                                            [body_idx_tar]
+                                                .push_back(wtar);
+
+                                        atoms_interactions_weights_src
+                                            [body_idx_tar]
+                                                .push_back(wsrc);
+                                    }
+
+                                    bx++;
                                 }
                             }
                         }
@@ -307,160 +356,83 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
         }
     }
 
-    // for (size_t k = 0; k < fmm_cells.size(); k++)
-    // {
-    //     const FMMCell &cell = fmm_cells[k];
-    //     const auto &adj1_cells_indices =
-    //         fmm_direct_interactions_tree_.get_adjacent_cells(k);
+    for (size_t k = 0; k < fmm_cells.size(); k++)
+    {
+        const FMMCell &cell = fmm_cells[k];
+        const auto &adj1_cells_indices =
+            fmm_direct_interactions_tree_.get_adjacent_cells(k);
 
-    //     const std::unordered_set<int> &adj1_cells_indices_set =
-    //         fmm_direct_interactions_tree_.get_adjacent_cells_set(k);
+        const std::unordered_set<int> &adj1_cells_indices_set =
+            fmm_direct_interactions_tree_.get_adjacent_cells_set(k);
 
-    //     // to be optimized
-    //     std::unordered_set<int> adj2_cells_unqiue_indices;
-    //     for (size_t j = 0; j < adj1_cells_indices.size(); j++)
-    //     {
-    //         const int adj1_cell_idx = adj1_cells_indices[j];
-    //         const FMMCell &adj1_cell = fmm_cells[adj1_cell_idx];
+        // to be optimized
+        std::unordered_set<int> adj2_cells_unqiue_indices;
+        for (size_t j = 0; j < adj1_cells_indices.size(); j++)
+        {
+            const int adj1_cell_idx = adj1_cells_indices[j];
+            const FMMCell &adj1_cell = fmm_cells[adj1_cell_idx];
 
-    //         if (adj1_cell.index != cell.index)
-    //         {
-    //             const FPIndices &adj2_cells_indices =
-    //                 fmm_direct_interactions_tree_.get_adjacent_cells(
-    //                     adj1_cell_idx);
+            if (adj1_cell.index != cell.index)
+            {
+                const FPIndices &adj2_cells_indices =
+                    fmm_direct_interactions_tree_.get_adjacent_cells(
+                        adj1_cell_idx);
 
-    //             for (size_t l = 0; l < adj2_cells_indices.size(); l++)
-    //             {
-    //                 if (adj1_cells_indices_set.find(adj2_cells_indices[l]) ==
-    //                     adj1_cells_indices_set.end())
-    //                 {
-    //                     adj2_cells_unqiue_indices.insert(adj2_cells_indices[l]);
-    //                 }
-    //             }
-    //         }
-    //     }
+                for (size_t l = 0; l < adj2_cells_indices.size(); l++)
+                {
+                    if (adj1_cells_indices_set.find(adj2_cells_indices[l]) ==
+                        adj1_cells_indices_set.end())
+                    {
+                        adj2_cells_unqiue_indices.insert(adj2_cells_indices[l]);
+                    }
+                }
+            }
+        }
+        for (const int &body_idx_tar : cell.bodiesIndices)
+        {
+            const FBody &body_tar = bodies_all_[body_idx_tar];
 
-    //     for (const int &body_idx_tar : cell.bodiesIndices)
-    //     {
-    //         const FBody &body_tar = bodies_all_[body_idx_tar];
+            for (const int adj2_cell_idx : adj2_cells_unqiue_indices)
+            {
+                const FMMCell &adj2_cell = fmm_cells[adj2_cell_idx];
+                for (const int body_idx_src :
+                     boundary_bodies_idxs[adj2_cell_idx])
+                {
+                    const FBody &body_src = bodies_all_[body_idx_src];
 
-    //         for (const int adj2_cell_idx : adj2_cells_unqiue_indices)
-    //         {
-    //             for (const int body_idx_src :
-    //                  boundary_bodies_idxs[adj2_cell_idx])
-    //             {
-    //                 const FBody &body_src = bodies_all_[body_idx_src];
+                    for (size_t j = 0; j < adj1_cells_indices.size(); j++)
+                    {
+                        const int adj1_cell_idx = adj1_cells_indices[j];
+                        const FMMCell &adj1_cell = fmm_cells[adj1_cell_idx];
 
-    //                 for (size_t j = 0; j < adj1_cells_indices.size(); j++)
-    //                 {
-    //                     const int adj1_cell_idx = adj1_cells_indices[j];
+                        real wsrc_in_adjacent1 =
+                            fmm_weights_eval_.compute_weight(
+                                body_src.x, adj1_cell.center, adj1_cell.radius,
+                                false);
 
-    //                     if (adj1_cell_idx != cell.index)
-    //                     {
-    //                         const FMMCell &adj1_cell =
-    //                         fmm_cells[adj1_cell_idx];
-    //                         // real wsrc = fmm_weights_eval_.compute_weight(
-    //                         //     body_src.x, adj1_cell.center,
-    //                         adj1_cell.radius,
-    //                         //     false);
-    //                         real wsrc = 0;
+                        const real wtar =
+                            bodies_weights_to_adj_cells[body_idx_tar]
+                                                       [adj1_cell_idx] -
+                            fmm_weights_eval_.compute_weight(
+                                body_tar.x, adj1_cell.center, adj1_cell.radius,
+                                false);
 
-    //                         if
-    //                         (bodies_weights_to_adj_cells[body_idx_src].find(adj1_cell_idx)
-    //                         !=
-    //                         bodies_weights_to_adj_cells[body_idx_src].end())
-    //                         {
-    //                             wsrc =
-    //                             bodies_weights_to_adj_cells[body_idx_src][adj1_cell_idx];
-    //                         }
+                        if (wsrc_in_adjacent1 > 0 && wtar > 0)
+                        {
+                            atoms_interactions_list[body_idx_tar].push_back(
+                                body_idx_src);
 
-    //                         if (wsrc > 0)
-    //                         {
-    //                             // const real wtar =
-    //                             //     fmm_weights_eval_.compute_weight(
-    //                             //         body_tar.x, cell.center,
-    //                             cell.radius,
-    //                             //         false);
+                            atoms_interactions_weights_tar[body_idx_tar]
+                                .push_back(wtar);
 
-    //                             const real wtar =
-    //                                 bodies_weights_to_adj_cells[body_idx_tar]
-    //                                                            [adj1_cell_idx];
-
-    //                             atoms_interactions_list[body_idx_tar].push_back(
-    //                                 body_idx_src);
-
-    //                             atoms_interactions_weights_tar[body_idx_tar]
-    //                                 .push_back(wtar);
-
-    //                             atoms_interactions_weights_src[body_idx_tar]
-    //                                 .push_back(wsrc);
-    //                         }
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     }
-
-    // }
-
-    //     for (const int &body_idx_tar : cell.bodiesIndices)
-    //     {
-    //         const FBody &body_tar = bodies_all_[body_idx_tar];
-
-    //         for (const int adj2_cell_idx : adj2_cells_unqiue_indices)
-    //         {
-    //             size_t bidxs = 0;
-    //             const FMMCell &adj2_cell = fmm_cells[adj2_cell_idx];
-    //             for (const int body_idx_src : adj2_cell.bodiesIndices)
-    //             {
-    //                 const FBody &body_src = bodies_all_[body_idx_src];
-    //                 if (is_part_of_reg_region[adj2_cell_idx][bidxs] == true)
-    //                 {
-
-    //                     for (size_t j = 0; j < adj1_cells_indices.size();
-    //                     j++)
-    //                     {
-    //                         const int adj1_cell_idx = adj1_cells_indices[j];
-    //                         if (adj1_cell_idx != cell.index)
-    //                         {
-    //                             const FMMCell &adj1_cell =
-    //                                 fmm_cells[adj1_cell_idx];
-
-    //                             // may need some adjustment
-    //                             const real wtar =
-    //                                 fmm_weights_eval_.compute_ac_weight(
-    //                                     body_tar.x, adj1_cell.center,
-    //                                     adj1_cell.radius);
-
-    //                             const real wsrc =
-    //                                 fmm_weights_eval_.compute_ac_weight(
-    //                                     body_src.x, adj2_cell.center,
-    //                                     adj2_cell.radius);
-
-    //                             const real wsrc_w =
-    //                                 fmm_weights_eval_.compute_ac_weight(
-    //                                     body_src.x, adj1_cell.center,
-    //                                     adj1_cell.radius);
-
-    //                             if (wtar != 0 && wsrc_w != 0)
-    //                             {
-    //                                 atoms_interactions_list[body_idx_tar]
-    //                                     .push_back(body_idx_src);
-
-    //                                 atoms_interactions_weights_tar[body_idx_tar]
-    //                                     .push_back(wtar);
-    //                                 atoms_interactions_weights_src[body_idx_tar]
-    //                                     .push_back(wsrc);
-    //                             }
-    //                         }
-    //                     }
-    //                 }
-    //                 bidxs++;
-    //             }
-    //         }
-    //     }
-
-    // }
+                            atoms_interactions_weights_src[body_idx_tar]
+                                .push_back(wsrc_in_adjacent1);
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     std::ofstream output_file("atom_interactions_dump.txt");
     if (!output_file.is_open())
