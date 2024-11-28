@@ -72,8 +72,9 @@ class FMMWeightEvaluator
         return ws; // Return the vector of weights.
     }
 
-    inline real compute_weight(RVec body_x, RVec center, real radius,
-                               bool is_periodic = false)
+    inline real compute_weight_within_cell(RVec body_x, RVec center,
+                                           real radius,
+                                           bool is_periodic = false)
     {
 
         const RVec dx = body_x - center;
@@ -99,11 +100,36 @@ class FMMWeightEvaluator
         return ws[0] * ws[1] * ws[2]; // Return the weight
     }
 
-    inline real compute_ac_weight(RVec body_x, RVec center, real radius)
+    inline real compute_weight_outside_cell(RVec body_x, RVec center,
+                                            real radius,
+                                            bool is_periodic = false)
     {
 
         const RVec dx = body_x - center;
         RVec ws = compute_w_xyz(dx, radius);
+
+        if (is_periodic == false)
+        {
+            real w_temp = ws[0] * ws[1] * ws[2];
+            if (w_temp > 0)
+            {
+                RVec dx_simcenter_inter = body_x - box_center_;
+                dx_simcenter_inter[0] = fabs(dx_simcenter_inter[0]);
+                dx_simcenter_inter[1] = fabs(dx_simcenter_inter[1]);
+                dx_simcenter_inter[2] = fabs(dx_simcenter_inter[2]);
+                const RVec dx_simcenter(dx_simcenter_inter[0] + reg_alpha_,
+                                        dx_simcenter_inter[1] + reg_alpha_,
+                                        dx_simcenter_inter[2] + reg_alpha_);
+
+                for (int d = 0; d <= 2; d++)
+                {
+                    if (dx_simcenter[d] >= box_radius_)
+                    {
+                        ws[d] = 1;
+                    }
+                }
+            }
+        }
         return ws[0] * ws[1] * ws[2]; // Return the weight
     }
 
