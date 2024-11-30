@@ -409,36 +409,35 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                 size_t bidxs2 = 0;
 
                 // problematic part
-                for (const int body_idx_src : adj2_cell.bodiesIndices)
+                for (const int body_idx_src : boundary_bodies_idxs[adj2_cell_idx])
                 {
                     const FBody &body_src = bodies_all_[body_idx_src];
                     for (size_t j = 0; j < adj1_cells_indices.size(); j++)
                     {
                         const int adj1_cell_idx = adj1_cells_indices[j];
                         const FMMCell &adj1_cell = fmm_cells[adj1_cell_idx];
+                        
                         if (adj1_cell_idx != cell.index)
                         {
-                            real wtar_adj1_partial =
-                                fmm_weights_eval_.compute_weight_outside_cell(
-                                    body_tar.x, adj1_cell.center,
-                                    adj1_cell.radius, false);
+                            real wtar_within_cell =
+                                fmm_weights_eval_.compute_weight_within_cell(
+                                    body_tar.x, cell.center,
+                                    cell.radius, false);
+
+                            // conditional addition ???
 
                             real wsrc2_adj1_partial =
                                 fmm_weights_eval_.compute_weight_outside_cell(
                                     body_src.x, adj1_cell.center,
                                     adj1_cell.radius, false);
 
-                            real wtar_adj1_full =
-                                bodies_weights_to_adj_cells[body_idx_tar]
-                                                           [adj1_cell_idx];
-                            real wtar_inf = wtar_adj1_full - wtar_adj1_partial;
-                            if (wsrc2_adj1_partial > 0 && wtar_inf > 0)
+                            if (wsrc2_adj1_partial > 0)
                             {
                                 atoms_interactions_list[body_idx_tar].push_back(
                                     body_idx_src);
 
                                 atoms_interactions_weights_tar[body_idx_tar]
-                                    .push_back(wtar_inf);
+                                    .push_back(wtar_within_cell);
 
                                 atoms_interactions_weights_src[body_idx_tar]
                                     .push_back(wsrc2_adj1_partial);
