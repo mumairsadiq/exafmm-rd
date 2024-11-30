@@ -199,10 +199,21 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
             {
                 if (body_idx_tar != body_idx_src)
                 {
+                    const FBody &body_src = bodies_all_[body_idx_src];
+                    real target_weight_within_cell =
+                        fmm_weights_eval_.compute_weight_within_cell(
+                            body_tar.x, cell.center, cell.radius, false);
+
+                    real source_weight_within_cell =
+                        fmm_weights_eval_.compute_weight_within_cell(
+                            body_src.x, cell.center, cell.radius, false);
+
                     atoms_interactions_list[body_idx_tar].push_back(
                         body_idx_src);
+                    
+                    atoms_interactions_weights_tar[body_idx_tar].push_back(
+                        target_weight_within_cell);
                     atoms_interactions_weights_src[body_idx_tar].push_back(1);
-                    atoms_interactions_weights_tar[body_idx_tar].push_back(1);
                 }
             }
         }
@@ -293,29 +304,33 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                 const FMMCell &adj2_cell =
                                     fmm_cells[adj2_cell_idx];
 
-                                if (adj2_cell_idx != cell.index)
+                                // if (adj2_cell_idx != cell.index)
                                 {
                                     size_t bidxs2 = 0;
                                     for (const int body_idx_src :
                                          adj2_cell.bodiesIndices)
                                     {
-                                        const FBody &body_src =
-                                            bodies_all_[body_idx_src];
+                                        if (body_idx_tar != body_idx_src)
+                                        {
+                                            const FBody &body_src =
+                                                bodies_all_[body_idx_src];
 
-                                        atoms_interactions_list[body_idx_tar]
-                                            .push_back(body_idx_src);
+                                            atoms_interactions_list
+                                                [body_idx_tar]
+                                                    .push_back(body_idx_src);
 
-                                        atoms_interactions_weights_tar
-                                            [body_idx_tar]
-                                                .push_back(
-                                                    target_weight_in_adj1);
+                                            atoms_interactions_weights_tar
+                                                [body_idx_tar]
+                                                    .push_back(
+                                                        target_weight_in_adj1);
 
-                                        atoms_interactions_weights_src
-                                            [body_idx_tar]
-                                                .push_back(
-                                                    bodies_weights_to_adj_cells
-                                                        [body_idx_src]
-                                                        [adj1_cell_idx]);
+                                            atoms_interactions_weights_src
+                                                [body_idx_tar]
+                                                    .push_back(
+                                                        bodies_weights_to_adj_cells
+                                                            [body_idx_src]
+                                                            [adj1_cell_idx]);
+                                        }
                                         bidxs2++;
                                     }
                                 }
@@ -408,7 +423,7 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                 const FMMCell &adj2_cell = fmm_cells[adj2_cell_idx];
                 size_t bidxs2 = 0;
 
-                // problematic part
+                // problematic part was mostly, corrected, in case for future
                 for (const int body_idx_src :
                      boundary_bodies_idxs[adj2_cell_idx])
                 {
@@ -454,8 +469,6 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                     }
                                 }
                             }
-
-                            // conditional addition ???
 
                             real wsrc2_adj1_partial =
                                 fmm_weights_eval_.compute_weight_outside_cell(
@@ -538,29 +551,29 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
         }
     }
 
-    std::ofstream output_file("atom_interactions_dump.txt");
-    if (!output_file.is_open())
-    {
-        throw std::runtime_error(
-            "Failed to open file for dumping atom interactions.");
-    }
+    // std::ofstream output_file("atom_interactions_dump.txt");
+    // if (!output_file.is_open())
+    // {
+    //     throw std::runtime_error(
+    //         "Failed to open file for dumping atom interactions.");
+    // }
 
-    // Write the data
-    for (size_t target = 0; target < bodies_all_.size(); ++target)
-    {
-        for (size_t i = 0; i < atoms_interactions_list[target].size(); ++i)
-        {
-            const int body_src_idx = atoms_interactions_list[target][i];
+    // // Write the data
+    // for (size_t target = 0; target < bodies_all_.size(); ++target)
+    // {
+    //     for (size_t i = 0; i < atoms_interactions_list[target].size(); ++i)
+    //     {
+    //         const int body_src_idx = atoms_interactions_list[target][i];
 
-            output_file << bodies_all_[body_src_idx].x << "--"
-                        << bodies_all_[target].x << "--"
-                        << atoms_interactions_weights_src[target][i] << "--"
-                        << atoms_interactions_weights_tar[target][i] << "\n";
-        }
-    }
+    //         output_file << bodies_all_[body_src_idx].x << "--"
+    //                     << bodies_all_[target].x << "--"
+    //                     << atoms_interactions_weights_src[target][i] << "--"
+    //                     << atoms_interactions_weights_tar[target][i] << "\n";
+    //     }
+    // }
 
-    // Close the file
-    output_file.close();
+    // // Close the file
+    // output_file.close();
 
     // std::ofstream output_file2("actual_belongings.txt");
 
