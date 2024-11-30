@@ -17,8 +17,8 @@ rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
     tbegin(build_and_traverse);
     tbegin(build_tree);
     Tree tree;
-    tree.build(bs, args.x, args.r, args.ncrit, Tree::TreeType::nonuniform);
-    // tree.build(bs, args.x, args.r, 3, Tree::TreeType::uniform);
+    // tree.build(bs, args.x, args.r, args.ncrit, Tree::TreeType::nonuniform);
+    tree.build(bs, args.x, args.r, 3, Tree::TreeType::uniform);
     cs = tree.get_cells();
     if(verbose && args.check_tree) check_tree(cs);
     tend(build_tree);
@@ -76,7 +76,7 @@ rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
         charges.push_back(bs[i].q);
     }
 
-    gmx::fmm::FMMDirectInteractions fmm_direct_inters(coordinates, charges, args.x, args.r, args.ncrit, args.rega);
+    gmx::fmm::FMMDirectInteractions fmm_direct_inters(coordinates, charges, args.x, args.r, 3, args.rega);
     auto forces_and_potentials = fmm_direct_inters.execute_direct_kernel();
 
     for (int i = 0; i < bs.size(); i++)
