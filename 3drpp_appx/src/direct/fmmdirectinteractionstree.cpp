@@ -51,19 +51,6 @@ int gmx::fmm::FMMDirectInteractionsTree::check_adjacent_parent_(int ca_idx,
     return dx[0] <= dist && dx[1] <= dist && dx[2] <= dist;
 }
 
-int gmx::fmm::FMMDirectInteractionsTree::check_adjacent(int ca_idx, int cb_idx)
-{
-    const FMMCell &ca = fmm_cells_[ca_idx];
-    const FMMCell &cb = fmm_cells_[cb_idx];
-    RVec dx = ca.center - cb.center;
-    dx[0] = fabs(dx[0]);
-    dx[1] = fabs(dx[1]);
-    dx[2] = fabs(dx[2]);
-    real dist = (ca.radius + cb.radius) *
-                1.001; // warning : DO NOT ignore the float error
-    return dx[0] <= dist && dx[1] <= dist && dx[2] <= dist;
-}
-
 void gmx::fmm::FMMDirectInteractionsTree::find_all_adjacent_cells_()
 {
 
