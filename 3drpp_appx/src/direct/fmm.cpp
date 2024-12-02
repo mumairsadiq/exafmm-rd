@@ -28,6 +28,7 @@ bool gmx::fmm::FMMDirectInteractions::is_point_within_radius(const RVec &point1,
 
 void gmx::fmm::FMMDirectInteractions::compute_weights_()
 {
+    TIME_BEGIN(compute_weights_func);
     atoms_interactions_list.clear();
     atoms_interactions_list.resize(bodies_all_.size());
 
@@ -39,42 +40,11 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
 
     const FMMCells &fmm_cells = fmm_direct_interactions_tree_.get_cells();
 
-    // needs optimization
-    std::vector<std::unordered_set<int>> adj_second_cells(fmm_cells.size());
-    for (size_t k = 0; k < fmm_cells.size(); k++)
-    {
-        const FMMCell &cell = fmm_cells[k];
-        const auto &adj1_cells_indices =
-            fmm_direct_interactions_tree_.get_adjacent_cells(k);
-
-        const std::unordered_set<int> &adj1_cells_indices_set =
-            fmm_direct_interactions_tree_.get_adjacent_cells_set(k);
-
-        for (size_t j = 0; j < adj1_cells_indices.size(); j++)
-        {
-            const int adj1_cell_idx = adj1_cells_indices[j];
-            const FMMCell &adj1_cell = fmm_cells[adj1_cell_idx];
-            if (adj1_cell.index != cell.index)
-            {
-                const FPIndices &adj2_cells_indices =
-                    fmm_direct_interactions_tree_.get_adjacent_cells(
-                        adj1_cell_idx);
-
-                for (size_t l = 0; l < adj2_cells_indices.size(); l++)
-                {
-                    if (adj1_cells_indices_set.find(adj2_cells_indices[l]) ==
-                        adj1_cells_indices_set.end())
-                    {
-                        adj_second_cells[k].insert(adj2_cells_indices[l]);
-                    }
-                }
-            }
-        }
-    }
-
     std::vector<FPIndices> boundary_bodies_idxs(fmm_cells.size());
     std::vector<std::vector<bool>> is_part_of_reg_region(fmm_cells.size());
 
+
+    TIME_BEGIN(compute_weights_func_simple);
     for (size_t k = 0; k < fmm_cells.size(); k++)
     {
         const FMMCell &cell = fmm_cells[k];
@@ -99,6 +69,9 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
         }
     }
 
+
+
+    TIME_BEGIN(compute_weights_func_building_adj_map);
     std::vector<std::unordered_map<int, real>> bodies_weights_to_adj_cells(
         bodies_all_.size());
 
@@ -119,46 +92,7 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
         }
     }
 
-    std::vector<FPIndices> reg_bodies_cell(fmm_cells.size());
-    std::vector<std::vector<real>> reg_weights_cell(fmm_cells.size());
-    std::vector<FPIndices> reg_bodies_from_cell_idx(fmm_cells.size());
-
-    for (size_t k = 0; k < fmm_cells.size(); k++)
-    {
-
-        const FMMCell &cell = fmm_cells[k];
-
-        const auto &adj1_cell =
-            fmm_direct_interactions_tree_.get_adjacent_cells(k);
-
-        // find out bodies from adjacent cells that are influencing this cell
-        for (size_t j = 0; j < adj1_cell.size(); j++)
-        {
-            const int adj_cell_idx = adj1_cell[j];
-            if (cell.index != adj_cell_idx)
-            {
-                // checkout for regularization boundary bodies from adjacent
-                // cells having weight less than one in their cell
-                for (const int &body_idx : boundary_bodies_idxs[adj_cell_idx])
-                {
-
-                    const FBody &body = bodies_all_[body_idx];
-                    const RVec dx = body.x - cell.center;
-                    const real w =
-                        fmm_weights_eval_.compute_weight_outside_cell(
-                            body.x, cell.center, cell.radius, false);
-
-                    if (w > 0)
-                    {
-                        reg_bodies_cell[k].push_back(body_idx);
-                        reg_weights_cell[k].push_back(w);
-                        reg_bodies_from_cell_idx[k].push_back(adj_cell_idx);
-                    }
-                }
-            }
-        }
-    }
-
+    
     for (size_t k = 0; k < fmm_cells.size(); k++)
     {
         const FMMCell &cell = fmm_cells[k];
@@ -220,30 +154,27 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
         }
     }
 
-    // interactions within same cell for each body
+    TIME_END(compute_weights_func_building_adj_map);
     for (size_t k = 0; k < fmm_cells.size(); k++)
     {
         const FMMCell &cell = fmm_cells[k];
         for (const int &body_idx_tar : cell.bodiesIndices)
         {
-
             const FBody &body_tar = bodies_all_[body_idx_tar];
+
+            // it is possible that target weight is split into current
+            // cell and first adjacent cell, and source may only
+            // interact from adjacent cell
+            real target_weight_within_cell =
+                fmm_weights_eval_.compute_weight_within_cell(
+                    body_tar.x, cell.center, cell.radius, false);
+
+            // all bodies within same cell
             for (const int body_idx_src : cell.bodiesIndices)
             {
                 if (body_idx_tar != body_idx_src)
                 {
                     const FBody &body_src = bodies_all_[body_idx_src];
-
-                    // it is possible that target weight is split into current
-                    // cell and first adjacent cell, and source may only
-                    // interact from adjacent cell
-                    real target_weight_within_cell =
-                        fmm_weights_eval_.compute_weight_within_cell(
-                            body_tar.x, cell.center, cell.radius, false);
-
-                    real source_weight_within_cell =
-                        fmm_weights_eval_.compute_weight_within_cell(
-                            body_src.x, cell.center, cell.radius, false);
 
                     atoms_interactions_list[body_idx_tar].push_back(
                         body_idx_src);
@@ -255,19 +186,10 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                     atoms_interactions_weights_src[body_idx_tar].push_back(1);
                 }
             }
-        }
-    }
 
-    for (size_t k = 0; k < fmm_cells.size(); k++)
-    {
-        const FMMCell &cell = fmm_cells[k];
-        const auto &adj1_cells_indices =
-            fmm_direct_interactions_tree_.get_adjacent_cells(k);
-
-        size_t bidxt = 0;
-        for (const int &body_idx_tar : cell.bodiesIndices)
-        {
-            const FBody &body_tar = bodies_all_[body_idx_tar];
+            // handling all bodies in first adjacent cell
+            const auto &adj1_cells_indices =
+                fmm_direct_interactions_tree_.get_adjacent_cells(k);
 
             for (size_t j = 0; j < adj1_cells_indices.size(); j++)
             {
@@ -280,26 +202,26 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                     {
                         const FBody &body_src = bodies_all_[body_idx_src];
 
-                        real target_weight_within_cell =
-                            fmm_weights_eval_.compute_weight_within_cell(
-                                body_tar.x, cell.center, cell.radius, false);
-
                         atoms_interactions_list[body_idx_tar].push_back(
                             body_idx_src);
 
                         atoms_interactions_weights_tar[body_idx_tar].push_back(
                             target_weight_within_cell);
 
+                        // total influence of source body on target cell
                         atoms_interactions_weights_src[body_idx_tar].push_back(
                             bodies_weights_to_adj_cells[body_idx_src]
                                                        [cell.index]);
                     }
                 }
             }
-            bidxt++;
         }
     }
 
+    TIME_END(compute_weights_func_simple);
+
+
+    TIME_BEGIN(compute_weights_1st_reg);
     for (size_t k = 0; k < fmm_cells.size(); k++)
     {
         const FMMCell &cell = fmm_cells[k];
@@ -334,6 +256,8 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                             fmm_direct_interactions_tree_
                                 .get_adjacent_cells_set(adj1_cell_idx);
 
+
+                        // handling bodies in adjacent of first adjacent to target cell
                         for (size_t l = 0; l < adj2_cells_indices.size(); l++)
                         {
                             const int adj2_cell_idx = adj2_cells_indices[l];
@@ -361,6 +285,7 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                 }
                             }
 
+                            // not optimal so far
                             for (size_t j2 = 0; j2 < adj1_cells_indices.size();
                                  j2++)
                             {
@@ -406,7 +331,88 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
             }
         }
     }
+    TIME_END(compute_weights_1st_reg);
 
+
+
+    TIME_BEGIN(compute_weights_2nd_reg_pre_comp);
+    // needs optimization
+    std::vector<std::unordered_set<int>> adj_second_cells(fmm_cells.size());
+    for (size_t k = 0; k < fmm_cells.size(); k++)
+    {
+        const FMMCell &cell = fmm_cells[k];
+        const auto &adj1_cells_indices =
+            fmm_direct_interactions_tree_.get_adjacent_cells(k);
+
+        const std::unordered_set<int> &adj1_cells_indices_set =
+            fmm_direct_interactions_tree_.get_adjacent_cells_set(k);
+
+        for (size_t j = 0; j < adj1_cells_indices.size(); j++)
+        {
+            const int adj1_cell_idx = adj1_cells_indices[j];
+            const FMMCell &adj1_cell = fmm_cells[adj1_cell_idx];
+            if (adj1_cell.index != cell.index)
+            {
+                const FPIndices &adj2_cells_indices =
+                    fmm_direct_interactions_tree_.get_adjacent_cells(
+                        adj1_cell_idx);
+
+                for (size_t l = 0; l < adj2_cells_indices.size(); l++)
+                {
+                    if (adj1_cells_indices_set.find(adj2_cells_indices[l]) ==
+                        adj1_cells_indices_set.end())
+                    {
+                        adj_second_cells[k].insert(adj2_cells_indices[l]);
+                    }
+                }
+            }
+        }
+    }
+
+    std::vector<FPIndices> reg_bodies_cell(fmm_cells.size());
+    std::vector<std::vector<real>> reg_weights_cell(fmm_cells.size());
+    std::vector<FPIndices> reg_bodies_from_cell_idx(fmm_cells.size());
+
+    for (size_t k = 0; k < fmm_cells.size(); k++)
+    {
+
+        const FMMCell &cell = fmm_cells[k];
+
+        const auto &adj1_cell =
+            fmm_direct_interactions_tree_.get_adjacent_cells(k);
+
+        // find out bodies from adjacent cells that are influencing this cell
+        for (size_t j = 0; j < adj1_cell.size(); j++)
+        {
+            const int adj_cell_idx = adj1_cell[j];
+            if (cell.index != adj_cell_idx)
+            {
+                // checkout for regularization boundary bodies from adjacent
+                // cells having weight less than one in their cell
+                for (const int &body_idx : boundary_bodies_idxs[adj_cell_idx])
+                {
+
+                    const FBody &body = bodies_all_[body_idx];
+                    const RVec dx = body.x - cell.center;
+                    const real w =
+                        fmm_weights_eval_.compute_weight_outside_cell(
+                            body.x, cell.center, cell.radius, false);
+
+                    if (w > 0)
+                    {
+                        reg_bodies_cell[k].push_back(body_idx);
+                        reg_weights_cell[k].push_back(w);
+                        reg_bodies_from_cell_idx[k].push_back(adj_cell_idx);
+                    }
+                }
+            }
+        }
+    }
+    TIME_END(compute_weights_2nd_reg_pre_comp);
+
+
+    // the most unoptimal loop
+    TIME_BEGIN(compute_weights_2nd_reg);
     for (size_t k = 0; k < fmm_cells.size(); k++)
     {
         const FMMCell &cell = fmm_cells[k];
@@ -489,7 +495,7 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                     }
                 }
 
-                // the most unoptimal loop, rethink later
+                
                 for (size_t j = 0; j < adj1_cells_indices.size(); j++)
                 {
 
@@ -548,6 +554,9 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
             }
         }
     }
+    TIME_END(compute_weights_2nd_reg);
+
+    TIME_END(compute_weights_func);
 
     // std::ofstream output_file("atom_interactions_dump.txt");
     // if (!output_file.is_open())
