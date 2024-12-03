@@ -32,6 +32,23 @@ class FMMWeightEvaluator
         return compute_reg_w(x);
     }
 
+    /**
+     * Compute weights separately for each dimension in 3D space.
+     * @param dx The distance vector (x, y, z).
+     * @param R The radius of the interaction region.
+     * @return A vector of weights, one for each dimension (x, y, z).
+     */
+    inline RVec compute_w_xyz(RVec dx, real R)
+    {
+        RVec ws; // Result vector to store weights for each dimension.
+        for (int d = 0; d < 3; d++)
+        {
+            ws[d] =
+                compute_w_single(dx[d], R); // Compute weight for dimension `d`.
+        }
+        return ws; // Return the vector of weights.
+    }
+
     inline real compute_w(RVec dx, real R)
     {
         real w = 1;
@@ -53,23 +70,6 @@ class FMMWeightEvaluator
         : box_center_(box_center), box_radius_(box_radius),
           reg_alpha_(reg_alpha)
     {
-    }
-
-    /**
-     * Compute weights separately for each dimension in 3D space.
-     * @param dx The distance vector (x, y, z).
-     * @param R The radius of the interaction region.
-     * @return A vector of weights, one for each dimension (x, y, z).
-     */
-    inline RVec compute_w_xyz(RVec dx, real R)
-    {
-        RVec ws; // Result vector to store weights for each dimension.
-        for (int d = 0; d < 3; d++)
-        {
-            ws[d] =
-                compute_w_single(dx[d], R); // Compute weight for dimension `d`.
-        }
-        return ws; // Return the vector of weights.
     }
 
     inline real compute_weight_within_cell(RVec body_x, RVec center,
@@ -100,6 +100,33 @@ class FMMWeightEvaluator
         return ws[0] * ws[1] * ws[2]; // Return the weight
     }
 
+    inline RVec compute_weight_in_cell(RVec body_x, RVec center, real radius,
+                                       bool is_periodic = false)
+    {
+
+        const RVec dx = body_x - center;
+        RVec ws = compute_w_xyz(dx, radius);
+        if (is_periodic == false)
+        {
+            RVec dx_simcenter_inter = body_x - box_center_;
+            dx_simcenter_inter[0] = fabs(dx_simcenter_inter[0]);
+            dx_simcenter_inter[1] = fabs(dx_simcenter_inter[1]);
+            dx_simcenter_inter[2] = fabs(dx_simcenter_inter[2]);
+            const RVec dx_simcenter(dx_simcenter_inter[0] + reg_alpha_,
+                                    dx_simcenter_inter[1] + reg_alpha_,
+                                    dx_simcenter_inter[2] + reg_alpha_);
+
+            for (int d = 0; d <= 2; d++)
+            {
+                if (dx_simcenter[d] >= box_radius_)
+                {
+                    ws[d] = 1;
+                }
+            }
+        }
+        return ws;
+    }
+
     inline real compute_weight_outside_cell(RVec body_x, RVec center,
                                             real radius,
                                             bool is_periodic = false)
@@ -111,7 +138,7 @@ class FMMWeightEvaluator
         if (is_periodic == false)
         {
             real w_temp = ws[0] * ws[1] * ws[2];
-            if (w_temp > 0)
+            if (w_temp != 0)
             {
                 RVec dx_simcenter_inter = body_x - box_center_;
                 dx_simcenter_inter[0] = fabs(dx_simcenter_inter[0]);

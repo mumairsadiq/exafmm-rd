@@ -14,6 +14,7 @@ namespace gmx
 {
 using real = rtfmm::real;
 using RVec = rtfmm::vec3r;
+using BVec = rtfmm::vec<3, bool>;
 namespace fmm
 {
 
@@ -85,6 +86,8 @@ struct FMMCell
     real radiusParent; // Radius of parent of cell
     RVec centerParent; // Center coordinates of the parent of the cell
     FPIndices bodiesIndices; // Indices of bodies in the cell
+    FPIndices bodiesIndicesWithReg;
+    std::vector<real> weights;
 
     // Constructors
     FMMCell()
