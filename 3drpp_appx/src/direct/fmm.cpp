@@ -36,28 +36,114 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
     pair_list_b_src.clear();
     pair_list_b_src.resize(bodies_all_.size());
 
-    pair_list_b_tar.clear();
-    pair_list_b_tar.resize(bodies_all_.size());
+    pair_list_w_tar.clear();
+    pair_list_w_tar.resize(bodies_all_.size());
 
     w_per_atom.clear();
     w_per_atom.resize(bodies_all_.size());
 
+
     FMMCells &fmm_cells = fmm_direct_interactions_tree_.get_cells();
+
+    // duplicate particles (indices) in adjacent cells
+    std::vector<FPIndices> boundary_bodies_idxs(fmm_cells.size());
+    for (size_t k = 0; k < fmm_cells.size(); k++)
+    {
+        FMMCell &cell = fmm_cells[k];
+        for (const int &body_idx : cell.bodiesIndices)
+        {
+            const FBody &body = bodies_all_[body_idx];
+            const real w = fmm_weights_eval_.compute_weight_within_cell(
+                body.x, cell.center, cell.radius, false);
+
+            if (w < 1)
+            {
+                boundary_bodies_idxs[k].push_back(body_idx);
+            }
+            cell.bodiesIndicesReg.push_back(body_idx);
+            cell.weights.push_back(w);
+        }
+    }
+
+    for (size_t k = 0; k < fmm_cells.size(); k++)
+    {
+
+        FMMCell &cell = fmm_cells[k];
+
+        const auto &adj1_cell =
+            fmm_direct_interactions_tree_.get_adjacent_cells(k);
+
+        // find out bodies from adjacent cells that are influencing this cell
+        for (size_t j = 0; j < adj1_cell.size(); j++)
+        {
+            const int adj_cell_idx = adj1_cell[j];
+            if (cell.index != adj_cell_idx)
+            {
+                // checkout for regularization boundary bodies from adjacent
+                // cells having weight less than one in their cell
+                for (const int &body_idx : boundary_bodies_idxs[adj_cell_idx])
+                {
+
+                    const FBody &body = bodies_all_[body_idx];
+                    const RVec dx = body.x - cell.center;
+                    const real w =
+                        fmm_weights_eval_.compute_weight_outside_cell(
+                            body.x, cell.center, cell.radius, false);
+
+                    if (w > 0)
+                    {
+                        cell.bodiesIndicesReg.push_back(body_idx);
+                        cell.weights.push_back(w);
+                    }
+                }
+            }
+        }
+    }
+
     for (size_t k = 0; k < fmm_cells.size(); k++)
     {
         const FMMCell &cell = fmm_cells[k];
-        for (const int &body_idx_tar : cell.bodiesIndices)
+        for (const int &body_idx_tar : cell.bodiesIndicesReg)
         {
             const FBody &body_tar = bodies_all_[body_idx_tar];
             const RVec ws = fmm_weights_eval_.compute_weight_in_cell(
                 body_tar.x, cell.center, cell.radius, false);
 
             w_per_atom[body_idx_tar] = ws;
+        }
+    }
 
-            bool bxt = ws[0] != 1 ? 1 : 0;
-            bool byt = ws[0] != 1 ? 1 : 0;
-            bool bzt = ws[0] != 1 ? 1 : 0;
-            pair_list_b_tar[body_idx_tar] = {bxt, byt, bzt};
+
+    // redundant loop, access second neigbour directly later on
+    std::vector<std::unordered_set<int>> adj_second_cells(fmm_cells.size());
+    for (size_t k = 0; k < fmm_cells.size(); k++)
+    {
+        const FMMCell &cell = fmm_cells[k];
+        const auto &adj1_cells_indices =
+            fmm_direct_interactions_tree_.get_adjacent_cells(k);
+
+        const std::unordered_set<int> &adj1_cells_indices_set =
+            fmm_direct_interactions_tree_.get_adjacent_cells_set(k);
+
+        for (size_t j = 0; j < adj1_cells_indices.size(); j++)
+        {
+            const int adj1_cell_idx = adj1_cells_indices[j];
+            const FMMCell &adj1_cell = fmm_cells[adj1_cell_idx];
+            if (adj1_cell.index != cell.index)
+            {
+                const FPIndices &adj2_cells_indices =
+                    fmm_direct_interactions_tree_.get_adjacent_cells(
+                        adj1_cell_idx);
+
+                for (size_t l = 0; l < adj2_cells_indices.size(); l++)
+                {
+                    if (adj1_cells_indices_set.find(adj2_cells_indices[l]) ==
+                        adj1_cells_indices_set.end())
+                    {
+                        adj_second_cells[k].insert(adj2_cells_indices[l]);
+                    }
+                }
+            }
         }
     }
 
@@ -67,7 +153,7 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
         const auto &adj1_cell =
             fmm_direct_interactions_tree_.get_adjacent_cells(k);
         size_t bidxt = 0;
-        for (const int &body_idx_tar : cell.bodiesIndices)
+        for (const int &body_idx_tar : cell.bodiesIndicesReg)
         {
             const FBody &body_tar = bodies_all_[body_idx_tar];
 
@@ -84,12 +170,14 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
             {
                 if (body_idx_tar != body_idx_src)
                 {
-                    const FBody &body_src = bodies_all_[body_idx_src];
+                    // const FBody &body_src = bodies_all_[body_idx_src];
                     // pair_list[body_idx_tar].push_back(body_idx_src);
+                    // pair_list_w_tar[body_idx_tar].push_back(cell.weights[bidxt]);
                     // pair_list_b_src[body_idx_tar].push_back({1, 1, 1});
                 }
             }
-            bidxt++;
+
+            const real region_of_tcell = cell.radius * 3; // one and half cell
 
             for (size_t j = 0; j < adj1_cell.size(); j++)
             {
@@ -101,16 +189,66 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                     // cells having weight less than one in their cell
                     for (const int &body_idx_src : adj_cell.bodiesIndices)
                     {
-
-                        const RVec ws = w_per_atom[body_idx_src];
-                        bool bx = ws[0] < 1 ? 0 : 1;
-                        bool by = ws[1] < 1 ? 0 : 1;
-                        bool bz = ws[2] < 1 ? 0 : 1;
-                        pair_list[body_idx_tar].push_back(body_idx_src);
-                        pair_list_b_src[body_idx_tar].push_back({bx, by, bz});
+                        const FBody &body_src = bodies_all_[body_idx_src];
+                        if (body_idx_tar != body_idx_src)
+                        {
+                            const RVec ws = w_per_atom[body_idx_src];
+                            bool bx =
+                                ws[0] < 1
+                                    ? (fabs(body_src.x[0] - cell.center[0]) +
+                                                   fmm_weights_eval_
+                                                       .getRegAlpha() >=
+                                               region_of_tcell
+                                           ? 0
+                                           : 1)
+                                    : 1;
+                            bool by =
+                                ws[1] < 1
+                                    ? (fabs(body_src.x[1] - cell.center[1]) +
+                                                   fmm_weights_eval_
+                                                       .getRegAlpha() >=
+                                               region_of_tcell
+                                           ? 0
+                                           : 1)
+                                    : 1;
+                            bool bz =
+                                ws[2] < 1
+                                    ? (fabs(body_src.x[2] - cell.center[2]) +
+                                                   fmm_weights_eval_
+                                                       .getRegAlpha() >=
+                                               region_of_tcell
+                                           ? 0
+                                           : 1)
+                                    : 1;
+                            pair_list_w_tar[body_idx_tar].push_back(
+                                cell.weights[bidxt]);
+                            pair_list[body_idx_tar].push_back(body_idx_src);
+                            pair_list_b_src[body_idx_tar].push_back(
+                                {bx, by, bz});
+                        }
                     }
                 }
             }
+            
+            for (const int adj2_cell_idx : adj_second_cells[k])
+            {
+                const FMMCell &adj2_cell = fmm_cells[adj2_cell_idx];
+
+                for (const int body_idx_src :
+                     boundary_bodies_idxs[adj2_cell_idx])
+                {
+                    pair_list_w_tar[body_idx_tar].push_back(
+                                cell.weights[bidxt]);
+                    pair_list[body_idx_tar].push_back(body_idx_src);
+
+                    // correct this now
+                    pair_list_b_src[body_idx_tar].push_back(
+                        {1, 1, 1});
+                }
+            }
+            
+            
+            bidxt++;
         }
     }
 }
@@ -138,10 +276,8 @@ gmx::fmm::FMMDirectInteractions::execute_direct_kernel()
         int ix = 0;
         for (auto &body_src_idx : pair_list[i])
         {
-            const RVec wtar_ws = w_per_atom[i];
-            const BVec wtar_b = pair_list_b_tar[i];
+            const real wtar = pair_list_w_tar[i][ix];
 
-            real wtar = wtar_ws[0] * wtar_ws[1] * wtar_ws[2];
             gmx::fmm::FBody &asrc = bodies_all_[body_src_idx];
 
             const BVec wsrc_b = pair_list_b_src[i][ix];
@@ -154,19 +290,23 @@ gmx::fmm::FMMDirectInteractions::execute_direct_kernel()
             const real dz = zj - asrc.x[2];
 
             real wsrc_x =
-                wsrc_b[0] == 1 ? 1 : (dx < 0 ? wsrc_ws[0] : 1 - wsrc_ws[0]);
+                wsrc_b[0] == 1 ? 1 : (dx < 0 ? 1 - wsrc_ws[0] : wsrc_ws[0]);
             real wsrc_y =
-                wsrc_b[1] == 1 ? 1 : (dy < 0 ?  wsrc_ws[1] :1 - wsrc_ws[1]);
+                wsrc_b[1] == 1 ? 1 : (dy < 0 ? 1 - wsrc_ws[1] : wsrc_ws[1]);
             real wsrc_z =
-                wsrc_b[2] == 1 ? 1 : (dz < 0 ? wsrc_ws[2] : 1 - wsrc_ws[2]);
+                wsrc_b[2] == 1 ? 1 : (dz < 0 ? 1 - wsrc_ws[2] : wsrc_ws[2]);
 
             real pj = 0.0;
             real fxj = 0.0, fyj = 0.0, fzj = 0.0;
 
             real wsrc = wsrc_x * wsrc_y * wsrc_z;
 
-            std::cout << asrc.x << "--" << body_tar.x << "--" << wsrc << "--"
-                      << wtar << "\n";
+            if (wsrc_x < 1 || wsrc_y < 1 || wsrc_z < 1)
+                std::cout << "Flag: " << asrc.x << "--" << body_tar.x << "--" << wsrc
+                          << "--" << wtar << "\n";
+            else
+            std::cout <<  asrc.x << "--" << body_tar.x << "--" << wsrc
+                          << "--" << wtar << "\n";
 
             // const real wsrcx = pair_list_b_src[i][ix][0] != 0
             //                        ? w_per_atom[body_src_idx][0]

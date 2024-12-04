@@ -131,7 +131,6 @@ class FMMWeightEvaluator
                                             real radius,
                                             bool is_periodic = false)
     {
-
         const RVec dx = body_x - center;
         RVec ws = compute_w_xyz(dx, radius);
 
