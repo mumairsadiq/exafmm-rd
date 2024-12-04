@@ -155,15 +155,6 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
         {
             const FBody &body_tar = bodies_all_[body_idx_tar];
 
-            // it is possible that target weight is split into current
-            // cell and first adjacent cell, and source may only
-            // interact from adjacent cell
-            // real target_weight_within_cell =
-            //     fmm_weights_eval_.compute_weight_within_cell(
-            //         body_tar.x, cell.center, cell.radius, false);
-
-            // all bodies within same cell
-
             for (const int body_idx_src : cell.bodiesIndices)
             {
                 if (body_idx_tar != body_idx_src)
