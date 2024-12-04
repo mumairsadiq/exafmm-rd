@@ -42,7 +42,6 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
     w_per_atom.clear();
     w_per_atom.resize(bodies_all_.size());
 
-
     FMMCells &fmm_cells = fmm_direct_interactions_tree_.get_cells();
 
     // duplicate particles (indices) in adjacent cells
@@ -113,7 +112,6 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
         }
     }
 
-
     // redundant loop, access second neigbour directly later on
     std::vector<std::unordered_set<int>> adj_second_cells(fmm_cells.size());
     for (size_t k = 0; k < fmm_cells.size(); k++)
@@ -170,10 +168,10 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
             {
                 if (body_idx_tar != body_idx_src)
                 {
-                    // const FBody &body_src = bodies_all_[body_idx_src];
-                    // pair_list[body_idx_tar].push_back(body_idx_src);
-                    // pair_list_w_tar[body_idx_tar].push_back(cell.weights[bidxt]);
-                    // pair_list_b_src[body_idx_tar].push_back({1, 1, 1});
+                    const FBody &body_src = bodies_all_[body_idx_src];
+                    pair_list[body_idx_tar].push_back(body_idx_src);
+                    pair_list_w_tar[body_idx_tar].push_back(cell.weights[bidxt]);
+                    pair_list_b_src[body_idx_tar].push_back({1, 1, 1});
                 }
             }
 
@@ -229,7 +227,7 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                     }
                 }
             }
-            
+
             for (const int adj2_cell_idx : adj_second_cells[k])
             {
                 const FMMCell &adj2_cell = fmm_cells[adj2_cell_idx];
@@ -237,17 +235,42 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                 for (const int body_idx_src :
                      boundary_bodies_idxs[adj2_cell_idx])
                 {
+                    const FBody &body_src = bodies_all_[body_idx_src];
                     pair_list_w_tar[body_idx_tar].push_back(
-                                cell.weights[bidxt]);
+                        cell.weights[bidxt]);
                     pair_list[body_idx_tar].push_back(body_idx_src);
 
+                    const RVec ws = w_per_atom[body_idx_src];
                     // correct this now
-                    pair_list_b_src[body_idx_tar].push_back(
-                        {1, 1, 1});
+                    bool bx =
+                        ws[0] < 1
+                            ? (fabs(body_src.x[0] - cell.center[0]) +
+                                           fmm_weights_eval_.getRegAlpha() >=
+                                       region_of_tcell
+                                   ? 0
+                                   : 1)
+                            : 1;
+                    bool by =
+                        ws[1] < 1
+                            ? (fabs(body_src.x[1] - cell.center[1]) +
+                                           fmm_weights_eval_.getRegAlpha() >=
+                                       region_of_tcell
+                                   ? 0
+                                   : 1)
+                            : 1;
+                    bool bz =
+                        ws[2] < 1
+                            ? (fabs(body_src.x[2] - cell.center[2]) +
+                                           fmm_weights_eval_.getRegAlpha() >=
+                                       region_of_tcell
+                                   ? 0
+                                   : 1)
+                            : 1;
+
+                    pair_list_b_src[body_idx_tar].push_back({bx, by, bz});
                 }
             }
-            
-            
+
             bidxt++;
         }
     }
@@ -289,6 +312,8 @@ gmx::fmm::FMMDirectInteractions::execute_direct_kernel()
             const real dy = yj - asrc.x[1];
             const real dz = zj - asrc.x[2];
 
+
+            // switching function
             real wsrc_x =
                 wsrc_b[0] == 1 ? 1 : (dx < 0 ? 1 - wsrc_ws[0] : wsrc_ws[0]);
             real wsrc_y =
@@ -300,26 +325,6 @@ gmx::fmm::FMMDirectInteractions::execute_direct_kernel()
             real fxj = 0.0, fyj = 0.0, fzj = 0.0;
 
             real wsrc = wsrc_x * wsrc_y * wsrc_z;
-
-            if (wsrc_x < 1 || wsrc_y < 1 || wsrc_z < 1)
-                std::cout << "Flag: " << asrc.x << "--" << body_tar.x << "--" << wsrc
-                          << "--" << wtar << "\n";
-            else
-            std::cout <<  asrc.x << "--" << body_tar.x << "--" << wsrc
-                          << "--" << wtar << "\n";
-
-            // const real wsrcx = pair_list_b_src[i][ix][0] != 0
-            //                        ? w_per_atom[body_src_idx][0]
-            //                        : 1;
-            // const real wsrcy = pair_list_b_src[i][ix][1] != 0
-            //                        ? w_per_atom[body_src_idx][1]
-            //                        : 1;
-            // const real wsrcz = pair_list_b_src[i][ix][2] != 0
-            //                        ? w_per_atom[body_src_idx][2]
-            //                        : 1;
-            // const real wsrc = wsrcx * wsrcy * wsrcz;
-
-            // Compute distance differences
 
             // Compute squared distance
             real invr = dx * dx + dy * dy + dz * dz;
