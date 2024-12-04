@@ -78,8 +78,6 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
             const int adj_cell_idx = adj1_cell[j];
             if (cell.index != adj_cell_idx)
             {
-                // checkout for regularization boundary bodies from adjacent
-                // cells having weight less than one in their cell
                 for (const int &body_idx : boundary_bodies_idxs[adj_cell_idx])
                 {
 
@@ -112,7 +110,7 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
         }
     }
 
-    // redundant loop, access second neigbour directly later on
+    // redundant loop, access second neighbour directly later on
     std::vector<std::unordered_set<int>> adj_second_cells(fmm_cells.size());
     for (size_t k = 0; k < fmm_cells.size(); k++)
     {
@@ -174,8 +172,7 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                 if (cell.index != adj_cell_idx)
                 {
                     const FMMCell &adj_cell = fmm_cells[adj_cell_idx];
-                    // checkout for regularization boundary bodies from adjacent
-                    // cells having weight less than one in their cell
+                    
                     for (const int &body_idx_src : adj_cell.bodiesIndices)
                     {
                         const FBody &body_src = bodies_all_[body_idx_src];
@@ -227,6 +224,9 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                      boundary_bodies_idxs[adj2_cell_idx])
                 {
                     const FBody &body_src = bodies_all_[body_idx_src];
+
+                    // checking pending if source particle borders with 1st adjacent cell, way out is to check radius + reg_alpha directly
+                    // otherwise it is irrelevant
                     pair_list_w_tar[body_idx_tar].push_back(
                         cell.weights[bidxt]);
                     pair_list[body_idx_tar].push_back(body_idx_src);
