@@ -32,9 +32,7 @@ struct OffsetAndNumber
     int number;
 
     OffsetAndNumber() {}
-    OffsetAndNumber(int offset_, int number_) : offset(offset_), number(number_)
-    {
-    }
+    OffsetAndNumber(int offset_, int number_) : offset(offset_), number(number_) {}
 
     friend std::ostream &operator<<(std::ostream &os, const OffsetAndNumber &on)
     {
@@ -50,16 +48,11 @@ struct FBodies : public std::vector<FBody>
 
     FBodies() = default;
     // Constructor that calls initialize from the initializer list
-    FBodies(const std::vector<RVec> &coordinates,
-            const std::vector<real> &charges)
-    {
-        initialize(coordinates, charges);
-    }
+    FBodies(const std::vector<RVec> &coordinates, const std::vector<real> &charges) { initialize(coordinates, charges); }
 
   private:
     // Helper function to initialize FBodies from coordinates and charges
-    void initialize(const std::vector<RVec> &coordinates,
-                    const std::vector<real> &charges)
+    void initialize(const std::vector<RVec> &coordinates, const std::vector<real> &charges)
     {
         this->reserve(coordinates.size()); // Reserve memory for efficiency
 
@@ -76,15 +69,15 @@ struct FBodies : public std::vector<FBody>
 
 struct FMMCell
 {
-    size_t index;      // Unique cell index
-    int octant;        // Octant relative to the parent cell (0-7 for relative
-                       // position, 13 for central/hitorikko)
-    int depth;         // Depth of the cell
-    real radius;       // Radius of the cell
-    RVec center;       // Center coordinates of the cell
-    Range crange;      // Children information of the cell
-    real radiusParent; // Radius of parent of cell
-    RVec centerParent; // Center coordinates of the parent of the cell
+    size_t index;               // Unique cell index
+    int octant;                 // Octant relative to the parent cell (0-7 for relative
+                                // position, 13 for central/hitorikko)
+    int depth;                  // Depth of the cell
+    real radius;                // Radius of the cell
+    RVec center;                // Center coordinates of the cell
+    Range crange;               // Children information of the cell
+    real radiusParent;          // Radius of parent of cell
+    RVec centerParent;          // Center coordinates of the parent of the cell
     FPIndices bodiesIndices;    // Indices of bodies in the cell
     FPIndices bodiesIndicesReg; // Indices of bodies in the cell
     std::vector<real> weights;  // Indices of bodies in the cell

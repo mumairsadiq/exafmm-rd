@@ -20,8 +20,7 @@ class IFMMTree
 class FMMTree : public IFMMTree
 {
   public:
-    FMMTree(const FBodies &bodies, const RVec box_center, const real box_radius,
-            const size_t max_cell_param, const bool is_tree_uniform = true);
+    FMMTree(const FBodies &bodies, const RVec box_center, const real box_radius, const size_t max_cell_param, const bool is_tree_uniform = true);
 
     // Overriding methods from IFMMTree
     FMMCells &get_cells() override;

@@ -14,9 +14,7 @@ namespace fmm
 class FMMDirectInteractionsTree : public FMMTree
 {
   public:
-    FMMDirectInteractionsTree(const FBodies &bodies, const RVec box_center,
-                              const real box_radius,
-                              const size_t cell_limit_param,
+    FMMDirectInteractionsTree(const FBodies &bodies, const RVec box_center, const real box_radius, const size_t cell_limit_param,
                               const bool is_tree_uniform = true);
 
     // New methods specific to direct interactions

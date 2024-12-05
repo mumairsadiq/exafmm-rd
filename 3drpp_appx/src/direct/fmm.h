@@ -11,13 +11,10 @@ namespace fmm
 class FMMDirectInteractions
 {
   public:
-    FMMDirectInteractions(const std::vector<RVec> coordinates,
-                          const std::vector<real> charges,
-                          const RVec box_center, const real box_radius,
+    FMMDirectInteractions(const std::vector<RVec> coordinates, const std::vector<real> charges, const RVec box_center, const real box_radius,
                           const size_t cell_limit_param, const real reg_alpha);
 
-    bool is_point_within_radius(const RVec &point1, const RVec &point2,
-                                double radius);
+    bool is_point_within_radius(const RVec &point1, const RVec &point2, double radius);
 
     // returns forces and potentials pair
     std::vector<std::pair<RVec, real>> execute_direct_kernel();

@@ -43,8 +43,7 @@ class FMMWeightEvaluator
         RVec ws; // Result vector to store weights for each dimension.
         for (int d = 0; d < 3; d++)
         {
-            ws[d] =
-                compute_w_single(dx[d], R); // Compute weight for dimension `d`.
+            ws[d] = compute_w_single(dx[d], R); // Compute weight for dimension `d`.
         }
         return ws; // Return the vector of weights.
     }
@@ -65,16 +64,12 @@ class FMMWeightEvaluator
      * @param reg_alpha A regularization parameter that determines the
      * smoothness of the weight function.
      */
-    FMMWeightEvaluator(const RVec box_center, const real box_radius,
-                       const real reg_alpha)
-        : box_center_(box_center), box_radius_(box_radius),
-          reg_alpha_(reg_alpha)
+    FMMWeightEvaluator(const RVec box_center, const real box_radius, const real reg_alpha)
+        : box_center_(box_center), box_radius_(box_radius), reg_alpha_(reg_alpha)
     {
     }
 
-    inline real compute_weight_within_cell(RVec body_x, RVec center,
-                                           real radius,
-                                           bool is_periodic = false)
+    inline real compute_weight_within_cell(RVec body_x, RVec center, real radius, bool is_periodic = false)
     {
 
         const RVec dx = body_x - center;
@@ -85,9 +80,7 @@ class FMMWeightEvaluator
             dx_simcenter_inter[0] = fabs(dx_simcenter_inter[0]);
             dx_simcenter_inter[1] = fabs(dx_simcenter_inter[1]);
             dx_simcenter_inter[2] = fabs(dx_simcenter_inter[2]);
-            const RVec dx_simcenter(dx_simcenter_inter[0] + reg_alpha_,
-                                    dx_simcenter_inter[1] + reg_alpha_,
-                                    dx_simcenter_inter[2] + reg_alpha_);
+            const RVec dx_simcenter(dx_simcenter_inter[0] + reg_alpha_, dx_simcenter_inter[1] + reg_alpha_, dx_simcenter_inter[2] + reg_alpha_);
 
             for (int d = 0; d <= 2; d++)
             {
@@ -100,8 +93,7 @@ class FMMWeightEvaluator
         return ws[0] * ws[1] * ws[2]; // Return the weight
     }
 
-    inline RVec compute_weight_in_cell(RVec body_x, RVec center, real radius,
-                                       bool is_periodic = false)
+    inline RVec compute_weight_in_cell(RVec body_x, RVec center, real radius, bool is_periodic = false)
     {
 
         const RVec dx = body_x - center;
@@ -112,9 +104,7 @@ class FMMWeightEvaluator
             dx_simcenter_inter[0] = fabs(dx_simcenter_inter[0]);
             dx_simcenter_inter[1] = fabs(dx_simcenter_inter[1]);
             dx_simcenter_inter[2] = fabs(dx_simcenter_inter[2]);
-            const RVec dx_simcenter(dx_simcenter_inter[0] + reg_alpha_,
-                                    dx_simcenter_inter[1] + reg_alpha_,
-                                    dx_simcenter_inter[2] + reg_alpha_);
+            const RVec dx_simcenter(dx_simcenter_inter[0] + reg_alpha_, dx_simcenter_inter[1] + reg_alpha_, dx_simcenter_inter[2] + reg_alpha_);
 
             for (int d = 0; d <= 2; d++)
             {
@@ -127,9 +117,7 @@ class FMMWeightEvaluator
         return ws;
     }
 
-    inline real compute_weight_outside_cell(RVec body_x, RVec center,
-                                            real radius,
-                                            bool is_periodic = false)
+    inline real compute_weight_outside_cell(RVec body_x, RVec center, real radius, bool is_periodic = false)
     {
         const RVec dx = body_x - center;
         RVec ws = compute_w_xyz(dx, radius);
@@ -143,9 +131,7 @@ class FMMWeightEvaluator
                 dx_simcenter_inter[0] = fabs(dx_simcenter_inter[0]);
                 dx_simcenter_inter[1] = fabs(dx_simcenter_inter[1]);
                 dx_simcenter_inter[2] = fabs(dx_simcenter_inter[2]);
-                const RVec dx_simcenter(dx_simcenter_inter[0] + reg_alpha_,
-                                        dx_simcenter_inter[1] + reg_alpha_,
-                                        dx_simcenter_inter[2] + reg_alpha_);
+                const RVec dx_simcenter(dx_simcenter_inter[0] + reg_alpha_, dx_simcenter_inter[1] + reg_alpha_, dx_simcenter_inter[2] + reg_alpha_);
 
                 for (int d = 0; d <= 2; d++)
                 {

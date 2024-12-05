@@ -2,8 +2,7 @@
 #include "fmmdirectinteractionstree.h"
 #include <fstream>
 
-const gmx::fmm::FPIndices &
-gmx::fmm::FMMDirectInteractionsTree::get_adjacent_cells(size_t i) const
+const gmx::fmm::FPIndices &gmx::fmm::FMMDirectInteractionsTree::get_adjacent_cells(size_t i) const
 {
     if (i >= fmm_cells_.size())
     {
@@ -12,8 +11,7 @@ gmx::fmm::FMMDirectInteractionsTree::get_adjacent_cells(size_t i) const
     return adjacent_cells_info_[i];
 }
 
-const std::unordered_set<int> &
-gmx::fmm::FMMDirectInteractionsTree::get_adjacent_cells_set(size_t i) const
+const std::unordered_set<int> &gmx::fmm::FMMDirectInteractionsTree::get_adjacent_cells_set(size_t i) const
 {
     if (i >= fmm_cells_.size())
     {
@@ -31,8 +29,7 @@ void gmx::fmm::FMMDirectInteractionsTree::rebuild_and_reprocess_tree()
     find_all_adjacent_cells_();
 }
 
-int gmx::fmm::FMMDirectInteractionsTree::check_adjacent_parent_(int ca_idx,
-                                                                int cb_idx)
+int gmx::fmm::FMMDirectInteractionsTree::check_adjacent_parent_(int ca_idx, int cb_idx)
 {
     const FMMCell &ca = fmm_cells_[ca_idx];
     const FMMCell &cb = fmm_cells_[cb_idx];
@@ -46,8 +43,7 @@ int gmx::fmm::FMMDirectInteractionsTree::check_adjacent_parent_(int ca_idx,
     dx[1] = fabs(dx[1]);
     dx[2] = fabs(dx[2]);
     real neighbour_factor = (num_neighbours - 1) * 2;
-    real dist = (ca.radius + cb.radiusParent + (ca.radius * neighbour_factor)) *
-                1.001; // warning : DO NOT ignore the float error
+    real dist = (ca.radius + cb.radiusParent + (ca.radius * neighbour_factor)) * 1.001; // warning : DO NOT ignore the float error
     return dx[0] <= dist && dx[1] <= dist && dx[2] <= dist;
 }
 
@@ -59,24 +55,20 @@ int gmx::fmm::FMMDirectInteractionsTree::check_adjacent(int ca_idx, int cb_idx)
     dx[0] = fabs(dx[0]);
     dx[1] = fabs(dx[1]);
     dx[2] = fabs(dx[2]);
-    real dist = (ca.radius + cb.radius) *
-                1.001; // warning : DO NOT ignore the float error
+    real dist = (ca.radius + cb.radius) * 1.001; // warning : DO NOT ignore the float error
     return dx[0] <= dist && dx[1] <= dist && dx[2] <= dist;
 }
 
 void gmx::fmm::FMMDirectInteractionsTree::find_all_adjacent_cells_()
 {
 
-    std::vector<std::unordered_map<long, int>> cells_at_depth_i(max_depth_ -
-                                                                min_depth_ + 1);
+    std::vector<std::unordered_map<long, int>> cells_at_depth_i(max_depth_ - min_depth_ + 1);
     for (size_t i = 0; i < fmm_cells_.size(); i++)
     {
         const auto &current_cell = fmm_cells_[i];
         if (current_cell.depth >= min_depth_)
         {
-            cells_at_depth_i[current_cell.depth - min_depth_][coord_to_long(
-                current_cell.center, box_center_, box_radius_)] =
-                current_cell.index;
+            cells_at_depth_i[current_cell.depth - min_depth_][coord_to_long(current_cell.center, box_center_, box_radius_)] = current_cell.index;
         }
     }
 
@@ -93,27 +85,19 @@ void gmx::fmm::FMMDirectInteractionsTree::find_all_adjacent_cells_()
                 size_t total_leaves_to_insert = 0;
                 for (int k = 0; k < cell_curr.crange.number; k++)
                 {
-                    total_leaves_to_insert +=
-                        fmm_cells_children_leaves[cell_curr.crange.offset + k]
-                            .size();
+                    total_leaves_to_insert += fmm_cells_children_leaves[cell_curr.crange.offset + k].size();
                 }
-                fmm_cells_children_leaves[cell_curr.index].reserve(
-                    total_leaves_to_insert);
+                fmm_cells_children_leaves[cell_curr.index].reserve(total_leaves_to_insert);
                 for (int k = 0; k < cell_curr.crange.number; k++)
                 {
-                    std::copy(
-                        fmm_cells_children_leaves[cell_curr.crange.offset + k]
-                            .begin(),
-                        fmm_cells_children_leaves[cell_curr.crange.offset + k]
-                            .end(),
-                        std::back_inserter(
-                            fmm_cells_children_leaves[cell_curr.index]));
+                    std::copy(fmm_cells_children_leaves[cell_curr.crange.offset + k].begin(),
+                              fmm_cells_children_leaves[cell_curr.crange.offset + k].end(),
+                              std::back_inserter(fmm_cells_children_leaves[cell_curr.index]));
                 }
             }
             else
             {
-                fmm_cells_children_leaves[cell_curr.index].push_back(
-                    cell_curr.index);
+                fmm_cells_children_leaves[cell_curr.index].push_back(cell_curr.index);
             }
         }
     }
@@ -131,8 +115,7 @@ void gmx::fmm::FMMDirectInteractionsTree::find_all_adjacent_cells_()
         const FMMCell &curr_cell = fmm_cells_[i];
         if (curr_cell.isLeaf())
         {
-            full_tree_to_leaves_indices[i] =
-                full_tree_to_leaves_map[curr_cell.index];
+            full_tree_to_leaves_indices[i] = full_tree_to_leaves_map[curr_cell.index];
         }
     }
     full_tree_to_leaves_map.clear();
@@ -149,19 +132,16 @@ void gmx::fmm::FMMDirectInteractionsTree::find_all_adjacent_cells_()
         {
             const int tar_cell_idx = val.second;
             const auto &target_cell = fmm_cells_[tar_cell_idx];
-            const int tar_cell_idx_l =
-                full_tree_to_leaves_indices[tar_cell_idx];
+            const int tar_cell_idx_l = full_tree_to_leaves_indices[tar_cell_idx];
 
             if (target_cell.isLeaf())
             {
                 real ddistance = target_cell.radius * 2;
                 for (int dz = -1 * num_neighbours; dz <= num_neighbours; dz++)
                 {
-                    for (int dy = -1 * num_neighbours; dy <= num_neighbours;
-                         dy++)
+                    for (int dy = -1 * num_neighbours; dy <= num_neighbours; dy++)
                     {
-                        for (int dx = -1 * num_neighbours; dx <= num_neighbours;
-                             dx++)
+                        for (int dx = -1 * num_neighbours; dx <= num_neighbours; dx++)
                         {
                             // Skip the current cell (dx == 0, dy == 0, dz == 0)
                             if (dx == 0 && dy == 0 && dz == 0)
@@ -170,60 +150,41 @@ void gmx::fmm::FMMDirectInteractionsTree::find_all_adjacent_cells_()
                             }
 
                             // Compute the neighboring cell's center coordinates
-                            const long neighbor_center = coord_to_long(
-                                target_cell.center + RVec(dx * ddistance,
-                                                          dy * ddistance,
-                                                          dz * ddistance),
-                                box_center_, box_radius_);
+                            const long neighbor_center =
+                                coord_to_long(target_cell.center + RVec(dx * ddistance, dy * ddistance, dz * ddistance), box_center_, box_radius_);
 
-                            if (cells_at_depth_i[i].find(neighbor_center) !=
-                                cells_at_depth_i[i].end())
+                            if (cells_at_depth_i[i].find(neighbor_center) != cells_at_depth_i[i].end())
                             {
-                                int src_idx =
-                                    cells_at_depth_i[i][neighbor_center];
+                                int src_idx = cells_at_depth_i[i][neighbor_center];
 
                                 FMMCell &source_cell = fmm_cells_[src_idx];
 
                                 if (source_cell.isLeaf())
                                 {
 
-                                    const int src_cell_idx_l =
-                                        full_tree_to_leaves_indices[src_idx];
+                                    const int src_cell_idx_l = full_tree_to_leaves_indices[src_idx];
 
-                                    adjacent_cells_info_[tar_cell_idx_l]
-                                        .push_back(src_cell_idx_l);
+                                    adjacent_cells_info_[tar_cell_idx_l].push_back(src_cell_idx_l);
 
                                     if (target_cell.depth < source_cell.depth)
                                     {
-                                        adjacent_cells_info_[src_cell_idx_l]
-                                            .push_back(tar_cell_idx_l);
+                                        adjacent_cells_info_[src_cell_idx_l].push_back(tar_cell_idx_l);
                                     }
                                 }
                                 else
                                 {
-                                    const auto &leave_cells_to_curr_source =
-                                        fmm_cells_children_leaves[source_cell
-                                                                      .index];
+                                    const auto &leave_cells_to_curr_source = fmm_cells_children_leaves[source_cell.index];
 
-                                    for (size_t k = 0;
-                                         k < leave_cells_to_curr_source.size();
-                                         k++)
+                                    for (size_t k = 0; k < leave_cells_to_curr_source.size(); k++)
                                     {
-                                        int csrc_idx =
-                                            leave_cells_to_curr_source[k];
+                                        int csrc_idx = leave_cells_to_curr_source[k];
 
-                                        const int csrc_cell_idx_l =
-                                            full_tree_to_leaves_indices
-                                                [csrc_idx];
-                                        if (check_adjacent_parent_(tar_cell_idx,
-                                                                   csrc_idx))
+                                        const int csrc_cell_idx_l = full_tree_to_leaves_indices[csrc_idx];
+                                        if (check_adjacent_parent_(tar_cell_idx, csrc_idx))
                                         {
-                                            adjacent_cells_info_[tar_cell_idx_l]
-                                                .push_back(csrc_cell_idx_l);
+                                            adjacent_cells_info_[tar_cell_idx_l].push_back(csrc_cell_idx_l);
 
-                                            adjacent_cells_info_
-                                                [csrc_cell_idx_l]
-                                                    .push_back(tar_cell_idx_l);
+                                            adjacent_cells_info_[csrc_cell_idx_l].push_back(tar_cell_idx_l);
                                         }
                                     }
                                 }
@@ -266,12 +227,9 @@ void gmx::fmm::FMMDirectInteractionsTree::find_all_adjacent_cells_()
     // fout_adj.
 }
 
-gmx::fmm::FMMDirectInteractionsTree::FMMDirectInteractionsTree(
-    const FBodies &bodies, const RVec box_center, const real box_radius,
-    const size_t cell_limit_param, const bool is_tree_uniform)
-    : FMMTree(bodies, box_center, box_radius, cell_limit_param,
-              is_tree_uniform),
-      num_neighbours(1)
+gmx::fmm::FMMDirectInteractionsTree::FMMDirectInteractionsTree(const FBodies &bodies, const RVec box_center, const real box_radius,
+                                                               const size_t cell_limit_param, const bool is_tree_uniform)
+    : FMMTree(bodies, box_center, box_radius, cell_limit_param, is_tree_uniform), num_neighbours(1)
 {
     this->process_tree_();
 }
@@ -283,7 +241,6 @@ void gmx::fmm::FMMDirectInteractionsTree::process_tree_()
 
     for (size_t i = 0; i < adjacent_cells_info_.size(); i++)
     {
-        adjacent_cells_info_set_[i].insert(adjacent_cells_info_[i].begin(),
-                                           adjacent_cells_info_[i].end());
+        adjacent_cells_info_set_[i].insert(adjacent_cells_info_[i].begin(), adjacent_cells_info_[i].end());
     }
 }
