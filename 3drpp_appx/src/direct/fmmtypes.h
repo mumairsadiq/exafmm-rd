@@ -69,18 +69,16 @@ struct FBodies : public std::vector<FBody>
 
 struct FMMCell
 {
-    size_t index;               // Unique cell index
-    int octant;                 // Octant relative to the parent cell (0-7 for relative
-                                // position, 13 for central/hitorikko)
-    int depth;                  // Depth of the cell
-    real radius;                // Radius of the cell
-    RVec center;                // Center coordinates of the cell
-    Range crange;               // Children information of the cell
-    real radiusParent;          // Radius of parent of cell
-    RVec centerParent;          // Center coordinates of the parent of the cell
-    FPIndices bodiesIndices;    // Indices of bodies in the cell
-    FPIndices bodiesIndicesReg; // Indices of bodies in the cell
-    std::vector<real> weights;  // Indices of bodies in the cell
+    size_t index;            // Unique cell index
+    int octant;              // Octant relative to the parent cell (0-7 for relative
+                             // position, 13 for central/hitorikko)
+    int depth;               // Depth of the cell
+    real radius;             // Radius of the cell
+    RVec center;             // Center coordinates of the cell
+    Range crange;            // Children information of the cell
+    real radiusParent;       // Radius of parent of cell
+    RVec centerParent;       // Center coordinates of the parent of the cell
+    FPIndices bodiesIndices; // Indices of bodies in the cell
 
     // Constructors
     FMMCell()

@@ -12,7 +12,7 @@ class FMMDirectInteractions
 {
   public:
     FMMDirectInteractions(const std::vector<RVec> coordinates, const std::vector<real> charges, const RVec box_center, const real box_radius,
-                          const size_t cell_limit_param, const real reg_alpha);
+                          const size_t max_depth, const real reg_alpha);
 
     bool is_point_within_radius(const RVec &point1, const RVec &point2, double radius);
 
@@ -33,7 +33,8 @@ class FMMDirectInteractions
 
     std::vector<std::vector<int>> pair_list;
     std::vector<std::vector<real>> pair_list_w_tar;
-    std::vector<std::vector<BVec>> pair_list_b_src;
+    std::vector<std::vector<BVec>> pair_list_bxyz_src;
+    std::vector<std::vector<BVec>> pair_list_bxyz_tar;
     std::vector<RVec> w_per_atom;
 
     void compute_weights_();

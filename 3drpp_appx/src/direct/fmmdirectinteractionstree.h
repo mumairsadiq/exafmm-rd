@@ -14,29 +14,16 @@ namespace fmm
 class FMMDirectInteractionsTree : public FMMTree
 {
   public:
-    FMMDirectInteractionsTree(const FBodies &bodies, const RVec box_center, const real box_radius, const size_t cell_limit_param,
-                              const bool is_tree_uniform = true);
+    FMMDirectInteractionsTree(const FBodies &bodies, const RVec box_center, const real box_radius, const size_t max_depth_);
 
-    // New methods specific to direct interactions
-    const FPIndices &get_adjacent_cells(size_t i) const;
-
-    const std::unordered_set<int> &get_adjacent_cells_set(size_t i) const;
+    int get_neighbour_idx(RVec neighbor_center);
 
     void rebuild_and_reprocess_tree();
 
-    int check_adjacent(int ca_idx, int cb_idx);
-
   private:
+    std::unordered_map<long, int> cells_map;
+
     void process_tree_();
-
-    void find_all_adjacent_cells_();
-    int check_adjacent_parent_(int ca_idx, int cb_idx);
-
-    // Data members
-
-    std::vector<FPIndices> adjacent_cells_info_;
-    std::vector<std::unordered_set<int>> adjacent_cells_info_set_;
-    const int num_neighbours;
 };
 
 } // namespace fmm
