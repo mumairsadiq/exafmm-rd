@@ -35,6 +35,9 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
     pair_list_w_tar.clear();
     pair_list_w_tar.resize(bodies_all_.size());
 
+    pair_list_interaction_type.clear();
+    pair_list_interaction_type.resize(bodies_all_.size());
+
     w_per_atom.clear();
     w_per_atom.resize(bodies_all_.size());
 
@@ -63,10 +66,59 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
             {
                 if (body_idx_tar != body_idx_src)
                 {
-                    // const FBody &body_src = bodies_all_[body_idx_src];
-                    // pair_list[body_idx_tar].push_back(body_idx_src);
-                    // pair_list_w_tar[body_idx_tar].push_back(cell.weights[bidxt]);
-                    // pair_list_b_src[body_idx_tar].push_back({1, 1, 1});
+                    const FBody &body_src = bodies_all_[body_idx_src];
+
+                    const RVec w3t = w_per_atom[body_idx_tar];
+                    const RVec w3s = w_per_atom[body_idx_src];
+                    real wtar_in_cell = w3t[0] * w3t[1] * w3t[2];
+                    real wsrc_in_cell = w3s[0] * w3s[1] * w3s[2];
+
+                    if (wtar_in_cell < 1 || wsrc_in_cell < 1)
+                    {
+                        pair_list[body_idx_tar].push_back(body_idx_src);
+                        pair_list_bxyz_src[body_idx_tar].push_back({1, 1, 1});
+                        pair_list_bxyz_tar[body_idx_tar].push_back({1, 1, 1});
+                        pair_list_interaction_type[body_idx_tar].push_back(1);
+                    }
+                    else
+                    {
+
+                        bool x_dir_flag = true;
+                        bool y_dir_flag = true;
+                        bool z_dir_flag = true;
+
+                        real r1x = body_tar.x[0] - cell.center[0];
+                        real r2x = body_src.x[0] - cell.center[0];
+                        if (r1x * r2x < 0)
+                        {
+                            x_dir_flag = false;
+                        }
+
+                        real r1y = body_tar.x[1] - cell.center[1];
+                        real r2y = body_src.x[1] - cell.center[1];
+                        if (r1y * r2y < 0)
+                        {
+                            y_dir_flag = false;
+                        }
+
+                        real r1z = body_tar.x[2] - cell.center[2];
+                        real r2z = body_src.x[2] - cell.center[2];
+                        if (r1z * r2z < 0)
+                        {
+                            z_dir_flag = false;
+                        }
+
+                        bool bxt = w3t[0] != 1 && w3s[0] != 1 ? x_dir_flag : 1;
+                        bool byt = w3t[1] != 1 && w3s[1] != 1 ? y_dir_flag : 1;
+                        bool bzt = w3t[2] != 1 && w3s[2] != 1 ? z_dir_flag : 1;
+
+                        std::cout << body_src.x << "--" << body_tar.x << "--" << z_dir_flag << "--" << y_dir_flag << "--" << x_dir_flag << std::endl;
+
+                        pair_list[body_idx_tar].push_back(body_idx_src);
+                        pair_list_bxyz_src[body_idx_tar].push_back({1, 1, 1});
+                        pair_list_bxyz_tar[body_idx_tar].push_back({bxt, byt, bzt});
+                        pair_list_interaction_type[body_idx_tar].push_back(1);
+                    }
                 }
             }
 
@@ -102,11 +154,23 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                             {
                                 const FMMCell &adj_cell = fmm_cells[adj_cell_idx];
                                 const real interaction_region_scell = adj_cell.radius * 3; // one and half cell
-                                bool bxt = wst[0] != 1 ? (fabs(body_tar.x[0] - adj_cell.center[0]) + fmm_weights_eval_.getRegAlpha() <= interaction_region_scell  ? 1 : 0) : 1;
+                                bool bxt =
+                                    wst[0] != 1
+                                        ? (fabs(body_tar.x[0] - adj_cell.center[0]) + fmm_weights_eval_.getRegAlpha() <= interaction_region_scell ? 1
+                                                                                                                                                  : 0)
+                                        : 1;
 
-                                bool byt = wst[1] != 1 ? (fabs(body_tar.x[1] - adj_cell.center[1]) + fmm_weights_eval_.getRegAlpha() <= interaction_region_scell  ? 1 : 0) : 1;
+                                bool byt =
+                                    wst[1] != 1
+                                        ? (fabs(body_tar.x[1] - adj_cell.center[1]) + fmm_weights_eval_.getRegAlpha() <= interaction_region_scell ? 1
+                                                                                                                                                  : 0)
+                                        : 1;
 
-                                bool bzt = wst[2] != 1 ? (fabs(body_tar.x[2] - adj_cell.center[2]) + fmm_weights_eval_.getRegAlpha() <= interaction_region_scell  ? 1 : 0) : 1;
+                                bool bzt =
+                                    wst[2] != 1
+                                        ? (fabs(body_tar.x[2] - adj_cell.center[2]) + fmm_weights_eval_.getRegAlpha() <= interaction_region_scell ? 1
+                                                                                                                                                  : 0)
+                                        : 1;
 
                                 for (const int &body_idx_src : adj_cell.bodiesIndices)
                                 {
@@ -116,22 +180,29 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                         const RVec ws = w_per_atom[body_idx_src];
                                         bool bx =
                                             ws[0] < 1
-                                                ? (fabs(body_src.x[0] - cell.center[0]) + fmm_weights_eval_.getRegAlpha() >= interaction_region_tcell ? 0 : 1)
+                                                ? (fabs(body_src.x[0] - cell.center[0]) + fmm_weights_eval_.getRegAlpha() >= interaction_region_tcell
+                                                       ? 0
+                                                       : 1)
                                                 : 1;
 
                                         bool by =
                                             ws[1] < 1
-                                                ? (fabs(body_src.x[1] - cell.center[1]) + fmm_weights_eval_.getRegAlpha() >= interaction_region_tcell ? 0 : 1)
+                                                ? (fabs(body_src.x[1] - cell.center[1]) + fmm_weights_eval_.getRegAlpha() >= interaction_region_tcell
+                                                       ? 0
+                                                       : 1)
                                                 : 1;
 
                                         bool bz =
                                             ws[2] < 1
-                                                ? (fabs(body_src.x[2] - cell.center[2]) + fmm_weights_eval_.getRegAlpha() >= interaction_region_tcell ? 0 : 1)
+                                                ? (fabs(body_src.x[2] - cell.center[2]) + fmm_weights_eval_.getRegAlpha() >= interaction_region_tcell
+                                                       ? 0
+                                                       : 1)
                                                 : 1;
 
                                         pair_list[body_idx_tar].push_back(body_idx_src);
                                         pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
                                         pair_list_bxyz_tar[body_idx_tar].push_back({bxt, byt, bzt});
+                                        pair_list_interaction_type[body_idx_tar].push_back(1);
                                     }
                                 }
                             }
@@ -194,6 +265,7 @@ std::vector<std::pair<gmx::RVec, gmx::real>> gmx::fmm::FMMDirectInteractions::ex
 
             const BVec bxyz_src = pair_list_bxyz_src[i][ix];
             const BVec bxyz_tar = pair_list_bxyz_tar[i][ix];
+            const bool is_direct = pair_list_interaction_type[i][ix];
 
             const RVec wsrc_ws = w_per_atom[body_src_idx];
 
@@ -201,18 +273,20 @@ std::vector<std::pair<gmx::RVec, gmx::real>> gmx::fmm::FMMDirectInteractions::ex
             const real dy = yj - asrc.x[1];
             const real dz = zj - asrc.x[2];
 
-            // switch between w and 1-w
-            real wsrc_x = bxyz_src[0] == 1 ? 1 : (dx < 0 ? 1 - wsrc_ws[0] : wsrc_ws[0]);
-            real wsrc_y = bxyz_src[1] == 1 ? 1 : (dy < 0 ? 1 - wsrc_ws[1] : wsrc_ws[1]);
-            real wsrc_z = bxyz_src[2] == 1 ? 1 : (dz < 0 ? 1 - wsrc_ws[2] : wsrc_ws[2]);
+            real wsrc_x = bxyz_src[0] == 1 ? 1 : (is_direct == 1 ? wsrc_ws[0] : 1 - wsrc_ws[0]);
+            real wsrc_y = bxyz_src[1] == 1 ? 1 : (is_direct == 1 ? wsrc_ws[1] : 1 - wsrc_ws[1]);
+            real wsrc_z = bxyz_src[2] == 1 ? 1 : (is_direct == 1 ? wsrc_ws[2] : 1 - wsrc_ws[2]);
             real wsrc = wsrc_x * wsrc_y * wsrc_z;
 
-            real wtar_x = bxyz_tar[0] == 1 ? 1 : (dx > 0 ? 1 - wtar_ws[0] : wtar_ws[0]);
-            real wtar_y = bxyz_tar[1] == 1 ? 1 : (dy > 0 ? 1 - wtar_ws[1] : wtar_ws[1]);
-            real wtar_z = bxyz_tar[2] == 1 ? 1 : (dz > 0 ? 1 - wtar_ws[2] : wtar_ws[2]);
+            real wtar_x = bxyz_tar[0] == 1 ? 1 : (is_direct == 1 ? wtar_ws[0] : 1 - wtar_ws[0]);
+            real wtar_y = bxyz_tar[1] == 1 ? 1 : (is_direct == 1 ? wtar_ws[1] : 1 - wtar_ws[1]);
+            real wtar_z = bxyz_tar[2] == 1 ? 1 : (is_direct == 1 ? wtar_ws[2] : 1 - wtar_ws[2]);
+
             const real wtar = wtar_x * wtar_y * wtar_z;
 
-            std::cout << asrc.x << "--" << body_tar.x << "--" << wsrc << "--" << wtar <<  "--" << wtar_ws[0] << "," <<wtar_ws[1] << "," << wtar_ws[2] << std::endl;
+            // std::cout << asrc.x << "--" << body_tar.x << "--" << wsrc << "--" << wtar << std::endl;
+            std::cout << asrc.x << "--" << body_tar.x << "--" << wsrc << "--" << wtar << "#" << "\n";
+            std::cout << wsrc_ws << "--" << wtar_ws << std::endl;
 
             real pj = 0.0;
             real fxj = 0.0, fyj = 0.0, fzj = 0.0;
