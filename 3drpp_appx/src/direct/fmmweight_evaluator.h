@@ -17,21 +17,6 @@ class FMMWeightEvaluator
   private:
     inline real compute_reg_w(real x) { return 0.25 * (2 + 3 * x - x * x * x); }
 
-    inline real compute_w_single(real dx, real R)
-    {
-        real r = std::abs(dx) - R + reg_alpha_;
-        real x;
-
-        if (r <= 0)
-            x = 1;
-        else if (r > 2 * reg_alpha_)
-            x = -1;
-        else
-            x = 1 - r / reg_alpha_;
-
-        return compute_reg_w(x);
-    }
-
     /**
      * Compute weights separately for each dimension in 3D space.
      * @param dx The distance vector (x, y, z).
@@ -59,6 +44,20 @@ class FMMWeightEvaluator
     }
 
   public:
+    inline real compute_w_single(real dx, real R)
+    {
+        real r = std::abs(dx) - R + reg_alpha_;
+        real x;
+
+        if (r <= 0)
+            x = 1;
+        else if (r > 2 * reg_alpha_)
+            x = -1;
+        else
+            x = 1 - r / reg_alpha_;
+
+        return compute_reg_w(x);
+    }
     /**
      * Constructor
      * @param reg_alpha A regularization parameter that determines the
