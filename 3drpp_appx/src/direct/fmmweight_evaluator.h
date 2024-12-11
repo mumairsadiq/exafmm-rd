@@ -46,6 +46,8 @@ class FMMWeightEvaluator
   public:
     inline real compute_w_single(real dx, real R)
     {
+
+        // 3 - 2
         real r = std::abs(dx) - R + reg_alpha_;
         real x;
 
