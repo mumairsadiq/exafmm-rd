@@ -34,6 +34,7 @@ class FMMDirectInteractions
     std::vector<std::vector<int>> pair_list;
     std::vector<std::vector<real>> pair_list_w_tar;
     std::vector<std::vector<BVec>> pair_list_b_src;
+    std::vector<std::vector<bool>> pair_list_is_direct;
     std::vector<RVec> w_per_atom;
 
     void compute_weights_();
