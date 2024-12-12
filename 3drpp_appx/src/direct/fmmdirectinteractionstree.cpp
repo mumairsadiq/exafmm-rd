@@ -90,7 +90,8 @@ void gmx::fmm::FMMDirectInteractionsTree::find_all_adjacent_cells_()
                 fmm_cells_children_leaves[cell_curr.index].reserve(total_leaves_to_insert);
                 for (int k = 0; k < cell_curr.crange.number; k++)
                 {
-                    std::copy(fmm_cells_children_leaves[cell_curr.crange.offset + k].begin(), fmm_cells_children_leaves[cell_curr.crange.offset + k].end(),
+                    std::copy(fmm_cells_children_leaves[cell_curr.crange.offset + k].begin(),
+                              fmm_cells_children_leaves[cell_curr.crange.offset + k].end(),
                               std::back_inserter(fmm_cells_children_leaves[cell_curr.index]));
                 }
             }
