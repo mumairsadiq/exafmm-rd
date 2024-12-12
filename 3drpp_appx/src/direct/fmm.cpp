@@ -259,6 +259,7 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                     const real dist_z = fabs(adj_cell.center[2] - cell.center[2]);
 
                                     const RVec ws = w_per_atom[body_idx_src];
+
                                     bool bx =
                                         ws[0] < 1
                                             ? (fabs(body_src.x[0] - cell.center[0]) + fmm_weights_eval_.getRegAlpha() > interaction_region_tcell ? 0
@@ -275,119 +276,248 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                                                                                                                                  : 1)
                                             : 1;
 
+                                    bool is_body_facing_towards_adj_cell = false;
+                                    bool is_body_fully_interacting_adj_cell = false;
+
+                                    if (fabs(body_tar.x[0] - adj_cell.center[0]) <= interaction_region_tcell + fmm_weights_eval_.getRegAlpha() &&
+                                        fabs(body_tar.x[1] - adj_cell.center[1]) <= interaction_region_tcell + fmm_weights_eval_.getRegAlpha() &&
+                                        fabs(body_tar.x[2] - adj_cell.center[2]) <= interaction_region_tcell + fmm_weights_eval_.getRegAlpha())
+                                    {
+                                        is_body_fully_interacting_adj_cell = true;
+                                    }
+
+                                    if (fabs(body_tar.x[0] - adj_cell.center[0]) <= interaction_region_tcell + fmm_weights_eval_.getRegAlpha() ||
+                                        fabs(body_tar.x[1] - adj_cell.center[1]) <= interaction_region_tcell + fmm_weights_eval_.getRegAlpha() ||
+                                        fabs(body_tar.x[2] - adj_cell.center[2]) <= interaction_region_tcell + fmm_weights_eval_.getRegAlpha())
+                                    {
+                                        is_body_facing_towards_adj_cell = true;
+                                    }
+
+                                   
+
                                     if (dist_x > dist_y && dist_x > dist_z)
                                     {
-                                        const real interaction_region_x = dist_x - adj_cell.radius;
-                                        if (fabs(body_src.x[0] - cell.center[0]) <= interaction_region_x + fmm_weights_eval_.getRegAlpha())
+                                        if (is_reg_body[body_idx_src])
+                                        {
+                                            const real interaction_region_x = dist_x - adj_cell.radius;
+                                            if (fabs(body_src.x[0] - cell.center[0]) <= interaction_region_x + fmm_weights_eval_.getRegAlpha())
+                                            {
+                                                pair_list[body_idx_tar].push_back(body_idx_src);
+
+                                                pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
+                                                pair_list_sif_within[body_idx_tar].push_back({0, 1, 1});
+
+                                                pair_list_bxyz_tar[body_idx_tar].push_back({bxt, byt, bzt});
+                                                pair_list_tif_within[body_idx_tar].push_back({1, 1, 1});
+                                            }
+                                        }
+                                        
+
+                                        // to be continued
+                                        if (is_body_fully_interacting_adj_cell)
                                         {
                                             pair_list[body_idx_tar].push_back(body_idx_src);
 
+                                            pair_list_bxyz_tar[body_idx_tar].push_back({bxt, byt, bzt});
+                                            pair_list_tif_within[body_idx_tar].push_back({0, 0, 0});
+
                                             pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
                                             pair_list_sif_within[body_idx_tar].push_back({0, 1, 1});
-
-                                            pair_list_bxyz_tar[body_idx_tar].push_back({bxt, byt, bzt});
-                                            pair_list_tif_within[body_idx_tar].push_back({1, 1, 1});
                                         }
                                     }
                                     else if (dist_y > dist_x && dist_y > dist_z)
                                     {
-                                        const real interaction_region_y = dist_y - adj_cell.radius;
-                                        if (fabs(body_src.x[1] - cell.center[1]) <= interaction_region_y + fmm_weights_eval_.getRegAlpha())
+                                        
+                                        if (is_reg_body[body_idx_src])
                                         {
+                                            const real interaction_region_y = dist_y - adj_cell.radius;
+                                            if (fabs(body_src.x[1] - cell.center[1]) <= interaction_region_y + fmm_weights_eval_.getRegAlpha())
+                                            {
 
-                                            pair_list[body_idx_tar].push_back(body_idx_src);
+                                                pair_list[body_idx_tar].push_back(body_idx_src);
 
-                                            pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
-                                            pair_list_sif_within[body_idx_tar].push_back({1, 0, 1});
+                                                pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
+                                                pair_list_sif_within[body_idx_tar].push_back({1, 0, 1});
 
-                                            pair_list_bxyz_tar[body_idx_tar].push_back({bxt, byt, bzt});
-                                            pair_list_tif_within[body_idx_tar].push_back({1, 1, 1});
+                                                pair_list_bxyz_tar[body_idx_tar].push_back({bxt, byt, bzt});
+                                                pair_list_tif_within[body_idx_tar].push_back({1, 1, 1});
+                                            }
+                                        }
+                                        if (is_body_fully_interacting_adj_cell)
+                                        {
+                                            // pair_list[body_idx_tar].push_back(body_idx_src);
+
+                                            // pair_list_bxyz_tar[body_idx_tar].push_back({bxt, byt, bzt});
+                                            // pair_list_tif_within[body_idx_tar].push_back({1, 0, 1});
+
+                                            // pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
+                                            // pair_list_sif_within[body_idx_tar].push_back({1, 1, 1});
                                         }
                                     }
                                     else if (dist_z > dist_x && dist_z > dist_y)
                                     {
-                                        const real interaction_region_z = dist_z - adj_cell.radius;
-                                        if (fabs(body_src.x[2] - cell.center[2]) <= interaction_region_z + fmm_weights_eval_.getRegAlpha())
+                                        if (is_reg_body[body_idx_src])
                                         {
+                                            const real interaction_region_z = dist_z - adj_cell.radius;
+                                            if (fabs(body_src.x[2] - cell.center[2]) <= interaction_region_z + fmm_weights_eval_.getRegAlpha())
+                                            {
 
-                                            pair_list[body_idx_tar].push_back(body_idx_src);
+                                                pair_list[body_idx_tar].push_back(body_idx_src);
 
-                                            pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
-                                            pair_list_sif_within[body_idx_tar].push_back({1, 1, 0});
+                                                pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
+                                                pair_list_sif_within[body_idx_tar].push_back({1, 1, 0});
 
-                                            pair_list_bxyz_tar[body_idx_tar].push_back({bxt, byt, bzt});
-                                            pair_list_tif_within[body_idx_tar].push_back({1, 1, 1});
+                                                pair_list_bxyz_tar[body_idx_tar].push_back({bxt, byt, bzt});
+                                                pair_list_tif_within[body_idx_tar].push_back({1, 1, 1});
+                                            }
+                                        }
+                                        if (is_body_fully_interacting_adj_cell)
+                                        {
+                                            // pair_list[body_idx_tar].push_back(body_idx_src);
+
+                                            // pair_list_bxyz_tar[body_idx_tar].push_back({bxt, byt, bzt});
+                                            // pair_list_tif_within[body_idx_tar].push_back({1, 1, 0});
+
+                                            // pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
+                                            // pair_list_sif_within[body_idx_tar].push_back({1, 1, 1});
                                         }
                                     }
                                     else if (dist_z > dist_x && dist_z == dist_y)
                                     {
-                                        const real interaction_region_z = dist_z - adj_cell.radius;
-                                        const real interaction_region_y = dist_y - adj_cell.radius;
-                                        if (fabs(body_src.x[2] - cell.center[2]) <= interaction_region_z + fmm_weights_eval_.getRegAlpha() &&
-                                            fabs(body_src.x[1] - cell.center[1]) <= interaction_region_y + fmm_weights_eval_.getRegAlpha())
+                                        if (is_reg_body[body_idx_src])
                                         {
-                                            pair_list[body_idx_tar].push_back(body_idx_src);
+                                            const real interaction_region_z = dist_z - adj_cell.radius;
+                                            const real interaction_region_y = dist_y - adj_cell.radius;
+                                            if (fabs(body_src.x[2] - cell.center[2]) <= interaction_region_z + fmm_weights_eval_.getRegAlpha() &&
+                                                fabs(body_src.x[1] - cell.center[1]) <= interaction_region_y + fmm_weights_eval_.getRegAlpha())
+                                            {
+                                                pair_list[body_idx_tar].push_back(body_idx_src);
 
-                                            pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
-                                            pair_list_sif_within[body_idx_tar].push_back({1, 0, 0});
+                                                pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
+                                                pair_list_sif_within[body_idx_tar].push_back({1, 0, 0});
 
-                                            pair_list_bxyz_tar[body_idx_tar].push_back({bxt, byt, bzt});
-                                            pair_list_tif_within[body_idx_tar].push_back({1, 1, 1});
+                                                pair_list_bxyz_tar[body_idx_tar].push_back({bxt, byt, bzt});
+                                                pair_list_tif_within[body_idx_tar].push_back({1, 1, 1});
+                                            }
+                                        }
+
+                                        if (is_body_fully_interacting_adj_cell)
+                                        {
+                                            // pair_list[body_idx_tar].push_back(body_idx_src);
+
+                                            // pair_list_bxyz_tar[body_idx_tar].push_back({bxt, byt, bzt});
+                                            // pair_list_tif_within[body_idx_tar].push_back({1, 0, 0});
+
+                                            // pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
+                                            // pair_list_sif_within[body_idx_tar].push_back({1, 1, 1});
+                                        }
+
+                                        if (is_body_facing_towards_adj_cell && !is_body_fully_interacting_adj_cell &&
+                                            !(bxt == 1 && byt == 1 && bzt == 1))
+                                        {
+                                            // pair_list[body_idx_tar].push_back(body_idx_src);
+
+                                            // pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
+                                            // pair_list_sif_within[body_idx_tar].push_back({0, 0, 0});
+
+                                            // pair_list_bxyz_tar[body_idx_tar].push_back({bxt, byt, bzt});
+                                            // pair_list_tif_within[body_idx_tar].push_back({0, 0, 0});
                                         }
                                     }
 
                                     else if (dist_z > dist_y && dist_z == dist_x)
                                     {
-                                        const real interaction_region_z = dist_z - adj_cell.radius;
-                                        const real interaction_region_x = dist_x - adj_cell.radius;
-                                        if (fabs(body_src.x[2] - cell.center[2]) <= interaction_region_z + fmm_weights_eval_.getRegAlpha() &&
-                                            fabs(body_src.x[0] - cell.center[0]) <= interaction_region_x + fmm_weights_eval_.getRegAlpha())
+                                        if (is_reg_body[body_idx_src])
                                         {
+                                            const real interaction_region_z = dist_z - adj_cell.radius;
+                                            const real interaction_region_x = dist_x - adj_cell.radius;
+                                            if (fabs(body_src.x[2] - cell.center[2]) <= interaction_region_z + fmm_weights_eval_.getRegAlpha() &&
+                                                fabs(body_src.x[0] - cell.center[0]) <= interaction_region_x + fmm_weights_eval_.getRegAlpha())
+                                            {
 
-                                            pair_list[body_idx_tar].push_back(body_idx_src);
+                                                pair_list[body_idx_tar].push_back(body_idx_src);
 
-                                            pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
-                                            pair_list_sif_within[body_idx_tar].push_back({0, 1, 0});
+                                                pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
+                                                pair_list_sif_within[body_idx_tar].push_back({0, 1, 0});
 
-                                            pair_list_bxyz_tar[body_idx_tar].push_back({bxt, byt, bzt});
-                                            pair_list_tif_within[body_idx_tar].push_back({1, 1, 1});
+                                                pair_list_bxyz_tar[body_idx_tar].push_back({bxt, byt, bzt});
+                                                pair_list_tif_within[body_idx_tar].push_back({1, 1, 1});
+                                            }
+                                        }
+                                        if (is_body_fully_interacting_adj_cell)
+                                        {
+                                            // pair_list[body_idx_tar].push_back(body_idx_src);
+
+                                            // pair_list_bxyz_tar[body_idx_tar].push_back({bxt, byt, bzt});
+                                            // pair_list_tif_within[body_idx_tar].push_back({0, 1, 0});
+
+                                            // pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
+                                            // pair_list_sif_within[body_idx_tar].push_back({1, 1, 1});
                                         }
                                     }
+
                                     else if (dist_x > dist_z && dist_x == dist_y)
                                     {
-                                        const real interaction_region_x = dist_x - adj_cell.radius;
-                                        const real interaction_region_y = dist_y - adj_cell.radius;
-                                        if (fabs(body_src.x[0] - cell.center[0]) <= interaction_region_x + fmm_weights_eval_.getRegAlpha() &&
-                                            fabs(body_src.x[1] - cell.center[1]) <= interaction_region_y + fmm_weights_eval_.getRegAlpha())
+                                        if (is_reg_body[body_idx_src])
                                         {
-                                            pair_list[body_idx_tar].push_back(body_idx_src);
+                                            const real interaction_region_x = dist_x - adj_cell.radius;
+                                            const real interaction_region_y = dist_y - adj_cell.radius;
+                                            if (fabs(body_src.x[0] - cell.center[0]) <= interaction_region_x + fmm_weights_eval_.getRegAlpha() &&
+                                                fabs(body_src.x[1] - cell.center[1]) <= interaction_region_y + fmm_weights_eval_.getRegAlpha())
+                                            {
+                                                pair_list[body_idx_tar].push_back(body_idx_src);
 
-                                            pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
-                                            pair_list_sif_within[body_idx_tar].push_back({0, 0, 1});
+                                                pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
+                                                pair_list_sif_within[body_idx_tar].push_back({0, 0, 1});
 
-                                            pair_list_bxyz_tar[body_idx_tar].push_back({bxt, byt, bzt});
-                                            pair_list_tif_within[body_idx_tar].push_back({1, 1, 1});
+                                                pair_list_bxyz_tar[body_idx_tar].push_back({bxt, byt, bzt});
+                                                pair_list_tif_within[body_idx_tar].push_back({1, 1, 1});
+                                            }
+                                        }
+                                        if (is_body_fully_interacting_adj_cell)
+                                        {
+                                            // pair_list[body_idx_tar].push_back(body_idx_src);
+
+                                            // pair_list_bxyz_tar[body_idx_tar].push_back({bxt, byt, bzt});
+                                            // pair_list_tif_within[body_idx_tar].push_back({0, 0, 1});
+
+                                            // pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
+                                            // pair_list_sif_within[body_idx_tar].push_back({1, 1, 1});
                                         }
                                     }
 
                                     else
                                     {
-                                        const real interaction_region_x = dist_x - adj_cell.radius;
-                                        const real interaction_region_y = dist_y - adj_cell.radius;
-                                        const real interaction_region_z = dist_z - adj_cell.radius;
-                                        if (fabs(body_src.x[0] - cell.center[0]) <= interaction_region_x + fmm_weights_eval_.getRegAlpha() &&
-                                            fabs(body_src.x[1] - cell.center[1]) <= interaction_region_y + fmm_weights_eval_.getRegAlpha() &&
-                                            fabs(body_src.x[2] - cell.center[2]) <= interaction_region_z + fmm_weights_eval_.getRegAlpha())
+                                        if (is_reg_body[body_idx_src])
+                                        {
+                                            const real interaction_region_x = dist_x - adj_cell.radius;
+                                            const real interaction_region_y = dist_y - adj_cell.radius;
+                                            const real interaction_region_z = dist_z - adj_cell.radius;
+                                            if (fabs(body_src.x[0] - cell.center[0]) <= interaction_region_x + fmm_weights_eval_.getRegAlpha() &&
+                                                fabs(body_src.x[1] - cell.center[1]) <= interaction_region_y + fmm_weights_eval_.getRegAlpha() &&
+                                                fabs(body_src.x[2] - cell.center[2]) <= interaction_region_z + fmm_weights_eval_.getRegAlpha())
+                                            {
+                                                pair_list[body_idx_tar].push_back(body_idx_src);
+                                                pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
+                                                pair_list_sif_within[body_idx_tar].push_back({0, 0, 0});
+
+                                                pair_list_bxyz_tar[body_idx_tar].push_back({bxt, byt, bzt});
+                                                pair_list_tif_within[body_idx_tar].push_back({1, 1, 1});
+                                            }
+                                        }
+                                        if (is_body_fully_interacting_adj_cell)
                                         {
                                             pair_list[body_idx_tar].push_back(body_idx_src);
-                                            pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
-                                            pair_list_sif_within[body_idx_tar].push_back({0, 0, 0});
 
                                             pair_list_bxyz_tar[body_idx_tar].push_back({bxt, byt, bzt});
-                                            pair_list_tif_within[body_idx_tar].push_back({1, 1, 1});
+                                            pair_list_tif_within[body_idx_tar].push_back({0, 0, 0});
+
+                                            pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
+                                            pair_list_sif_within[body_idx_tar].push_back({1, 1, 1});
                                         }
                                     }
                                 }
+
                                 // // if (bxt == 1 && byt == 1 && bzt == 1)
                                 // {
                                 //     // check if
@@ -523,34 +653,15 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                             {
                                 const real interaction_region_scell = adj_cell.radius * 5; // two and half cell
 
-                                if (fabs(body_tar.x[0] - adj_cell.center[0]) <= interaction_region_scell + fmm_weights_eval_.getRegAlpha() &&
-                                    fabs(body_tar.x[1] - adj_cell.center[1]) <= interaction_region_scell + fmm_weights_eval_.getRegAlpha() &&
-                                    fabs(body_tar.x[2] - adj_cell.center[2]) <= interaction_region_scell + fmm_weights_eval_.getRegAlpha())
+                                // if (fabs(body_tar.x[0] - adj_cell.center[0]) <= interaction_region_scell + fmm_weights_eval_.getRegAlpha() &&
+                                //     fabs(body_tar.x[1] - adj_cell.center[1]) <= interaction_region_scell + fmm_weights_eval_.getRegAlpha() &&
+                                //     fabs(body_tar.x[2] - adj_cell.center[2]) <= interaction_region_scell + fmm_weights_eval_.getRegAlpha())
                                 {
-
-                                    bool bxt =
-                                        wst[0] != 1
-                                            ? (fabs(body_tar.x[0] - adj_cell.center[0]) + fmm_weights_eval_.getRegAlpha() <= interaction_region_scell
-                                                   ? 1
-                                                   : 0)
-                                            : 1;
-
-                                    bool byt =
-                                        wst[1] != 1
-                                            ? (fabs(body_tar.x[1] - adj_cell.center[1]) + fmm_weights_eval_.getRegAlpha() <= interaction_region_scell
-                                                   ? 1
-                                                   : 0)
-                                            : 1;
-
-                                    bool bzt =
-                                        wst[2] != 1
-                                            ? (fabs(body_tar.x[2] - adj_cell.center[2]) + fmm_weights_eval_.getRegAlpha() <= interaction_region_scell
-                                                   ? 1
-                                                   : 0)
-                                            : 1;
 
                                     for (const int body_idx_src : adj_cell.bodiesIndices)
                                     {
+                                        const FBody &body_src = bodies_all_[body_idx_src];
+
                                         // const FBody &body_src = bodies_all_[body_idx_src];
                                         // pair_list[body_idx_tar].push_back(body_idx_src);
                                         // pair_list_bxyz_src[body_idx_tar].push_back({1, 1, 1});
