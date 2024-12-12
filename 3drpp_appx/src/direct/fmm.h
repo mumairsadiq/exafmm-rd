@@ -35,8 +35,8 @@ class FMMDirectInteractions
     std::vector<std::vector<real>> pair_list_w_tar;
     std::vector<std::vector<BVec>> pair_list_bxyz_src;
     std::vector<std::vector<BVec>> pair_list_bxyz_tar;
-    std::vector<std::vector<bool>> pair_list_interaction_type_tar; // direct or in regularization region
-    std::vector<std::vector<bool>> pair_list_interaction_type_src; // direct or in regularization region
+    std::vector<std::vector<BVec>> pair_list_tif_within; // target interaction from within original cell
+    std::vector<std::vector<BVec>> pair_list_sif_within; // source interaction from within original cell
     std::vector<RVec> w_per_atom;
 
     void compute_weights_();
