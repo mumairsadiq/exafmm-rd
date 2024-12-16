@@ -70,10 +70,12 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
         for (const int &body_idx_tar : cell.bodiesIndices)
         {
             const FBody &body_tar = bodies_all_[body_idx_tar];
+            // std::cout << body_tar.x << "--" << cell.center << "\n";
             const RVec ws = fmm_weights_eval_.compute_weight_in_cell(body_tar.x, cell.center, cell.radius, false);
             w_per_atom[body_idx_tar] = ws;
         }
     }
+
 
     for (size_t k = 0; k < fmm_cells.size(); k++)
     {
@@ -256,10 +258,32 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
 
                                 bool bzt = wst[2] != 1 ? 0 : 1;
 
+                                // if target particle is in regularized region of z axis
+                                const bool in_reg_z_tar = fabs(body_tar.x[2] - cell.center[2]) + fmm_weights_eval_.getRegAlpha() > cell.radius;
+
+                                // if target particle is in regularized region of y axis
+                                const bool in_reg_y_tar = fabs(body_tar.x[1] - cell.center[1]) + fmm_weights_eval_.getRegAlpha() > cell.radius;
+
+                                // if target particle is in regularized region of x axis
+                                const bool in_reg_x_tar = fabs(body_tar.x[0] - cell.center[0]) + fmm_weights_eval_.getRegAlpha() > cell.radius;
+
+
+
+
                                 for (const int body_idx_src : adj_cell.bodiesIndices)
                                 {
-
                                     const FBody &body_src = bodies_all_[body_idx_src];
+
+                                    // if source particle is in regularized region of z axis
+                                    const bool in_reg_z_src = fabs(body_src.x[2] - adj_cell.center[2]) + fmm_weights_eval_.getRegAlpha() > adj_cell.radius;
+
+                                    // if source particle is in regularized region of y axis
+                                    const bool in_reg_y_src = fabs(body_src.x[1] - adj_cell.center[1]) + fmm_weights_eval_.getRegAlpha() > adj_cell.radius;
+
+                                    // if source particle is in regularized region of x axis
+                                    const bool in_reg_x_src = fabs(body_src.x[0] - adj_cell.center[0]) + fmm_weights_eval_.getRegAlpha() > adj_cell.radius;
+
+                                    
                                     bool x_same_dir_tar = true;
                                     bool y_same_dir_tar = true;
                                     bool z_same_dir_tar = true;
@@ -281,7 +305,7 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                         y_same_dir_tar = false;
                                     }
 
-                                    // both particles are in opposite direction z f z
+                                    // both particles are in opposite direction of z
                                     real r1z = body_tar.x[2] - cell.center[2];
                                     real r2z = body_src.x[2] - cell.center[2];
                                     if (r1z * r2z < 0)
@@ -353,8 +377,10 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                     {
                                         if (is_reg_body[body_idx_src])
                                         {
+                                            // for sure source particle is in regularized region of x axis, and could be others also
                                             if (fabs(body_src.x[0] - cell.center[0]) <= interaction_region_tcell + fmm_weights_eval_.getRegAlpha())
                                             {
+                                                // if target particle is fully into in its own cell, not part of any regaulrized region
                                                 if (!is_reg_body[body_idx_tar])
                                                 {
                                                     // pair_list[body_idx_tar].push_back(body_idx_src);
@@ -362,49 +388,136 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                                     // pair_list_bxyz_tar[body_idx_tar].push_back({bxt, byt, bzt});
                                                     // pair_list_tif_within[body_idx_tar].push_back({1, 1, 1});
 
-
                                                     // pair_list_bxyz_src[body_idx_tar].push_back({bx, 1, 1});
                                                     // pair_list_sif_within[body_idx_tar].push_back({0, 1, 1});
-
                                                 }
                                                 else
                                                 {
-                                                    bool wisx = 1;
-                                                    bool wisy = 1;
-                                                    bool wisz = 1;
 
-                                                    bool witx = 1;
-                                                    bool wity = 1;
-                                                    bool witz = 1;
-
-                                                    if (x_same_dir_tar)
+                                                    // simple case
+                                                    if (x_same_dir_tar && y_same_dir_tar && z_same_dir_tar)
                                                     {
-                                                        bxt = 1;
-                                                        bx = 1;
 
-                                                        witx = 1;
-                                                        wisx = 1;
+                                                        // handle source weight outside the its cell
+                                                        bool bx = ws[0] < 1
+                                                                      ? (fabs(body_src.x[0] - cell.center[0]) + fmm_weights_eval_.getRegAlpha() >
+                                                                                 interaction_region_tcell
+                                                                             ? 0
+                                                                             : 1)
+                                                                      : 1;
+
+                                                        bool by = ws[1] < 1
+                                                                      ? (fabs(body_src.x[1] - cell.center[1]) + fmm_weights_eval_.getRegAlpha() >
+                                                                                 interaction_region_tcell
+                                                                             ? 0
+                                                                             : 1)
+                                                                      : 1;
+
+                                                        bool bz = ws[2] < 1
+                                                                      ? (fabs(body_src.x[2] - cell.center[2]) + fmm_weights_eval_.getRegAlpha() >
+                                                                                 interaction_region_tcell
+                                                                             ? 0
+                                                                             : 1)
+                                                                      : 1;
+
+                                                        // pair_list[body_idx_tar].push_back(body_idx_src);
+                                                        // pair_list_bxyz_tar[body_idx_tar].push_back({1, 1, 1});
+                                                        // pair_list_tif_within[body_idx_tar].push_back({1, 1, 1});
+
+                                                        // pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
+                                                        // pair_list_sif_within[body_idx_tar].push_back({0, 0, 0});
+
+                                                        // handle source weight inside its cell if target particle has some weight towards it
+                                                        if (in_reg_x_tar)
+                                                        {
+
+                                                            pair_list[body_idx_tar].push_back(body_idx_src);
+                                                            pair_list_bxyz_tar[body_idx_tar].push_back({bxt, 1, 1});
+                                                            pair_list_tif_within[body_idx_tar].push_back({0, 1, 1});
+
+                                                            pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
+                                                            pair_list_sif_within[body_idx_tar].push_back({1, 1, 1});
+                                                        }
                                                     }
-                                                    if (y_same_dir_tar)
+                                                    else if (x_same_dir_tar && y_same_dir_tar && !z_same_dir_tar)
                                                     {
-                                                        byt = 1;
-                                                        by = 1;
+
+                                                        
+                                                        pair_list[body_idx_tar].push_back(body_idx_src);
+                                                        if (in_reg_z_src && in_reg_z_tar)
+                                                        {
+                                                            pair_list_bxyz_tar[body_idx_tar].push_back({bxt, 1, bzt});
+                                                            pair_list_tif_within[body_idx_tar].push_back({1, 1, 1});
+                                                            
+                                                        }
+                                                        else
+                                                        {
+                                                            pair_list_bxyz_tar[body_idx_tar].push_back({bxt, 1, 1});
+                                                            pair_list_tif_within[body_idx_tar].push_back({1, 1, 1});
+                                                            
+                                                        }
+
+                                                        // handle source weight outside the its cell
+                                                        bool bx = ws[0] < 1
+                                                                      ? (fabs(body_src.x[0] - cell.center[0]) + fmm_weights_eval_.getRegAlpha() >
+                                                                                 interaction_region_tcell
+                                                                             ? 0
+                                                                             : 1)
+                                                                      : 1;
+
+                                                        bool by = ws[1] < 1
+                                                                      ? (fabs(body_src.x[1] - cell.center[1]) + fmm_weights_eval_.getRegAlpha() >
+                                                                                 interaction_region_tcell
+                                                                             ? 0
+                                                                             : 1)
+                                                                      : 1;
+
+                                                        bool bz = ws[2] < 1
+                                                                      ? (fabs(body_src.x[2] - cell.center[2]) + fmm_weights_eval_.getRegAlpha() >
+                                                                                 interaction_region_tcell
+                                                                             ? 0
+                                                                             : 1)
+                                                                      : 1;
+
+                                                        pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
+                                                        pair_list_sif_within[body_idx_tar].push_back({0, 0, 0});
+
+
+                                                        if (in_reg_z_tar && !in_reg_y_tar)
+                                                        {
+                                                            // pair_list[body_idx_tar].push_back(body_idx_src);
+                                                            // pair_list_bxyz_tar[body_idx_tar].push_back({bxt, 1, bzt});
+                                                            // pair_list_tif_within[body_idx_tar].push_back({1, 1, 0});
+
+                                                            // pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
+                                                            // pair_list_sif_within[body_idx_tar].push_back({0, 1, 1});
+                                                        }
+
+                                                        // // particle is in regularized region of z axis
+                                                        // if (in_reg_z)
+                                                        // {
+                                                        //     pair_list[body_idx_tar].push_back(body_idx_src);
+                                                        //     pair_list_bxyz_tar[body_idx_tar].push_back({bxt, 1, bzt});
+                                                        //     pair_list_tif_within[body_idx_tar].push_back({1, 1, 0});
+
+                                                        //     pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
+                                                        //     pair_list_sif_within[body_idx_tar].push_back({0, 1, 1});
+                                                        // }
+
+                                                        // // handle source weight inside its cell if target particle has some weight towards it
+                                                        // if (fabs(body_tar.x[0] - adj_cell.center[0]) <=
+                                                        //     interaction_region_scell + fmm_weights_eval_.getRegAlpha())
+                                                        // {
+
+                                                        //     // pair_list[body_idx_tar].push_back(body_idx_src);
+                                                        //     // pair_list_bxyz_tar[body_idx_tar].push_back({bxt, 1, 1});
+                                                        //     // pair_list_tif_within[body_idx_tar].push_back({0, 1, 1});
+
+                                                        //     // pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
+                                                        //     // pair_list_sif_within[body_idx_tar].push_back({1, 1, 1});
+                                                        // }
                                                     }
-
-                                                    if (z_same_dir_tar)
-                                                    {
-                                                        bzt = 1;
-                                                        bz = 1;
-                                                    }
-                                                    pair_list[body_idx_tar].push_back(body_idx_src);
-                                                    pair_list_bxyz_tar[body_idx_tar].push_back({bxt, byt, bzt});
-                                                    pair_list_tif_within[body_idx_tar].push_back({0, 0, 0});
-
-
-                                                    pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
-                                                    pair_list_sif_within[body_idx_tar].push_back({0, 0, 0});
                                                 }
-
 
                                                 // pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
                                                 // pair_list_sif_within[body_idx_tar].push_back({0, 1, 1});
