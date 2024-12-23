@@ -504,11 +504,38 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                         }
                                     }
 
+                                    // Check if the source particle is within the x-range of the target cell
+                                    bool srcp_in_tarc_x = fabs(body_src.x[0] - cell.center[0]) <= interaction_region_tcell + fmm_weights_eval_.getRegAlpha();
+
+                                    // Check if the source particle is within the y-range of the target cell
+                                    bool srcp_in_tarc_y = fabs(body_src.x[1] - cell.center[1]) <= interaction_region_tcell + fmm_weights_eval_.getRegAlpha();
+
+                                    // Check if the source particle is within the z-range of the target cell
+                                    bool srcp_in_tarc_z = fabs(body_src.x[2] - cell.center[2]) <= interaction_region_tcell + fmm_weights_eval_.getRegAlpha();
+
+                                    // Check if the target particle is within the x-range of the source cell
+                                    bool tarp_in_srcc_x =
+                                        fabs(body_tar.x[0] - adj_cell.center[0]) <= interaction_region_scell + fmm_weights_eval_.getRegAlpha();
+
+                                    // Check if the target particle is within the y-range of the source cell
+                                    bool tarp_in_srcc_y =
+                                        fabs(body_tar.x[1] - adj_cell.center[1]) <= interaction_region_scell + fmm_weights_eval_.getRegAlpha();
+
+                                    // Check if the target particle is within the z-range of the source cell
+                                    bool tarp_in_srcc_z =
+                                        fabs(body_tar.x[2] - adj_cell.center[2]) <= interaction_region_scell + fmm_weights_eval_.getRegAlpha();
+
+                                    // Determine if the source particle is entirely within the range of the target cell
+                                    bool srcp_in_tarc = srcp_in_tarc_x && srcp_in_tarc_y && srcp_in_tarc_z;
+
+                                    // Determine if the target particle is entirely within the range of the source cell
+                                    bool tarp_in_srcc = tarp_in_srcc_x && tarp_in_srcc_y && tarp_in_srcc_z;
+
                                     if (!is_reg_body[body_idx_tar])
                                     {
                                         if (is_reg_body[body_idx_src])
                                         {
-                                            if (sif_x == false || sif_y == false || sif_z == false)
+                                            if (srcp_in_tarc && (sif_x == false || sif_y == false || sif_z == false))
                                             {
                                                 // pair_list[body_idx_tar].push_back(body_idx_src);
 
@@ -522,35 +549,6 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                     }
                                     else
                                     {
-                                        // Check if the source particle is within the x-range of the target cell
-                                        bool srcp_in_tarc_x =
-                                            fabs(body_src.x[0] - cell.center[0]) <= interaction_region_tcell + fmm_weights_eval_.getRegAlpha();
-
-                                        // Check if the source particle is within the y-range of the target cell
-                                        bool srcp_in_tarc_y =
-                                            fabs(body_src.x[1] - cell.center[1]) <= interaction_region_tcell + fmm_weights_eval_.getRegAlpha();
-
-                                        // Check if the source particle is within the z-range of the target cell
-                                        bool srcp_in_tarc_z =
-                                            fabs(body_src.x[2] - cell.center[2]) <= interaction_region_tcell + fmm_weights_eval_.getRegAlpha();
-
-                                        // Check if the target particle is within the x-range of the source cell
-                                        bool tarp_in_srcc_x =
-                                            fabs(body_tar.x[0] - adj_cell.center[0]) <= interaction_region_scell + fmm_weights_eval_.getRegAlpha();
-
-                                        // Check if the target particle is within the y-range of the source cell
-                                        bool tarp_in_srcc_y =
-                                            fabs(body_tar.x[1] - adj_cell.center[1]) <= interaction_region_scell + fmm_weights_eval_.getRegAlpha();
-
-                                        // Check if the target particle is within the z-range of the source cell
-                                        bool tarp_in_srcc_z =
-                                            fabs(body_tar.x[2] - adj_cell.center[2]) <= interaction_region_scell + fmm_weights_eval_.getRegAlpha();
-
-                                        // Determine if the source particle is entirely within the range of the target cell
-                                        bool srcp_in_tarc = srcp_in_tarc_x && srcp_in_tarc_y && srcp_in_tarc_z;
-
-                                        // Determine if the target particle is entirely within the range of the source cell
-                                        bool tarp_in_srcc = tarp_in_srcc_x && tarp_in_srcc_y && tarp_in_srcc_z;
 
                                         if (!is_reg_body[body_idx_src])
                                         {
