@@ -265,6 +265,61 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                 const bool in_rel_regy_tar = in_regy_tar && rty_tc * rty_sc < 0;
                                 const bool in_rel_regz_tar = in_regz_tar && rtz_tc * rtz_sc < 0;
 
+                                // if (dist_x == dist_2cells && dist_y != dist_2cells && dist_z != dist_2cells)
+                                // {
+                                //     if (in_rel_regx_tar)
+                                //     {
+                                //         tif_x = false;
+                                //     }
+                                // }
+                                // else if (dist_y == dist_2cells && dist_x != dist_2cells && dist_z != dist_2cells)
+                                // {
+                                //     if (in_rel_regy_tar)
+                                //     {
+                                //         tif_y = false;
+                                //     }
+                                // }
+                                // else if (dist_z == dist_2cells && dist_x != dist_2cells && dist_y != dist_2cells)
+                                // {
+                                //     if (in_rel_regz_tar)
+                                //     {
+                                //         tif_z = false;
+                                //     }
+                                // }
+                                // else if (dist_x == dist_2cells && dist_y == dist_2cells && dist_z != dist_2cells)
+                                // {
+                                //     if (in_rel_regx_tar && in_rel_regy_tar)
+                                //     {
+                                //         tif_x = false;
+                                //         tif_y = false;
+                                //     }
+                                // }
+                                // else if (dist_y == dist_2cells && dist_z == dist_2cells && dist_x != dist_2cells)
+                                // {
+                                //     if (in_rel_regy_tar && in_rel_regz_tar)
+                                //     {
+                                //         tif_y = false;
+                                //         tif_z = false;
+                                //     }
+                                // }
+                                // else if (dist_x == dist_2cells && dist_z == dist_2cells && dist_y != dist_2cells)
+                                // {
+                                //     if (in_rel_regx_tar && in_rel_regz_tar)
+                                //     {
+                                //         tif_x = false;
+                                //         tif_z = false;
+                                //     }
+                                // }
+                                // else if (dist_x == dist_2cells && dist_y == dist_2cells && dist_z == dist_2cells)
+                                // {
+                                //     if (in_rel_regx_tar && in_rel_regy_tar && in_rel_regz_tar)
+                                //     {
+                                //         tif_x = false;
+                                //         tif_y = false;
+                                //         tif_z = false;
+                                //     }
+                                // }
+
                                 if (dist_x == dist_2cells)
                                 {
                                     if (in_rel_regx_tar)
@@ -372,6 +427,61 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                     bool sif_y = true;
                                     bool sif_z = true;
 
+                                    // if (dist_x == dist_2cells && dist_y != dist_2cells && dist_z != dist_2cells)
+                                    // {
+                                    //     if (in_rel_regx_src)
+                                    //     {
+                                    //         sif_x = false;
+                                    //     }
+                                    // }
+                                    // else if (dist_y == dist_2cells && dist_x != dist_2cells && dist_z != dist_2cells)
+                                    // {
+                                    //     if (in_rel_regy_src)
+                                    //     {
+                                    //         sif_y = false;
+                                    //     }
+                                    // }
+                                    // else if (dist_z == dist_2cells && dist_x != dist_2cells && dist_y != dist_2cells)
+                                    // {
+                                    //     if (in_rel_regz_src)
+                                    //     {
+                                    //         sif_z = false;
+                                    //     }
+                                    // }
+                                    // else if (dist_x == dist_2cells && dist_y == dist_2cells && dist_z != dist_2cells)
+                                    // {
+                                    //     if (in_rel_regx_src && in_rel_regy_src)
+                                    //     {
+                                    //         sif_x = false;
+                                    //         sif_y = false;
+                                    //     }
+                                    // }
+                                    // else if (dist_y == dist_2cells && dist_z == dist_2cells && dist_x != dist_2cells)
+                                    // {
+                                    //     if (in_rel_regy_src && in_rel_regz_src)
+                                    //     {
+                                    //         sif_y = false;
+                                    //         sif_z = false;
+                                    //     }
+                                    // }
+                                    // else if (dist_x == dist_2cells && dist_z == dist_2cells && dist_y != dist_2cells)
+                                    // {
+                                    //     if (in_rel_regx_src && in_rel_regz_src)
+                                    //     {
+                                    //         sif_x = false;
+                                    //         sif_z = false;
+                                    //     }
+                                    // }
+                                    // else if (dist_x == dist_2cells && dist_y == dist_2cells && dist_z == dist_2cells)
+                                    // {
+                                    //     if (in_rel_regx_src && in_rel_regy_src && in_rel_regz_src)
+                                    //     {
+                                    //         sif_x = false;
+                                    //         sif_y = false;
+                                    //         sif_z = false;
+                                    //     }
+                                    // }
+
                                     if (dist_x == dist_2cells)
                                     {
                                         if (in_rel_regx_src)
@@ -455,32 +565,79 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                             //     pair_list_sif_within[body_idx_tar].push_back({1, 1, 1});
                                             // }
                                         }
-                                        
-                                        else
+                                        else if (!srcp_in_tarc && !tarp_in_srcc)
                                         {
 
-                                            if (x_same_dir_tar && y_same_dir_tar && z_same_dir_tar)
+                                            bool xs_out = sif_x == false && srcp_in_tarc_x;
+                                            bool ys_out = sif_y == false && srcp_in_tarc_y;
+                                            bool zs_out = sif_z == false && srcp_in_tarc_z;
+
+                                            bool xt_out = tif_x == false && tarp_in_srcc_x;
+                                            bool yt_out = tif_y == false && tarp_in_srcc_y;
+                                            bool zt_out = tif_z == false && tarp_in_srcc_z;
+
+                                            if (tif_x == false || tif_y == false || tif_z == false)
                                             {
-                                                // if (sif_x == false || sif_y == false || sif_z == false)
-                                                // {
-                                                //     pair_list[body_idx_tar].push_back(body_idx_src);
 
-                                                //     pair_list_bxyz_tar[body_idx_tar].push_back({1, 1, 1});
-                                                //     pair_list_tif_within[body_idx_tar].push_back({1, 1, 1});
+                                                bool sx_c = 1;
+                                                bool sy_c = 1;
+                                                bool sz_c = 1;
 
-                                                //     pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
-                                                //     pair_list_sif_within[body_idx_tar].push_back({sif_x, sif_y, sif_z});
-                                                // }
+                                                bool tx_c = 1;
+                                                bool ty_c = 1;
+                                                bool tz_c = 1;
 
-                                                // if (tif_x == false || tif_y == false || tif_z == false)
+                                                if (srcp_in_tarc_x && sif_x == false)
+                                                {
+                                                    sx_c = 0;
+                                                }
+
+                                                if (srcp_in_tarc_y && sif_y == false)
+                                                {
+                                                    sy_c = 0;
+                                                }
+
+                                                if (srcp_in_tarc_z && sif_z == false)
+                                                {
+                                                    sz_c = 0;
+                                                }
+
+                                                // if (sx_c == false || sy_c == false || sz_c == false)
                                                 // {
                                                 //     pair_list[body_idx_tar].push_back(body_idx_src);
                                                 //     pair_list_bxyz_tar[body_idx_tar].push_back({bxt, byt, bzt});
                                                 //     pair_list_tif_within[body_idx_tar].push_back({tif_x, tif_y, tif_z});
 
                                                 //     pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
-                                                //     pair_list_sif_within[body_idx_tar].push_back({1, 1, 1});
+                                                //     pair_list_sif_within[body_idx_tar].push_back({sx_c, sy_c, sz_c});
                                                 // }
+                                            }
+                                        }
+                                        else
+                                        {
+
+                                            if (x_same_dir_tar && y_same_dir_tar && z_same_dir_tar)
+                                            {
+                                                if (srcp_in_tarc && (sif_x == false || sif_y == false || sif_z == false))
+                                                {
+                                                    pair_list[body_idx_tar].push_back(body_idx_src);
+
+                                                    pair_list_bxyz_tar[body_idx_tar].push_back({1, 1, 1});
+                                                    pair_list_tif_within[body_idx_tar].push_back({1, 1, 1});
+
+                                                    pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
+                                                    pair_list_sif_within[body_idx_tar].push_back({sif_x, sif_y, sif_z});
+                                                }
+
+                                                if (tarp_in_srcc && (tif_x == false || tif_y == false || tif_z == false))
+                                                {
+                                                    pair_list[body_idx_tar].push_back(body_idx_src);
+                                                    pair_list_bxyz_tar[body_idx_tar].push_back({bxt, byt, bzt});
+                                                    pair_list_tif_within[body_idx_tar].push_back({tif_x, tif_y, tif_z});
+
+                                                    pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
+                                                    pair_list_sif_within[body_idx_tar].push_back({1, 1, 1});
+                                                }
                                             }
 
                                             else if (!x_same_dir_tar && y_same_dir_tar && z_same_dir_tar)
@@ -871,8 +1028,9 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                             }
                                             else if (!x_same_dir_tar && !y_same_dir_tar && z_same_dir_tar)
                                             {
-                                                std::cout << body_src.x << "--" << body_tar.x << "--" << sif_x << "--" << sif_y << "--" << sif_z << "--"
-                                                          << tif_x << "--" << tif_y << "--" << tif_z << "--" << srcp_in_tarc << "--" << tarp_in_srcc << std::endl;
+                                                // std::cout << body_src.x << "--" << body_tar.x << "--" << sif_x << "--" << sif_y << "--" << sif_z << "--"
+                                                //           << tif_x << "--" << tif_y << "--" << tif_z << "--" << srcp_in_tarc << "--" << tarp_in_srcc <<
+                                                //           std::endl;
                                                 // if (srcp_in_tarc && (sif_x == false || sif_y == false || sif_z == false))
                                                 // {
                                                 //     if (dist_x == 0 && dist_y == 0)
@@ -1017,9 +1175,6 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                                 //         }
                                                 //     }
                                                 // }
-                                            
-                                            
-                                            
                                             }
 
                                             // other conditions of one same dir and two opposite dirs are dependent on correctness of this block
