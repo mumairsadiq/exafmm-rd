@@ -9,8 +9,7 @@ void gmx::fmm::FMMDirectInteractionsTree::rebuild_and_reprocess_tree()
     process_tree_();
 }
 
-gmx::fmm::FMMDirectInteractionsTree::FMMDirectInteractionsTree(const FBodies &bodies, const RVec box_center, const real box_radius,
-                                                               const size_t max_depth)
+gmx::fmm::FMMDirectInteractionsTree::FMMDirectInteractionsTree(const FBodies &bodies, const RVec box_center, const real box_radius, const size_t max_depth)
     : FMMTree(bodies, box_center, box_radius, max_depth)
 {
     process_tree_();
