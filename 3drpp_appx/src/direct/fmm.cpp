@@ -261,9 +261,12 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                 const bool in_regy_tar = fabs(body_tar.x[1] - cell.center[1]) + fmm_weights_eval_.getRegAlpha() > cell.radius;
                                 const bool in_regz_tar = fabs(body_tar.x[2] - cell.center[2]) + fmm_weights_eval_.getRegAlpha() > cell.radius;
 
-                                const bool in_rel_regx_tar = in_regx_tar && rtx_tc * rtx_sc < 0;
-                                const bool in_rel_regy_tar = in_regy_tar && rty_tc * rty_sc < 0;
-                                const bool in_rel_regz_tar = in_regz_tar && rtz_tc * rtz_sc < 0;
+                                const bool is_xtar_bw_cells = rtx_tc * rtx_sc < 0;
+                                const bool is_ytar_bw_cells = rty_tc * rty_sc < 0;
+                                const bool is_ztar_bw_cells = rtz_tc * rtz_sc < 0;
+                                const bool in_rel_regx_tar = in_regx_tar && is_xtar_bw_cells;
+                                const bool in_rel_regy_tar = in_regy_tar && is_ytar_bw_cells;
+                                const bool in_rel_regz_tar = in_regz_tar && is_ztar_bw_cells;
 
                                 // if (dist_x == dist_2cells && dist_y != dist_2cells && dist_z != dist_2cells)
                                 // {
@@ -417,11 +420,12 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                     const bool in_regy_src = fabs(body_src.x[1] - adj_cell.center[1]) + fmm_weights_eval_.getRegAlpha() > adj_cell.radius;
                                     const bool in_regz_src = fabs(body_src.x[2] - adj_cell.center[2]) + fmm_weights_eval_.getRegAlpha() > adj_cell.radius;
 
-                                    const bool in_rel_regx_src = in_regx_src && rsx_tc * rsx_sc < 0;
-
-                                    const bool in_rel_regy_src = in_regy_src && rsy_tc * rsy_sc < 0;
-
-                                    const bool in_rel_regz_src = in_regz_src && rsz_tc * rsz_sc < 0;
+                                    const bool is_xsrc_bw_cells = rsx_tc * rsx_sc < 0;
+                                    const bool is_ysrc_bw_cells = rsy_tc * rsy_sc < 0;
+                                    const bool is_zsrc_bw_cells = rsz_tc * rsz_sc < 0;
+                                    const bool in_rel_regx_src = in_regx_src && is_xsrc_bw_cells;
+                                    const bool in_rel_regy_src = in_regy_src && is_ysrc_bw_cells;
+                                    const bool in_rel_regz_src = in_regz_src && is_zsrc_bw_cells;
 
                                     bool sif_x = true;
                                     bool sif_y = true;
@@ -649,80 +653,207 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                         }
                                         else
                                         {
+
                                             if (in_rel_regx_src && in_rel_regx_tar)
                                             {
-                                                std::cout << "x: " << body_src.x << "--" << body_tar.x << std::endl;
+
+                                                if (dist_y == 0 && dist_z == 0)
+                                                {
+                                                    // pair_list[body_idx_tar].push_back(body_idx_src);
+                                                    // pair_list_bxyz_tar[body_idx_tar].push_back({bxt, byt, bzt});
+                                                    // pair_list_tif_within[body_idx_tar].push_back({tif_x, tif_y, tif_z});
+
+                                                    // pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
+                                                    // pair_list_sif_within[body_idx_tar].push_back({1, sif_y, sif_z});
+
+                                                    // pair_list[body_idx_tar].push_back(body_idx_src);
+                                                    // pair_list_bxyz_tar[body_idx_tar].push_back({1, byt, bzt});
+                                                    // pair_list_tif_within[body_idx_tar].push_back({1, tif_y, tif_z});
+
+                                                    // pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
+                                                    // pair_list_sif_within[body_idx_tar].push_back({sif_x, sif_y, sif_z});
+                                                    // if (y_same_dir_tar && z_same_dir_tar)
+                                                    // {
+                                                    //     pair_list[body_idx_tar].push_back(body_idx_src);
+                                                    //     pair_list_bxyz_tar[body_idx_tar].push_back({bxt, byt, bzt});
+                                                    //     pair_list_tif_within[body_idx_tar].push_back({tif_x, tif_y, tif_z});
+
+                                                    //     pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
+                                                    //     pair_list_sif_within[body_idx_tar].push_back({1, 1, 1});
+
+                                                    //     pair_list[body_idx_tar].push_back(body_idx_src);
+                                                    //     pair_list_bxyz_tar[body_idx_tar].push_back({1, 1, 1});
+                                                    //     pair_list_tif_within[body_idx_tar].push_back({1, 1, 1});
+
+                                                    //     pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
+                                                    //     pair_list_sif_within[body_idx_tar].push_back({sif_x, sif_y, sif_z});
+                                                    // }
+                                                    // else if (y_same_dir_tar)
+                                                    // {
+                                                    //     pair_list[body_idx_tar].push_back(body_idx_src);
+                                                    //     pair_list_bxyz_tar[body_idx_tar].push_back({bxt, byt, bzt});
+                                                    //     pair_list_tif_within[body_idx_tar].push_back({tif_x, tif_y, tif_z});
+
+                                                    //     pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
+                                                    //     pair_list_sif_within[body_idx_tar].push_back({1, 1, sif_z});
+
+                                                    //     pair_list[body_idx_tar].push_back(body_idx_src);
+                                                    //     pair_list_bxyz_tar[body_idx_tar].push_back({1, 1, bzt});
+                                                    //     pair_list_tif_within[body_idx_tar].push_back({1, 1, tif_z});
+
+                                                    //     pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
+                                                    //     pair_list_sif_within[body_idx_tar].push_back({sif_x, sif_y, sif_z});
+                                                    // }
+                                                    // else
+                                                    // {
+                                                    //     pair_list[body_idx_tar].push_back(body_idx_src);
+                                                    //     pair_list_bxyz_tar[body_idx_tar].push_back({bxt, byt, bzt});
+                                                    //     pair_list_tif_within[body_idx_tar].push_back({tif_x, tif_y, tif_z});
+
+                                                    //     pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
+                                                    //     pair_list_sif_within[body_idx_tar].push_back({1, sif_y, sif_z});
+
+                                                    //     pair_list[body_idx_tar].push_back(body_idx_src);
+                                                    //     pair_list_bxyz_tar[body_idx_tar].push_back({1, byt, bzt});
+                                                    //     pair_list_tif_within[body_idx_tar].push_back({1, tif_y, tif_z});
+
+                                                    //     pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
+                                                    //     pair_list_sif_within[body_idx_tar].push_back({sif_x, sif_y, sif_z});
+                                                    // }
+                                                }
+
+                                                else if (dist_z == 0)
+                                                {
+                                                    if (z_same_dir_tar)
+                                                    {
+                                                        // pair_list[body_idx_tar].push_back(body_idx_src);
+                                                        // pair_list_bxyz_tar[body_idx_tar].push_back({bxt, byt, bzt});
+                                                        // pair_list_tif_within[body_idx_tar].push_back({tif_x, tif_y, tif_z});
+
+                                                        // pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
+                                                        // pair_list_sif_within[body_idx_tar].push_back({1, sif_y, sif_z});
+
+                                                        // pair_list[body_idx_tar].push_back(body_idx_src);
+                                                        // pair_list_bxyz_tar[body_idx_tar].push_back({1, byt, bzt});
+                                                        // pair_list_tif_within[body_idx_tar].push_back({1, tif_y, tif_z});
+
+                                                        // pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
+                                                        // pair_list_sif_within[body_idx_tar].push_back({sif_x, sif_y, sif_z});
+                                                    }
+                                                    else
+                                                    {
+                                                        bool byt_c = byt;
+                                                        bool by_c = by;
+
+                                                        bool sif_y_c = 1;
+                                                        bool tif_y_c = 1;
+
+                                                        if (is_ytar_bw_cells)
+                                                        {
+                                                            byt_c = byt;
+                                                            sif_y_c = sif_y;
+                                                        }
+                                                        else
+                                                        {
+                                                            byt_c = 0;
+                                                            sif_y_c = 1;
+                                                        }
+
+                                                        if (is_ysrc_bw_cells)
+                                                        {
+                                                            by_c = by;
+                                                            tif_y_c = tif_y;
+                                                            
+                                                        }
+                                                        else
+                                                        {
+                                                            by_c = 0;
+                                                            tif_y_c = 1;
+                                                        }
+
+                                                        if (!is_ysrc_bw_cells)
+                                                        {
+
+                                                        pair_list[body_idx_tar].push_back(body_idx_src);
+                                                        pair_list_bxyz_tar[body_idx_tar].push_back({0, byt_c, 1});
+                                                        pair_list_tif_within[body_idx_tar].push_back({1, tif_y_c, 1});
+
+                                                        pair_list_bxyz_src[body_idx_tar].push_back({0, by_c, 0});
+                                                        pair_list_sif_within[body_idx_tar].push_back({0, sif_y_c, 1});
+
+                                                        pair_list[body_idx_tar].push_back(body_idx_src);
+                                                        pair_list_bxyz_tar[body_idx_tar].push_back({0, byt_c, 1});
+                                                        pair_list_tif_within[body_idx_tar].push_back({0, tif_y_c, 1});
+
+                                                        pair_list_bxyz_src[body_idx_tar].push_back({1, by_c, 0});
+                                                        pair_list_sif_within[body_idx_tar].push_back({1, sif_y_c, 1});
+
+                                                        if (in_regz_src)
+                                                        {
+
+                                                            pair_list[body_idx_tar].push_back(body_idx_src);
+                                                            pair_list_bxyz_tar[body_idx_tar].push_back({1, byt_c, 0});
+                                                            pair_list_tif_within[body_idx_tar].push_back({1, tif_y_c, 1});
+
+                                                            pair_list_bxyz_src[body_idx_tar].push_back({0, by_c, 0});
+                                                            pair_list_sif_within[body_idx_tar].push_back({0, sif_y_c, 0});
+
+                                                            pair_list[body_idx_tar].push_back(body_idx_src);
+                                                            pair_list_bxyz_tar[body_idx_tar].push_back({0, byt_c, 0});
+                                                            pair_list_tif_within[body_idx_tar].push_back({0, tif_y_c, 1});
+
+                                                            pair_list_bxyz_src[body_idx_tar].push_back({0, by_c, 0});
+                                                            pair_list_sif_within[body_idx_tar].push_back({1, sif_y_c, 0});
+                                                        }
+                                                        }
+                                                    }
+                                                }
+                                                else if (is_ytar_bw_cells && is_ztar_bw_cells)
+                                                {
+                                                }
+                                                else if (is_ytar_bw_cells)
+                                                {
+                                                }
+                                                else if (is_ztar_bw_cells)
+                                                {
+                                                }
+                                                else
+                                                {
+                                                }
+
+                                                // if (in_rel_regy_tar && in_rel_regz_tar)
+                                                // {
+                                                //     std::cout << "Both Related: " << body_src.x << "--" << body_tar.x << std::endl;
+                                                // }
+                                                // else if (in_rel_regy_tar)
+                                                // {
+                                                //     std::cout << "Y Related: " << body_src.x << "--" << body_tar.x << std::endl;
+                                                // }
+                                                // else if (in_rel_regz_tar)
+                                                // {
+                                                //     std::cout << "Z Related: " << body_src.x << "--" << body_tar.x << std::endl;
+                                                // }
+                                                // else
+                                                // {
+                                                // }
                                             }
-                                            else if (in_rel_regx_src)
+                                            else if (in_rel_regy_src && in_rel_regy_tar)
                                             {
-
-                                                pair_list[body_idx_tar].push_back(body_idx_src);
-                                                pair_list_bxyz_tar[body_idx_tar].push_back({bxt, byt, bzt});
-                                                pair_list_tif_within[body_idx_tar].push_back({tif_x, tif_y, tif_z});
-
-                                                pair_list_bxyz_src[body_idx_tar].push_back({bx, 0, 0});
-                                                pair_list_sif_within[body_idx_tar].push_back({sif_x, 1, 1});
+                                                // std::cout << "y: " << body_src.x << "--" << body_tar.x << std::endl;
                                             }
-                                            else if (in_rel_regx_tar)
+                                            else if (in_rel_regz_src && in_rel_regz_tar)
                                             {
-
-                                                pair_list[body_idx_tar].push_back(body_idx_src);
-                                                pair_list_bxyz_tar[body_idx_tar].push_back({bxt, 0, 0});
-                                                pair_list_tif_within[body_idx_tar].push_back({tif_x, 1, 1});
-
-                                                pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
-                                                pair_list_sif_within[body_idx_tar].push_back({sif_x, sif_y, sif_z});
+                                                // std::cout << "z: " << body_src.x << "--" << body_tar.x << std::endl;
                                             }
-
-                                            if (in_rel_regy_src && in_rel_regy_tar)
+                                            else if (in_rel_regx_src || in_rel_regx_tar || in_rel_regy_src || in_rel_regy_tar || in_rel_regz_src ||
+                                                     in_rel_regz_tar)
                                             {
-                                                std::cout << "y: " << body_src.x << "--" << body_tar.x << std::endl;
-                                            }
-                                            else if (in_rel_regy_src)
-                                            {
+                                                // pair_list[body_idx_tar].push_back(body_idx_src);
+                                                // pair_list_bxyz_tar[body_idx_tar].push_back({bxt, byt, bzt});
+                                                // pair_list_tif_within[body_idx_tar].push_back({tif_x, tif_y, tif_z});
 
-                                                pair_list[body_idx_tar].push_back(body_idx_src);
-                                                pair_list_bxyz_tar[body_idx_tar].push_back({bxt, byt, bzt});
-                                                pair_list_tif_within[body_idx_tar].push_back({tif_x, tif_y, tif_z});
-
-                                                pair_list_bxyz_src[body_idx_tar].push_back({0, by, 0});
-                                                pair_list_sif_within[body_idx_tar].push_back({1, sif_y, 1});
-                                            }
-                                            else if (in_rel_regy_tar)
-                                            {
-
-                                                pair_list[body_idx_tar].push_back(body_idx_src);
-                                                pair_list_bxyz_tar[body_idx_tar].push_back({0, byt, 0});
-                                                pair_list_tif_within[body_idx_tar].push_back({1, tif_y, 1});
-
-                                                pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
-                                                pair_list_sif_within[body_idx_tar].push_back({sif_x, sif_y, sif_z});
-                                            }
-
-                                            if (in_rel_regz_tar && in_rel_regz_src)
-                                            {
-                                                std::cout << "z: " << body_src.x << "--" << body_tar.x << std::endl;
-                                            }
-                                            else if (in_rel_regz_src)
-                                            {
-
-                                                pair_list[body_idx_tar].push_back(body_idx_src);
-                                                pair_list_bxyz_tar[body_idx_tar].push_back({bxt, byt, bzt});
-                                                pair_list_tif_within[body_idx_tar].push_back({tif_x, tif_y, tif_z});
-
-                                                pair_list_bxyz_src[body_idx_tar].push_back({0, 0, bz});
-                                                pair_list_sif_within[body_idx_tar].push_back({1, 1, sif_z});
-                                            }
-                                            
-                                            else if (in_rel_regz_tar)
-                                            {
-                                                    
-                                                    pair_list[body_idx_tar].push_back(body_idx_src);
-                                                    pair_list_bxyz_tar[body_idx_tar].push_back({0, 0, bzt});
-                                                    pair_list_tif_within[body_idx_tar].push_back({1, 1, tif_z});
-    
-                                                    pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
-                                                    pair_list_sif_within[body_idx_tar].push_back({sif_x, sif_y, sif_z});
+                                                // pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
+                                                // pair_list_sif_within[body_idx_tar].push_back({sif_x, sif_y, sif_z});
                                             }
 
                                             // if (x_same_dir_tar && y_same_dir_tar && z_same_dir_tar)
@@ -1154,8 +1285,10 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                             // else if (!x_same_dir_tar && !y_same_dir_tar && z_same_dir_tar)
                                             // {
 
-                                            //     // std::cout << body_src.x << "--" << body_tar.x << "--" << sif_x << "--" << sif_y << "--" << sif_z << "--"
-                                            //     //           << tif_x << "--" << tif_y << "--" << tif_z << "--" << srcp_in_tarc << "--" << tarp_in_srcc <<
+                                            //     // std::cout << body_src.x << "--" << body_tar.x << "--" << sif_x << "--" << sif_y << "--" << sif_z <<
+                                            //     "--"
+                                            //     //           << tif_x << "--" << tif_y << "--" << tif_z << "--" << srcp_in_tarc << "--" << tarp_in_srcc
+                                            //     <<
                                             //     //           std::endl;
                                             //     // if (srcp_in_tarc && (sif_x == false || sif_y == false || sif_z == false))
                                             //     // {
