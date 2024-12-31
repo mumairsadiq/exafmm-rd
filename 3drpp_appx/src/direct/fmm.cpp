@@ -203,8 +203,27 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                            ? (fabs(body_tar.x[2] - adj_cell.center[2]) + fmm_weights_eval_.getRegAlpha() <= interaction_region_scell ? 1 : 0)
                                            : 1;
 
+                            const real dist_2cells = cell.radius * 4;
+
+                            const real rtx_tc = body_tar.x[0] - cell.center[0];
+                            const real rty_tc = body_tar.x[1] - cell.center[1];
+                            const real rtz_tc = body_tar.x[2] - cell.center[2];
+
+                            const real rtx_sc = body_tar.x[0] - adj_cell.center[0];
+                            const real rty_sc = body_tar.x[1] - adj_cell.center[1];
+                            const real rtz_sc = body_tar.x[2] - adj_cell.center[2];
+
+                            const real dist_x = fabs(adj_cell.center[0] - cell.center[0]);
+                            const real dist_y = fabs(adj_cell.center[1] - cell.center[1]);
+                            const real dist_z = fabs(adj_cell.center[2] - cell.center[2]);
+
+                            const bool is_xtar_bw_cells = rtx_tc * rtx_sc < 0;
+                            const bool is_ytar_bw_cells = rty_tc * rty_sc < 0;
+                            const bool is_ztar_bw_cells = rtz_tc * rtz_sc < 0;
+
                             if (num_away == 1)
                             {
+
                                 // one and half cell
                                 for (const int &body_idx_src : adj_cell.bodiesIndices)
                                 {
@@ -227,31 +246,94 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                                 ? (fabs(body_src.x[2] - cell.center[2]) + fmm_weights_eval_.getRegAlpha() > interaction_region_tcell ? 0 : 1)
                                                 : 1;
 
-                                        // pair_list[body_idx_tar].push_back(body_idx_src);
-                                        // pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
-                                        // pair_list_bxyz_tar[body_idx_tar].push_back({bxt, byt, bzt});
-                                        // pair_list_sif_within[body_idx_tar].push_back({1, 1, 1});
-                                        // pair_list_tif_within[body_idx_tar].push_back({1, 1, 1});
+                                        const RVec w3t = w_per_atom[body_idx_tar];
+                                        const RVec w3s = w_per_atom[body_idx_src];
+
+                                        const real wtar_in_cell = w3t[0] * w3t[1] * w3t[2];
+                                        const real wsrc_in_cell = w3s[0] * w3s[1] * w3s[2];
+
+                                        const real rsx_tc = body_src.x[0] - cell.center[0];
+                                        const real rsx_sc = body_src.x[0] - adj_cell.center[0];
+
+                                        const real rsy_tc = body_src.x[1] - cell.center[1];
+                                        const real rsy_sc = body_src.x[1] - adj_cell.center[1];
+
+                                        const real rsz_tc = body_src.x[2] - cell.center[2];
+                                        const real rsz_sc = body_src.x[2] - adj_cell.center[2];
+
+                                        const bool is_xsrc_bw_cells = rsx_tc * rsx_sc < 0;
+                                        const bool is_ysrc_bw_cells = rsy_tc * rsy_sc < 0;
+                                        const bool is_zsrc_bw_cells = rsz_tc * rsz_sc < 0;
+
+                                        const bool x_same_dir_tar = rtx_tc * rsx_tc < 0;
+                                        const bool y_same_dir_tar = rty_tc * rsy_tc < 0;
+                                        const bool z_same_dir_tar = rtz_tc * rsz_tc < 0;
+
+                                        const bool x_same_dir_src = rsx_sc * rtx_sc < 0;
+                                        const bool y_same_dir_src = rsy_sc * rty_sc < 0;
+                                        const bool z_same_dir_src = rsz_sc * rtz_sc < 0;
+
+                                        const bool is_x_fr_cells = (dist_x == 0 && x_same_dir_tar) || (dist_x != 0 && is_xtar_bw_cells && is_xsrc_bw_cells);
+                                        const bool is_y_fr_cells = (dist_y == 0 && y_same_dir_tar) || (dist_y != 0 && is_ytar_bw_cells && is_ysrc_bw_cells);
+                                        const bool is_z_fr_cells = (dist_z == 0 && z_same_dir_tar) || (dist_z != 0 && is_ztar_bw_cells && is_zsrc_bw_cells);
+
+                                        if ((wtar_in_cell == 1 && wsrc_in_cell == 1) || (is_x_fr_cells && is_y_fr_cells && is_z_fr_cells))
+                                        {
+                                            // pair_list[body_idx_tar].push_back(body_idx_src);
+                                            // pair_list_bxyz_src[body_idx_tar].push_back({1, 1, 1});
+                                            // pair_list_bxyz_tar[body_idx_tar].push_back({1, 1, 1});
+                                            // pair_list_sif_within[body_idx_tar].push_back({1, 1, 1});
+                                            // pair_list_tif_within[body_idx_tar].push_back({1, 1, 1});
+                                        }
+                                        else
+                                        {
+
+                                            // code below needs double checking
+
+                                            const bool bxt_c1 =
+                                                (w3t[0] == 1 || is_x_fr_cells) ? 1 : ((dist_x == 0 && x_same_dir_tar) || (dist_x != 0 && is_xtar_bw_cells));
+                                            const bool byt_c1 =
+                                                (w3t[1] == 1 || is_y_fr_cells) ? 1 : ((dist_y == 0 && y_same_dir_tar) || (dist_y != 0 && is_ytar_bw_cells));
+                                            const bool bzt_c1 =
+                                                (w3t[2] == 1 || is_z_fr_cells) ? 1 : ((dist_z == 0 && z_same_dir_tar) || (dist_z != 0 && is_ztar_bw_cells));
+
+                                            const bool bxs_c1 =
+                                                (ws[0] == 1 || is_x_fr_cells) ? 1 : ((dist_x == 0 && x_same_dir_src) || (dist_x != 0 && is_xsrc_bw_cells));
+                                            const bool bys_c1 =
+                                                (ws[1] == 1 || is_y_fr_cells) ? 1 : ((dist_y == 0 && y_same_dir_src) || (dist_y != 0 && is_ysrc_bw_cells));
+                                            const bool bzs_c1 =
+                                                (ws[2] == 1 || is_z_fr_cells) ? 1 : ((dist_z == 0 && z_same_dir_src) || (dist_z != 0 && is_zsrc_bw_cells));
+
+                                            pair_list[body_idx_tar].push_back(body_idx_src);
+
+                                            pair_list_bxyz_tar[body_idx_tar].push_back({bxt_c1, byt_c1, bzt_c1});
+                                            pair_list_tif_within[body_idx_tar].push_back({1, 1, 1});
+
+                                            pair_list_bxyz_src[body_idx_tar].push_back({bxs_c1, bys_c1, bzs_c1});
+                                            pair_list_sif_within[body_idx_tar].push_back({1, 1, 1});
+
+                                            // // indirect weights outside the boundary of the cell
+                                            // if (bxt_c1 == false || byt_c1 == false || bzt_c1 == false)
+                                            // {
+                                            //     pair_list[body_idx_tar].push_back(body_idx_src);
+                                            //     pair_list_bxyz_src[body_idx_tar].push_back({bxt_c1, byt_c1, bzt_c1});
+                                            //     pair_list_bxyz_tar[body_idx_tar].push_back({bxt_c1, byt_c1, bzt_c1});
+                                            //     pair_list_sif_within[body_idx_tar].push_back({0, 0, 0});
+                                            //     pair_list_tif_within[body_idx_tar].push_back({0, 0, 0});
+                                            // }
+
+                                            // pair_list[body_idx_tar].push_back(body_idx_src);
+                                            // pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
+                                            // pair_list_bxyz_tar[body_idx_tar].push_back({bxt, byt, bzt});
+                                            // pair_list_sif_within[body_idx_tar].push_back({1, 1, 1});
+                                            // pair_list_tif_within[body_idx_tar].push_back({1, 1, 1});
+                                        }
                                     }
                                 }
                             }
 
                             else if (num_away == 2) // num_away == 2
                             {
-
-                                const real rtx_tc = body_tar.x[0] - cell.center[0];
-                                const real rty_tc = body_tar.x[1] - cell.center[1];
-                                const real rtz_tc = body_tar.x[2] - cell.center[2];
-
-                                const real rtx_sc = body_tar.x[0] - adj_cell.center[0];
-                                const real rty_sc = body_tar.x[1] - adj_cell.center[1];
-                                const real rtz_sc = body_tar.x[2] - adj_cell.center[2];
-
-                                const real dist_2cells = cell.radius * 4;
-
-                                const real dist_x = fabs(adj_cell.center[0] - cell.center[0]);
-                                const real dist_y = fabs(adj_cell.center[1] - cell.center[1]);
-                                const real dist_z = fabs(adj_cell.center[2] - cell.center[2]);
 
                                 bool tif_x = true;
                                 bool tif_y = true;
@@ -262,9 +344,6 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                 const bool in_regy_tar = wst[1] != 1 && fabs(body_tar.x[1] - cell.center[1]) + fmm_weights_eval_.getRegAlpha() > cell.radius;
                                 const bool in_regz_tar = wst[2] != 1 && fabs(body_tar.x[2] - cell.center[2]) + fmm_weights_eval_.getRegAlpha() > cell.radius;
 
-                                const bool is_xtar_bw_cells = rtx_tc * rtx_sc < 0;
-                                const bool is_ytar_bw_cells = rty_tc * rty_sc < 0;
-                                const bool is_ztar_bw_cells = rtz_tc * rtz_sc < 0;
                                 const bool in_rel_regx_tar = in_regx_tar && is_xtar_bw_cells;
                                 const bool in_rel_regy_tar = in_regy_tar && is_ytar_bw_cells;
                                 const bool in_rel_regz_tar = in_regz_tar && is_ztar_bw_cells;
@@ -352,10 +431,6 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                 {
                                     const FBody &body_src = bodies_all_[body_idx_src];
 
-                                    bool x_same_dir_tar = true;
-                                    bool y_same_dir_tar = true;
-                                    bool z_same_dir_tar = true;
-
                                     const real rsx_tc = body_src.x[0] - cell.center[0];
                                     const real rsx_sc = body_src.x[0] - adj_cell.center[0];
 
@@ -365,43 +440,13 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                     const real rsz_tc = body_src.x[2] - cell.center[2];
                                     const real rsz_sc = body_src.x[2] - adj_cell.center[2];
 
-                                    // both particles are in opposite direction of x
-                                    if (rtx_tc * rsx_tc < 0)
-                                    {
-                                        x_same_dir_tar = false;
-                                    }
+                                    const bool x_same_dir_tar = rtx_tc * rsx_tc < 0;
+                                    const bool y_same_dir_tar = rty_tc * rsy_tc < 0;
+                                    const bool z_same_dir_tar = rtz_tc * rsz_tc < 0;
 
-                                    // both particles are in opposite direction of y
-                                    if (rty_tc * rsy_tc < 0)
-                                    {
-                                        y_same_dir_tar = false;
-                                    }
-
-                                    // both particles are in opposite direction of z
-
-                                    if (rtz_tc * rsz_tc < 0)
-                                    {
-                                        z_same_dir_tar = false;
-                                    }
-
-                                    bool x_same_dir_src = true;
-                                    bool y_same_dir_src = true;
-                                    bool z_same_dir_src = true;
-
-                                    if (rsx_sc * rtx_sc < 0)
-                                    {
-                                        x_same_dir_src = false;
-                                    }
-
-                                    if (rsy_sc * rty_sc < 0)
-                                    {
-                                        y_same_dir_src = false;
-                                    }
-
-                                    if (rsz_sc * rtz_sc < 0)
-                                    {
-                                        z_same_dir_src = false;
-                                    }
+                                    const bool x_same_dir_src = rsx_sc * rtx_sc < 0;
+                                    const bool y_same_dir_src = rsy_sc * rty_sc < 0;
+                                    const bool z_same_dir_src = rsz_sc * rtz_sc < 0;
 
                                     const RVec ws = w_per_atom[body_idx_src];
 
@@ -428,6 +473,7 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                     const bool is_xsrc_bw_cells = rsx_tc * rsx_sc < 0;
                                     const bool is_ysrc_bw_cells = rsy_tc * rsy_sc < 0;
                                     const bool is_zsrc_bw_cells = rsz_tc * rsz_sc < 0;
+
                                     const bool in_rel_regx_src = in_regx_src && is_xsrc_bw_cells;
                                     const bool in_rel_regy_src = in_regy_src && is_ysrc_bw_cells;
                                     const bool in_rel_regz_src = in_regz_src && is_zsrc_bw_cells;
@@ -580,7 +626,8 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                         {
 
                                             // std::cout << body_src.x << "--" << body_tar.x << std::endl;
-                                            // std::cout << body_src.x << "--" << body_tar.x << "--" << sif_x << "--" << sif_y << "--" << sif_z << "--" << tif_x
+                                            // std::cout << body_src.x << "--" << body_tar.x << "--" << sif_x << "--" << sif_y << "--" << sif_z << "--" <<
+                                            // tif_x
                                             //           << "--" << tif_y << "--" << tif_z << "--s" << srcp_in_tarc_x << "--" << srcp_in_tarc_y << "--"
                                             //           << srcp_in_tarc_z << "--t" << tarp_in_srcc_x << "--" << tarp_in_srcc_y << "--" << tarp_in_srcc_z <<
                                             //           "\n";
@@ -790,59 +837,59 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                             else if (in_rel_regy_src && in_rel_regy_tar && dist_y == dist_2cells)
                                             {
                                                 // tested well, but still vulnerable if block
-                                                if (dist_z == 0 && dist_x != 0 && !z_same_dir_tar)
-                                                {
+                                                // if (dist_z == 0 && dist_x != 0 && !z_same_dir_tar)
+                                                // {
 
-                                                    pair_list[body_idx_tar].push_back(body_idx_src);
-                                                    pair_list_bxyz_tar[body_idx_tar].push_back({bxt, 0, 1});
-                                                    pair_list_tif_within[body_idx_tar].push_back({tif_x, 1, 1});
+                                                //     pair_list[body_idx_tar].push_back(body_idx_src);
+                                                //     pair_list_bxyz_tar[body_idx_tar].push_back({bxt, 0, 1});
+                                                //     pair_list_tif_within[body_idx_tar].push_back({tif_x, 1, 1});
 
-                                                    pair_list_bxyz_src[body_idx_tar].push_back({bx, by, 0});
-                                                    pair_list_sif_within[body_idx_tar].push_back({sif_x, sif_y, 1});
+                                                //     pair_list_bxyz_src[body_idx_tar].push_back({bx, by, 0});
+                                                //     pair_list_sif_within[body_idx_tar].push_back({sif_x, sif_y, 1});
 
-                                                    pair_list[body_idx_tar].push_back(body_idx_src);
-                                                    pair_list_bxyz_tar[body_idx_tar].push_back({bxt, 0, 1});
-                                                    pair_list_tif_within[body_idx_tar].push_back({tif_x, 0, 1});
+                                                //     pair_list[body_idx_tar].push_back(body_idx_src);
+                                                //     pair_list_bxyz_tar[body_idx_tar].push_back({bxt, 0, 1});
+                                                //     pair_list_tif_within[body_idx_tar].push_back({tif_x, 0, 1});
 
-                                                    pair_list_bxyz_src[body_idx_tar].push_back({bx, 1, 0});
-                                                    pair_list_sif_within[body_idx_tar].push_back({sif_x, 1, 1});
+                                                //     pair_list_bxyz_src[body_idx_tar].push_back({bx, 1, 0});
+                                                //     pair_list_sif_within[body_idx_tar].push_back({sif_x, 1, 1});
 
-                                                    if (in_regz_src)
-                                                    {
-                                                        pair_list[body_idx_tar].push_back(body_idx_src);
-                                                        pair_list_bxyz_tar[body_idx_tar].push_back({bxt, 1, 0});
-                                                        pair_list_tif_within[body_idx_tar].push_back({tif_x, 1, 1});
+                                                //     if (in_regz_src)
+                                                //     {
+                                                //         pair_list[body_idx_tar].push_back(body_idx_src);
+                                                //         pair_list_bxyz_tar[body_idx_tar].push_back({bxt, 1, 0});
+                                                //         pair_list_tif_within[body_idx_tar].push_back({tif_x, 1, 1});
 
-                                                        pair_list_bxyz_src[body_idx_tar].push_back({bx, 0, 0});
-                                                        pair_list_sif_within[body_idx_tar].push_back({sif_x, 0, 0});
+                                                //         pair_list_bxyz_src[body_idx_tar].push_back({bx, 0, 0});
+                                                //         pair_list_sif_within[body_idx_tar].push_back({sif_x, 0, 0});
 
-                                                        pair_list[body_idx_tar].push_back(body_idx_src);
-                                                        pair_list_bxyz_tar[body_idx_tar].push_back({bxt, 0, 0});
-                                                        pair_list_tif_within[body_idx_tar].push_back({tif_x, 0, 1});
+                                                //         pair_list[body_idx_tar].push_back(body_idx_src);
+                                                //         pair_list_bxyz_tar[body_idx_tar].push_back({bxt, 0, 0});
+                                                //         pair_list_tif_within[body_idx_tar].push_back({tif_x, 0, 1});
 
-                                                        pair_list_bxyz_src[body_idx_tar].push_back({bx, 0, 0});
-                                                        pair_list_sif_within[body_idx_tar].push_back({sif_x, 1, 0});
-                                                    }
-                                                    // highly skeptical portion
-                                                    else if (in_regx_src && in_regx_tar &&
-                                                             (dist_x != dist_2cells &&
-                                                              ((!is_xsrc_bw_cells && is_xtar_bw_cells) || (is_xsrc_bw_cells && !is_xtar_bw_cells))))
-                                                    {
-                                                        pair_list[body_idx_tar].push_back(body_idx_src);
-                                                        pair_list_bxyz_tar[body_idx_tar].push_back({0, 1, 0});
-                                                        pair_list_tif_within[body_idx_tar].push_back({0, 1, 1});
+                                                //         pair_list_bxyz_src[body_idx_tar].push_back({bx, 0, 0});
+                                                //         pair_list_sif_within[body_idx_tar].push_back({sif_x, 1, 0});
+                                                //     }
+                                                //     // highly skeptical portion
+                                                //     else if (in_regx_src && in_regx_tar &&
+                                                //              (dist_x != dist_2cells &&
+                                                //               ((!is_xsrc_bw_cells && is_xtar_bw_cells) || (is_xsrc_bw_cells && !is_xtar_bw_cells))))
+                                                //     {
+                                                //         pair_list[body_idx_tar].push_back(body_idx_src);
+                                                //         pair_list_bxyz_tar[body_idx_tar].push_back({0, 1, 0});
+                                                //         pair_list_tif_within[body_idx_tar].push_back({0, 1, 1});
 
-                                                        pair_list_bxyz_src[body_idx_tar].push_back({0, 0, 0});
-                                                        pair_list_sif_within[body_idx_tar].push_back({0, 0, 1});
+                                                //         pair_list_bxyz_src[body_idx_tar].push_back({0, 0, 0});
+                                                //         pair_list_sif_within[body_idx_tar].push_back({0, 0, 1});
 
-                                                        pair_list[body_idx_tar].push_back(body_idx_src);
-                                                        pair_list_bxyz_tar[body_idx_tar].push_back({0, 0, 0});
-                                                        pair_list_tif_within[body_idx_tar].push_back({0, 0, 1});
+                                                //         pair_list[body_idx_tar].push_back(body_idx_src);
+                                                //         pair_list_bxyz_tar[body_idx_tar].push_back({0, 0, 0});
+                                                //         pair_list_tif_within[body_idx_tar].push_back({0, 0, 1});
 
-                                                        pair_list_bxyz_src[body_idx_tar].push_back({0, 0, 0});
-                                                        pair_list_sif_within[body_idx_tar].push_back({0, 1, 1});
-                                                    }
-                                                }
+                                                //         pair_list_bxyz_src[body_idx_tar].push_back({0, 0, 0});
+                                                //         pair_list_sif_within[body_idx_tar].push_back({0, 1, 1});
+                                                //     }
+                                                // }
                                                 // else if (dist_x == 0 && dist_z != 0 && !x_same_dir_tar)
                                                 // {
 
@@ -913,7 +960,6 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                                 //     pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
                                                 //     pair_list_sif_within[body_idx_tar].push_back({sif_x, sif_y, sif_z});
                                                 // }
-                                            
                                             }
                                             else if (in_rel_regz_src && in_rel_regz_tar && dist_z == dist_2cells)
                                             {
@@ -1040,17 +1086,11 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                                 //     pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
                                                 //     pair_list_sif_within[body_idx_tar].push_back({sif_x, sif_y, sif_z});
                                                 // }
-                                            
                                             }
                                             else if (in_rel_regx_src || in_rel_regx_tar || in_rel_regy_src || in_rel_regy_tar || in_rel_regz_src ||
                                                      in_rel_regz_tar)
                                             {
-                                                // pair_list[body_idx_tar].push_back(body_idx_src);
-                                                // pair_list_bxyz_tar[body_idx_tar].push_back({bxt, byt, bzt});
-                                                // pair_list_tif_within[body_idx_tar].push_back({tif_x, tif_y, tif_z});
-
-                                                // pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
-                                                // pair_list_sif_within[body_idx_tar].push_back({sif_x, sif_y, sif_z});
+                                                // pair_list[body_idx_tar].push_back(borm
                                             }
                                         }
                                     }
