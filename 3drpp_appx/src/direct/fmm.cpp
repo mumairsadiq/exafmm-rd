@@ -2,10 +2,9 @@
 #include <fstream>
 #include <iomanip>
 
-gmx::fmm::FMMDirectInteractions::FMMDirectInteractions(const std::vector<RVec> coordinates, const std::vector<real> charges, const RVec box_center,
-                                                       const real box_radius, const size_t max_depth, const real reg_alpha)
-    : bodies_all_(coordinates, charges), fmm_weights_eval_(box_center, box_radius, reg_alpha),
-      fmm_direct_interactions_tree_(bodies_all_, box_center, box_radius, max_depth)
+gmx::fmm::FMMDirectInteractions::FMMDirectInteractions(const std::vector<RVec> coordinates, const std::vector<real> charges, const RVec box_center, const real box_radius, const size_t max_depth,
+                                                       const real reg_alpha)
+    : bodies_all_(coordinates, charges), fmm_weights_eval_(box_center, box_radius, reg_alpha), fmm_direct_interactions_tree_(bodies_all_, box_center, box_radius, max_depth)
 {
     compute_weights_();
 }
@@ -191,17 +190,15 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                 num_away = 2; // If any direction is "two away"
                             }
 
-                            bool bxt = wst[0] != 1
-                                           ? (fabs(body_tar.x[0] - adj_cell.center[0]) + fmm_weights_eval_.getRegAlpha() <= interaction_region_scell ? 1 : 0)
-                                           : 1;
+                            const bool in_regx_tar = wst[0] != 1;
+                            const bool in_regy_tar = wst[1] != 1;
+                            const bool in_regz_tar = wst[2] != 1;
 
-                            bool byt = wst[1] != 1
-                                           ? (fabs(body_tar.x[1] - adj_cell.center[1]) + fmm_weights_eval_.getRegAlpha() <= interaction_region_scell ? 1 : 0)
-                                           : 1;
+                            const bool bxt = in_regx_tar ? (fabs(body_tar.x[0] - adj_cell.center[0]) + fmm_weights_eval_.getRegAlpha() <= interaction_region_scell ? 1 : 0) : 1;
 
-                            bool bzt = wst[2] != 1
-                                           ? (fabs(body_tar.x[2] - adj_cell.center[2]) + fmm_weights_eval_.getRegAlpha() <= interaction_region_scell ? 1 : 0)
-                                           : 1;
+                            const bool byt = in_regy_tar ? (fabs(body_tar.x[1] - adj_cell.center[1]) + fmm_weights_eval_.getRegAlpha() <= interaction_region_scell ? 1 : 0) : 1;
+
+                            const bool bzt = in_regz_tar ? (fabs(body_tar.x[2] - adj_cell.center[2]) + fmm_weights_eval_.getRegAlpha() <= interaction_region_scell ? 1 : 0) : 1;
 
                             const real dist_2cells = cell.radius * 4;
 
@@ -221,41 +218,32 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                             const bool is_ytar_bw_cells = rty_tc * rty_sc < 0;
                             const bool is_ztar_bw_cells = rtz_tc * rtz_sc < 0;
 
-                            // it is possible that particle may be at the edge of the box, so wst[d] != 1 is necessary
-                            const bool in_regx_tar = wst[0] != 1 && fabs(body_tar.x[0] - cell.center[0]) + fmm_weights_eval_.getRegAlpha() > cell.radius;
-                            const bool in_regy_tar = wst[1] != 1 && fabs(body_tar.x[1] - cell.center[1]) + fmm_weights_eval_.getRegAlpha() > cell.radius;
-                            const bool in_regz_tar = wst[2] != 1 && fabs(body_tar.x[2] - cell.center[2]) + fmm_weights_eval_.getRegAlpha() > cell.radius;
-
                             if (num_away == 1)
                             {
 
                                 // one and half cell
                                 for (const int &body_idx_src : adj_cell.bodiesIndices)
                                 {
+
+                                    const RVec ws = w_per_atom[body_idx_src];
+
+                                    const bool in_regx_src = ws[0] != 1;
+                                    const bool in_regy_src = ws[1] != 1;
+                                    const bool in_regz_src = ws[2] != 1;
+
                                     const FBody &body_src = bodies_all_[body_idx_src];
+
                                     if (body_idx_tar != body_idx_src)
                                     {
-                                        const RVec ws = w_per_atom[body_idx_src];
-                                        bool bx =
-                                            ws[0] < 1
-                                                ? (fabs(body_src.x[0] - cell.center[0]) + fmm_weights_eval_.getRegAlpha() > interaction_region_tcell ? 0 : 1)
-                                                : 1;
 
-                                        bool by =
-                                            ws[1] < 1
-                                                ? (fabs(body_src.x[1] - cell.center[1]) + fmm_weights_eval_.getRegAlpha() > interaction_region_tcell ? 0 : 1)
-                                                : 1;
+                                        bool bx = in_regx_src ? (fabs(body_src.x[0] - cell.center[0]) + fmm_weights_eval_.getRegAlpha() > interaction_region_tcell ? 0 : 1) : 1;
 
-                                        bool bz =
-                                            ws[2] < 1
-                                                ? (fabs(body_src.x[2] - cell.center[2]) + fmm_weights_eval_.getRegAlpha() > interaction_region_tcell ? 0 : 1)
-                                                : 1;
+                                        bool by = in_regy_src ? (fabs(body_src.x[1] - cell.center[1]) + fmm_weights_eval_.getRegAlpha() > interaction_region_tcell ? 0 : 1) : 1;
 
-                                        const RVec w3t = w_per_atom[body_idx_tar];
-                                        const RVec w3s = w_per_atom[body_idx_src];
+                                        bool bz = in_regz_src ? (fabs(body_src.x[2] - cell.center[2]) + fmm_weights_eval_.getRegAlpha() > interaction_region_tcell ? 0 : 1) : 1;
 
-                                        const real wtar_in_cell = w3t[0] * w3t[1] * w3t[2];
-                                        const real wsrc_in_cell = w3s[0] * w3s[1] * w3s[2];
+                                        const real wtar_in_cell = wst[0] * wst[1] * wst[2];
+                                        const real wsrc_in_cell = ws[0] * ws[1] * ws[2];
 
                                         const real rsx_tc = body_src.x[0] - cell.center[0];
                                         const real rsx_sc = body_src.x[0] - adj_cell.center[0];
@@ -270,17 +258,13 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                         const bool is_ysrc_bw_cells = rsy_tc * rsy_sc < 0;
                                         const bool is_zsrc_bw_cells = rsz_tc * rsz_sc < 0;
 
-                                        const bool x_same_dir_tar = rtx_tc * rsx_tc < 0;
-                                        const bool y_same_dir_tar = rty_tc * rsy_tc < 0;
-                                        const bool z_same_dir_tar = rtz_tc * rsz_tc < 0;
+                                        const bool x_same_dir_tar = !(rtx_tc * rsx_tc < 0);
+                                        const bool y_same_dir_tar = !(rty_tc * rsy_tc < 0);
+                                        const bool z_same_dir_tar = !(rtz_tc * rsz_tc < 0);
 
-                                        const bool x_same_dir_src = rsx_sc * rtx_sc < 0;
-                                        const bool y_same_dir_src = rsy_sc * rty_sc < 0;
-                                        const bool z_same_dir_src = rsz_sc * rtz_sc < 0;
-
-                                        // const bool in_rel_regx_tar = in_regx_tar && ((dist_x != 0 && is_xtar_bw_cells) || dist_x == 0);
-                                        // const bool in_rel_regy_tar = in_regy_tar && ((dist_y != 0 && is_ytar_bw_cells) || dist_y == 0);
-                                        // const bool in_rel_regz_tar = in_regz_tar && ((dist_z != 0 && is_ztar_bw_cells) || dist_z == 0);
+                                        const bool x_same_dir_src = !(rsx_sc * rtx_sc < 0);
+                                        const bool y_same_dir_src = !(rsy_sc * rty_sc < 0);
+                                        const bool z_same_dir_src = !(rsz_sc * rtz_sc < 0);
 
                                         const bool is_x_fr_cells = (dist_x == 0) || (dist_x != 0 && is_xtar_bw_cells && is_xsrc_bw_cells);
                                         const bool is_y_fr_cells = (dist_y == 0) || (dist_y != 0 && is_ytar_bw_cells && is_ysrc_bw_cells);
@@ -296,132 +280,78 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                         }
                                         else
                                         {
+                                            const bool bxt_c1i = !in_regx_tar || is_x_fr_cells;
+                                            const bool byt_c1i = !in_regy_tar || is_y_fr_cells;
+                                            const bool bzt_c1i = !in_regz_tar || is_z_fr_cells;
 
-                                            // code below needs double checking
+                                            const bool bxs_c1i = !in_regx_src || is_x_fr_cells;
+                                            const bool bys_c1i = !in_regy_src || is_y_fr_cells;
+                                            const bool bzs_c1i = !in_regz_src || is_z_fr_cells;
 
-                                            const bool bxt_c1i = w3t[0] == 1 || is_x_fr_cells;
-                                            const bool byt_c1i = w3t[1] == 1 || is_y_fr_cells;
-                                            const bool bzt_c1i = w3t[2] == 1 || is_z_fr_cells;
+                                            const bool bxt_c1 = !in_regx_tar ? 1 : ((dist_x == 0 && x_same_dir_tar) || (dist_x != 0 && is_xtar_bw_cells));
+                                            const bool byt_c1 = !in_regy_tar ? 1 : ((dist_y == 0 && y_same_dir_tar) || (dist_y != 0 && is_ytar_bw_cells));
+                                            const bool bzt_c1 = !in_regz_tar ? 1 : ((dist_z == 0 && z_same_dir_tar) || (dist_z != 0 && is_ztar_bw_cells));
 
-                                            const bool bxs_c1i = ws[0] == 1 || is_x_fr_cells;
-                                            const bool bys_c1i = ws[1] == 1 || is_y_fr_cells;
-                                            const bool bzs_c1i = ws[2] == 1 || is_z_fr_cells;
+                                            const bool bxt_c1f = bxt_c1i ? 1 : is_xtar_bw_cells;
+                                            const bool byt_c1f = byt_c1i ? 1 : is_ytar_bw_cells;
+                                            const bool bzt_c1f = bzt_c1i ? 1 : is_ztar_bw_cells;
 
-                                            const bool bxt_c1 = bxt_c1i ? 1 : is_xtar_bw_cells;
-                                            const bool byt_c1 = byt_c1i ? 1 : is_ytar_bw_cells;
-                                            const bool bzt_c1 = bzt_c1i ? 1 : is_ztar_bw_cells;
+                                            const bool bxs_c1f = bxs_c1i ? 1 : is_xsrc_bw_cells;
+                                            const bool bys_c1f = bys_c1i ? 1 : is_ysrc_bw_cells;
+                                            const bool bzs_c1f = bzs_c1i ? 1 : is_zsrc_bw_cells;
 
-                                            const bool bxs_c1 = bxs_c1i ? 1 : is_xsrc_bw_cells;
-                                            const bool bys_c1 = bys_c1i ? 1 : is_ysrc_bw_cells;
-                                            const bool bzs_c1 = bzs_c1i ? 1 : is_zsrc_bw_cells;
+                                            const bool bxs_c1 = !in_regx_src ? 1 : ((dist_x == 0 && x_same_dir_src) || (dist_x != 0 && is_xsrc_bw_cells));
+                                            const bool bys_c1 = !in_regy_src ? 1 : ((dist_y == 0 && y_same_dir_src) || (dist_y != 0 && is_ysrc_bw_cells));
+                                            const bool bzs_c1 = !in_regz_src ? 1 : ((dist_z == 0 && z_same_dir_src) || (dist_z != 0 && is_zsrc_bw_cells));
 
                                             pair_list[body_idx_tar].push_back(body_idx_src);
 
-                                            pair_list_bxyz_tar[body_idx_tar].push_back({bxt_c1, byt_c1, bzt_c1});
+                                            pair_list_bxyz_tar[body_idx_tar].push_back({bxt_c1f, byt_c1f, bzt_c1f});
                                             pair_list_tif_within[body_idx_tar].push_back({1, 1, 1});
 
-                                            pair_list_bxyz_src[body_idx_tar].push_back({bxs_c1, bys_c1, bzs_c1});
+                                            pair_list_bxyz_src[body_idx_tar].push_back({bxs_c1f, bys_c1f, bzs_c1f});
                                             pair_list_sif_within[body_idx_tar].push_back({1, 1, 1});
 
-                                            // const bool stif_x = bxt_c1i == 1 ? 1 : 0;
-                                            // const bool stif_y = byt_c1i == 1 ? 1 : 0;
-                                            // const bool stif_z = bzt_c1i == 1 ? 1 : 0;
+                                            if (!(bxt_c1 == true && byt_c1 == true && bzt_c1 == true))
+                                            {
+                                                const bool bxs_c1b = !in_regx_src ? 1 : ((dist_x != 0 && is_xsrc_bw_cells && in_regx_tar && !is_xtar_bw_cells)) ? 0 : 1;
+                                                const bool bys_c1b = !in_regy_src ? 1 : ((dist_y != 0 && is_ysrc_bw_cells && in_regy_tar && !is_ytar_bw_cells)) ? 0 : 1;
+                                                const bool bzs_c1b = !in_regz_src ? 1 : ((dist_z != 0 && is_zsrc_bw_cells && in_regz_tar && !is_ztar_bw_cells)) ? 0 : 1;
 
-                                            // const bool sif_x = bxs_c1i == 1 ? 1 : 0;
-                                            // const bool sif_y = bys_c1i == 1 ? 1 : 0;
-                                            // const bool sif_z = bzs_c1i == 1 ? 1 : 0;
+                                                if (bxs_c1b == false || bys_c1b == false || bzs_c1b == false)
+                                                {
+                                                    std::cout << body_src.x << "--" << body_tar.x << "-->verify1[" << dist_x << "," << dist_y << "," << dist_z << "]" << std::endl;
+                                                    pair_list[body_idx_tar].push_back(body_idx_src);
+                                                    pair_list_bxyz_tar[body_idx_tar].push_back({bxt_c1, byt_c1, bzt_c1});
+                                                    pair_list_tif_within[body_idx_tar].push_back({0, 0, 0});
 
-                                            // if ((stif_x == false && bxt_c1i == 0) || (stif_y == false && byt_c1i == 0) || (stif_z == false && bzt_c1i == 0))
-                                            // {
+                                                    pair_list_bxyz_src[body_idx_tar].push_back({bxs_c1b, bys_c1b, bzs_c1b});
+                                                    pair_list_sif_within[body_idx_tar].push_back({0, 0, 0});
+                                                }
+                                            }
 
-                                            //     if ((sif_x == false && bxs_c1i == false) || (sif_y == false && bys_c1i == false) ||
-                                            //         (sif_z == false && bzs_c1i == false))
-                                            //     {
-                                            //         std::cout << body_src.x << "--" << body_tar.x << "it" << std::endl;
-                                            //         pair_list[body_idx_tar].push_back(body_idx_src);
-                                            //         pair_list_bxyz_tar[body_idx_tar].push_back({bxt_c1i, byt_c1i, bzt_c1i});
-                                            //         pair_list_tif_within[body_idx_tar].push_back({stif_x, stif_x, stif_x});
+                                            if (!(bxs_c1 == true && bys_c1 == true && bzs_c1 == true))
+                                            {
 
-                                            //         pair_list_bxyz_src[body_idx_tar].push_back({bxs_c1i, bys_c1i, bzs_c1i});
-                                            //         pair_list_sif_within[body_idx_tar].push_back({sif_x, sif_y, sif_z});
-                                            //     }
-                                            // }
+                                                const bool bxt_c1b = !in_regx_tar ? 1 : ((dist_x != 0 && is_xtar_bw_cells && (in_regx_src && !is_xsrc_bw_cells))) ? 0 : 1;
+                                                const bool byt_c1b = !in_regy_tar ? 1 : ((dist_y != 0 && is_ytar_bw_cells && (in_regy_src && !is_ysrc_bw_cells))) ? 0 : 1;
+                                                const bool bzt_c1b = !in_regz_tar ? 1 : ((dist_z != 0 && is_ztar_bw_cells && (in_regz_src && !is_zsrc_bw_cells))) ? 0 : 1;
 
-                                            // it is possible that particle may be at the edge of the box, so ws[d] != 1 is necessary
-                                            // const bool in_regx_src =
-                                            //     ws[0] != 1 && fabs(body_src.x[0] - adj_cell.center[0]) + fmm_weights_eval_.getRegAlpha() > adj_cell.radius;
-                                            // const bool in_regy_src =
-                                            //     ws[1] != 1 && fabs(body_src.x[1] - adj_cell.center[1]) + fmm_weights_eval_.getRegAlpha() > adj_cell.radius;
-                                            // const bool in_regz_src =
-                                            //     ws[2] != 1 && fabs(body_src.x[2] - adj_cell.center[2]) + fmm_weights_eval_.getRegAlpha() > adj_cell.radius;
+                                                if (bxt_c1b == false || byt_c1b == false || bzt_c1b == false)
+                                                {
+                                                    std::cout << body_src.x << "--" << body_tar.x << "-->verify2[" << dist_x << "," << dist_y << "," << dist_z << "]" << std::endl;
+                                                    pair_list[body_idx_tar].push_back(body_idx_src);
+                                                    pair_list_bxyz_tar[body_idx_tar].push_back({bxt_c1b, byt_c1b, bzt_c1b});
+                                                    pair_list_tif_within[body_idx_tar].push_back({0, 0, 0});
 
-                                            // const bool in_rel_regx_src = in_regx_src && ((dist_x != 0 && is_xsrc_bw_cells) || dist_x == 0);
-                                            // const bool in_rel_regy_src = in_regy_src && ((dist_y != 0 && is_ysrc_bw_cells) || dist_y == 0);
-                                            // const bool in_rel_regz_src = in_regz_src && ((dist_z != 0 && is_zsrc_bw_cells) || dist_z == 0);
-
-                                            // bool rtif_x = !in_rel_regx_tar;
-                                            // bool rtif_y = !in_rel_regy_tar;
-                                            // bool rtif_z = !in_rel_regz_tar;
-
-                                            // bool rsif_x = !in_rel_regx_src;
-                                            // bool rsif_y = !in_rel_regy_src;
-                                            // bool rsif_z = !in_rel_regz_src;
-
-                                            // bool usif_x = in_rel_regx_src;
-                                            // bool usif_y = in_rel_regy_src;
-                                            // bool usif_z = in_rel_regz_src;
-
-                                            // bool utif_x = in_rel_regx_tar;
-                                            // bool utif_y = in_rel_regy_tar;
-                                            // bool utif_z = in_rel_regz_tar;
-
-                                            // // if (rtif_x == false || rtif_x == false || rtif_x == false)
-                                            // // {
-                                            // //     // if (sif_x == false || sif_y == false || sif_z == false)
-                                            // //     {
-                                            // //         pair_list[body_idx_tar].push_back(body_idx_src);
-
-                                            // //         pair_list_bxyz_tar[body_idx_tar].push_back({0, 0, 0});
-                                            // //         pair_list_tif_within[body_idx_tar].push_back({rtif_x, rtif_x, rtif_x});
-
-                                            // //         pair_list_bxyz_src[body_idx_tar].push_back({0, 0, 0});
-                                            // //         pair_list_sif_within[body_idx_tar].push_back({usif_x, usif_y, usif_z});
-                                            // //     }
-                                            // // }
-
-                                            // if ((rsif_x == false && !bxs_c1i) || (rsif_y == false && !bys_c1i) || (rsif_z == false && !bzs_c1i))
-                                            // {
-                                            //     if ((utif_x == false && !bxt_c1i) || (utif_y == false && !byt_c1i) || (utif_z == false && !bzt_c1i))
-                                            //     {
-                                            //         std::cout << body_src.x << "--" << body_tar.x << "--c" << std::endl;
-                                            //         pair_list[body_idx_tar].push_back(body_idx_src);
-
-                                            //         pair_list_bxyz_tar[body_idx_tar].push_back({bxt_c1i, byt_c1i, bzt_c1i});
-                                            //         pair_list_tif_within[body_idx_tar].push_back({utif_x, utif_y, utif_z});
-
-                                            //         pair_list_bxyz_src[body_idx_tar].push_back({bxs_c1i, bys_c1i, bzs_c1i});
-                                            //         pair_list_sif_within[body_idx_tar].push_back({rsif_x, rsif_y, rsif_z});
-                                            //     }
-                                            // }
-
-                                            // if ((rtif_x == false && !bxt_c1i) || (rtif_y == false && !byt_c1i) || (rtif_z == false && !bzt_c1i))
-                                            // {
-                                            //     if ((usif_x == false && !bxs_c1i) || (usif_y == false && !bys_c1i) || (usif_z == false && !bzs_c1i))
-                                            //     {
-                                            //         pair_list[body_idx_tar].push_back(body_idx_src);
-
-                                            //         pair_list_bxyz_tar[body_idx_tar].push_back({bxt_c1i, byt_c1i, bzt_c1i});
-                                            //         pair_list_tif_within[body_idx_tar].push_back({rtif_x, rtif_y, rtif_z});
-
-                                            //         pair_list_bxyz_src[body_idx_tar].push_back({bxs_c1i, bys_c1i, bzs_c1i});
-                                            //         pair_list_sif_within[body_idx_tar].push_back({usif_x, usif_y, usif_z});
-                                            //     }
-                                            // }
+                                                    pair_list_bxyz_src[body_idx_tar].push_back({bxs_c1, bys_c1, bzs_c1});
+                                                    pair_list_sif_within[body_idx_tar].push_back({0, 0, 0});
+                                                }
+                                            }
                                         }
                                     }
                                 }
                             }
-
                             else if (num_away == 2) // num_away == 2
                             {
 
@@ -535,25 +465,16 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
 
                                     const RVec ws = w_per_atom[body_idx_src];
 
-                                    bool bx = ws[0] < 1
-                                                  ? (fabs(body_src.x[0] - cell.center[0]) + fmm_weights_eval_.getRegAlpha() <= interaction_region_tcell ? 1 : 0)
-                                                  : 1;
+                                    bool bx = ws[0] < 1 ? (fabs(body_src.x[0] - cell.center[0]) + fmm_weights_eval_.getRegAlpha() <= interaction_region_tcell ? 1 : 0) : 1;
 
-                                    bool by = ws[1] < 1
-                                                  ? (fabs(body_src.x[1] - cell.center[1]) + fmm_weights_eval_.getRegAlpha() <= interaction_region_tcell ? 1 : 0)
-                                                  : 1;
+                                    bool by = ws[1] < 1 ? (fabs(body_src.x[1] - cell.center[1]) + fmm_weights_eval_.getRegAlpha() <= interaction_region_tcell ? 1 : 0) : 1;
 
-                                    bool bz = ws[2] < 1
-                                                  ? (fabs(body_src.x[2] - cell.center[2]) + fmm_weights_eval_.getRegAlpha() <= interaction_region_tcell ? 1 : 0)
-                                                  : 1;
+                                    bool bz = ws[2] < 1 ? (fabs(body_src.x[2] - cell.center[2]) + fmm_weights_eval_.getRegAlpha() <= interaction_region_tcell ? 1 : 0) : 1;
 
                                     // it is possible that particle may be at the edge of the box, so ws[d] != 1 is necessary
-                                    const bool in_regx_src =
-                                        ws[0] != 1 && fabs(body_src.x[0] - adj_cell.center[0]) + fmm_weights_eval_.getRegAlpha() > adj_cell.radius;
-                                    const bool in_regy_src =
-                                        ws[1] != 1 && fabs(body_src.x[1] - adj_cell.center[1]) + fmm_weights_eval_.getRegAlpha() > adj_cell.radius;
-                                    const bool in_regz_src =
-                                        ws[2] != 1 && fabs(body_src.x[2] - adj_cell.center[2]) + fmm_weights_eval_.getRegAlpha() > adj_cell.radius;
+                                    const bool in_regx_src = ws[0] != 1 && fabs(body_src.x[0] - adj_cell.center[0]) + fmm_weights_eval_.getRegAlpha() > adj_cell.radius;
+                                    const bool in_regy_src = ws[1] != 1 && fabs(body_src.x[1] - adj_cell.center[1]) + fmm_weights_eval_.getRegAlpha() > adj_cell.radius;
+                                    const bool in_regz_src = ws[2] != 1 && fabs(body_src.x[2] - adj_cell.center[2]) + fmm_weights_eval_.getRegAlpha() > adj_cell.radius;
 
                                     const bool is_xsrc_bw_cells = rsx_tc * rsx_sc < 0;
                                     const bool is_ysrc_bw_cells = rsy_tc * rsy_sc < 0;
@@ -645,28 +566,22 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                     }
 
                                     // Check if the source particle is within the x-range of the target cell
-                                    const bool srcp_in_tarc_x =
-                                        fabs(body_src.x[0] - cell.center[0]) <= interaction_region_tcell + fmm_weights_eval_.getRegAlpha();
+                                    const bool srcp_in_tarc_x = fabs(body_src.x[0] - cell.center[0]) <= interaction_region_tcell + fmm_weights_eval_.getRegAlpha();
 
                                     // Check if the source particle is within the y-range of the target cell
-                                    const bool srcp_in_tarc_y =
-                                        fabs(body_src.x[1] - cell.center[1]) <= interaction_region_tcell + fmm_weights_eval_.getRegAlpha();
+                                    const bool srcp_in_tarc_y = fabs(body_src.x[1] - cell.center[1]) <= interaction_region_tcell + fmm_weights_eval_.getRegAlpha();
 
                                     // Check if the source particle is within the z-range of the target cell
-                                    const bool srcp_in_tarc_z =
-                                        fabs(body_src.x[2] - cell.center[2]) <= interaction_region_tcell + fmm_weights_eval_.getRegAlpha();
+                                    const bool srcp_in_tarc_z = fabs(body_src.x[2] - cell.center[2]) <= interaction_region_tcell + fmm_weights_eval_.getRegAlpha();
 
                                     // Check if the target particle is within the x-range of the source cell
-                                    const bool tarp_in_srcc_x =
-                                        fabs(body_tar.x[0] - adj_cell.center[0]) <= interaction_region_scell + fmm_weights_eval_.getRegAlpha();
+                                    const bool tarp_in_srcc_x = fabs(body_tar.x[0] - adj_cell.center[0]) <= interaction_region_scell + fmm_weights_eval_.getRegAlpha();
 
                                     // Check if the target particle is within the y-range of the source cell
-                                    const bool tarp_in_srcc_y =
-                                        fabs(body_tar.x[1] - adj_cell.center[1]) <= interaction_region_scell + fmm_weights_eval_.getRegAlpha();
+                                    const bool tarp_in_srcc_y = fabs(body_tar.x[1] - adj_cell.center[1]) <= interaction_region_scell + fmm_weights_eval_.getRegAlpha();
 
                                     // Check if the target particle is within the z-range of the source cell
-                                    const bool tarp_in_srcc_z =
-                                        fabs(body_tar.x[2] - adj_cell.center[2]) <= interaction_region_scell + fmm_weights_eval_.getRegAlpha();
+                                    const bool tarp_in_srcc_z = fabs(body_tar.x[2] - adj_cell.center[2]) <= interaction_region_scell + fmm_weights_eval_.getRegAlpha();
 
                                     // Determine if the source particle is entirely within the range of the target cell
                                     const bool srcp_in_tarc = srcp_in_tarc_x && srcp_in_tarc_y && srcp_in_tarc_z;
@@ -1172,8 +1087,7 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                                 //     pair_list_sif_within[body_idx_tar].push_back({sif_x, sif_y, sif_z});
                                                 // }
                                             }
-                                            else if (in_rel_regx_src || in_rel_regx_tar || in_rel_regy_src || in_rel_regy_tar || in_rel_regz_src ||
-                                                     in_rel_regz_tar)
+                                            else if (in_rel_regx_src || in_rel_regx_tar || in_rel_regy_src || in_rel_regy_tar || in_rel_regz_src || in_rel_regz_tar)
                                             {
                                                 // pair_list[body_idx_tar].push_back(borm
                                             }

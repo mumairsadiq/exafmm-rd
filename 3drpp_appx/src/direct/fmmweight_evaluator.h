@@ -63,10 +63,7 @@ class FMMWeightEvaluator
      * @param reg_alpha A regularization parameter that determines the
      * smoothness of the weight function.
      */
-    FMMWeightEvaluator(const RVec box_center, const real box_radius, const real reg_alpha)
-        : box_center_(box_center), box_radius_(box_radius), reg_alpha_(reg_alpha)
-    {
-    }
+    FMMWeightEvaluator(const RVec box_center, const real box_radius, const real reg_alpha) : box_center_(box_center), box_radius_(box_radius), reg_alpha_(reg_alpha) {}
 
     inline real compute_weight_within_cell(RVec body_x, RVec center, real radius, bool is_periodic = false)
     {

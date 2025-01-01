@@ -33,8 +33,7 @@ void gmx::fmm::FMMTree::build_tree_uniform()
             for (size_t i = 0; i < bodiesIndicesBranchCell.size(); i++)
             {
                 int body_idx = bodiesIndicesBranchCell[i];
-                int idx = ((bodies_[body_idx].x[0] > fmm_cells_[branch_cell_idx].center[0]) << 2) +
-                          ((bodies_[body_idx].x[1] > fmm_cells_[branch_cell_idx].center[1]) << 1) +
+                int idx = ((bodies_[body_idx].x[0] > fmm_cells_[branch_cell_idx].center[0]) << 2) + ((bodies_[body_idx].x[1] > fmm_cells_[branch_cell_idx].center[1]) << 1) +
                           ((bodies_[body_idx].x[2] > fmm_cells_[branch_cell_idx].center[2]) << 0);
                 quad_indices[idx].push_back(body_idx);
                 quad_num[idx]++;
@@ -97,8 +96,7 @@ gmx::RVec gmx::fmm::FMMTree::get_child_cell_x_(RVec x_par, real r_par, int octan
     return x;
 }
 
-gmx::fmm::FMMTree::FMMTree(const FBodies &bodies, const RVec box_center, const real box_radius, const size_t max_depth)
-    : bodies_(bodies), box_center_(box_center), box_radius_(box_radius), max_depth_(max_depth)
+gmx::fmm::FMMTree::FMMTree(const FBodies &bodies, const RVec box_center, const real box_radius, const size_t max_depth) : bodies_(bodies), box_center_(box_center), box_radius_(box_radius), max_depth_(max_depth)
 {
     build_tree_uniform();
 }
