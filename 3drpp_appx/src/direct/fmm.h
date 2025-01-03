@@ -31,11 +31,21 @@ class FMMDirectInteractions
     FMMDirectInteractionsTree fmm_direct_interactions_tree_;
 
     std::vector<std::vector<int>> pair_list;
+
+    // not relevant any more, need to be removed (never used in updated code)
     std::vector<std::vector<real>> pair_list_w_tar;
-    std::vector<std::vector<BVec>> pair_list_bxyz_src;
-    std::vector<std::vector<BVec>> pair_list_bxyz_tar;
-    std::vector<std::vector<BVec>> pair_list_tif_within; // target interaction from within original cell
-    std::vector<std::vector<BVec>> pair_list_sif_within; // source interaction from within original cell
+
+    // flags indicating whether to use a weight (w=1) or compute weights based on the atom's position in its original cell
+    std::vector<std::vector<BVec>> pair_list_bxyz_src; // Source-particle weighting
+    std::vector<std::vector<BVec>> pair_list_bxyz_tar; // Target-particle weighting
+
+    // Flags (tif_i) indicates whether the target has weight outside in the direction of adjacent cells beyond its original cell
+    std::vector<std::vector<BVec>> pair_list_tif_within; // Target interactions confined within the original cell or not
+
+    // Flags indicating whether the source has weight outside in the direction of adjacent cells beyond its original cell
+    std::vector<std::vector<BVec>> pair_list_sif_within; // Source interactions confined within the original cell or not
+
+    // weight values for each atom within its original cell
     std::vector<RVec> w_per_atom;
 
     void compute_weights_();
