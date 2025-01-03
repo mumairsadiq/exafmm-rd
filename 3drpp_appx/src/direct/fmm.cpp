@@ -93,11 +93,11 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
 
                     if (wtar_in_cell == 1 || wsrc_in_cell == 1)
                     {
-                        // pair_list[body_idx_tar].push_back(body_idx_src);
-                        // pair_list_bxyz_src[body_idx_tar].push_back({1, 1, 1});
-                        // pair_list_bxyz_tar[body_idx_tar].push_back({1, 1, 1});
-                        // pair_list_sif_within[body_idx_tar].push_back({1, 1, 1});
-                        // pair_list_tif_within[body_idx_tar].push_back({1, 1, 1});
+                        pair_list[body_idx_tar].push_back(body_idx_src);
+                        pair_list_bxyz_src[body_idx_tar].push_back({1, 1, 1});
+                        pair_list_bxyz_tar[body_idx_tar].push_back({1, 1, 1});
+                        pair_list_sif_within[body_idx_tar].push_back({1, 1, 1});
+                        pair_list_tif_within[body_idx_tar].push_back({1, 1, 1});
                     }
                     else
                     {
@@ -136,22 +136,22 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                         bool bxts = w3t[0] != 1 && w3s[0] != 1 ? x_dir_flag : 1;
                         bool byts = w3t[1] != 1 && w3s[1] != 1 ? y_dir_flag : 1;
                         bool bzts = w3t[2] != 1 && w3s[2] != 1 ? z_dir_flag : 1;
-                        // pair_list[body_idx_tar].push_back(body_idx_src);
+                        pair_list[body_idx_tar].push_back(body_idx_src);
 
-                        // pair_list_tif_within[body_idx_tar].push_back({1, 1, 1});
-                        // pair_list_bxyz_tar[body_idx_tar].push_back({bxts, byts, bzts});
+                        pair_list_tif_within[body_idx_tar].push_back({1, 1, 1});
+                        pair_list_bxyz_tar[body_idx_tar].push_back({bxts, byts, bzts});
 
-                        // pair_list_sif_within[body_idx_tar].push_back({1, 1, 1});
-                        // pair_list_bxyz_src[body_idx_tar].push_back({1, 1, 1});
+                        pair_list_sif_within[body_idx_tar].push_back({1, 1, 1});
+                        pair_list_bxyz_src[body_idx_tar].push_back({1, 1, 1});
 
                         // indirect weights outside the boundary of the cell
                         if (bxts == false || byts == false || bzts == false)
                         {
-                            // pair_list[body_idx_tar].push_back(body_idx_src);
-                            // pair_list_bxyz_src[body_idx_tar].push_back({bxts, byts, bzts});
-                            // pair_list_bxyz_tar[body_idx_tar].push_back({bxts, byts, bzts});
-                            // pair_list_sif_within[body_idx_tar].push_back({1, 1, 1});
-                            // pair_list_tif_within[body_idx_tar].push_back({0, 0, 0});
+                            pair_list[body_idx_tar].push_back(body_idx_src);
+                            pair_list_bxyz_src[body_idx_tar].push_back({bxts, byts, bzts});
+                            pair_list_bxyz_tar[body_idx_tar].push_back({bxts, byts, bzts});
+                            pair_list_sif_within[body_idx_tar].push_back({1, 1, 1});
+                            pair_list_tif_within[body_idx_tar].push_back({0, 0, 0});
                         }
                     }
                 }
@@ -184,6 +184,7 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                         const real dist_z = fabs(adj_cell.center[2] - cell.center[2]);
 
                         const real dist_2cells = cell.radius * 4;
+                        const real dist_3cells = cell.radius * 6;
 
                         short num_away = 1; // Default to "one away"
                         if (std::abs(dx) == 3 || std::abs(dy) == 3 || std::abs(dz) == 3)
@@ -529,13 +530,13 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                     const real interaction_region_tcell = cell.radius * 3;     // one and half cell
                                     const real interaction_region_scell = adj_cell.radius * 3; // one and half cell
 
-                                    const bool bxt = in_regx_tar || (fabs(body_tar.x[0] - adj_cell.center[0]) + fmm_weights_eval_.getRegAlpha() <= interaction_region_scell);
-                                    const bool byt = in_regy_tar || (fabs(body_tar.x[1] - adj_cell.center[1]) + fmm_weights_eval_.getRegAlpha() <= interaction_region_scell);
-                                    const bool bzt = in_regz_tar || (fabs(body_tar.x[2] - adj_cell.center[2]) + fmm_weights_eval_.getRegAlpha() <= interaction_region_scell);
+                                    const bool bxt = !in_regx_tar || (fabs(body_tar.x[0] - adj_cell.center[0]) + fmm_weights_eval_.getRegAlpha() <= interaction_region_scell);
+                                    const bool byt = !in_regy_tar || (fabs(body_tar.x[1] - adj_cell.center[1]) + fmm_weights_eval_.getRegAlpha() <= interaction_region_scell);
+                                    const bool bzt = !in_regz_tar || (fabs(body_tar.x[2] - adj_cell.center[2]) + fmm_weights_eval_.getRegAlpha() <= interaction_region_scell);
 
-                                    const bool bx = in_regx_src || (fabs(body_src.x[0] - cell.center[0]) + fmm_weights_eval_.getRegAlpha() <= interaction_region_tcell);
-                                    const bool by = in_regy_src || (fabs(body_src.x[1] - cell.center[1]) + fmm_weights_eval_.getRegAlpha() <= interaction_region_tcell);
-                                    const bool bz = in_regz_src || (fabs(body_src.x[2] - cell.center[2]) + fmm_weights_eval_.getRegAlpha() <= interaction_region_tcell);
+                                    const bool bx = !in_regx_src || (fabs(body_src.x[0] - cell.center[0]) + fmm_weights_eval_.getRegAlpha() <= interaction_region_tcell);
+                                    const bool by = !in_regy_src || (fabs(body_src.x[1] - cell.center[1]) + fmm_weights_eval_.getRegAlpha() <= interaction_region_tcell);
+                                    const bool bz = !in_regz_src || (fabs(body_src.x[2] - cell.center[2]) + fmm_weights_eval_.getRegAlpha() <= interaction_region_tcell);
 
                                     const bool in_rel_regx_src = in_regx_src && is_xsrc_bw_cells;
                                     const bool in_rel_regy_src = in_regy_src && is_ysrc_bw_cells;
@@ -1048,6 +1049,149 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
 
                                                 pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
                                                 pair_list_sif_within[body_idx_tar].push_back({sif_x, sif_y, sif_z});
+                                            }
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    const real interaction_region_tcell = cell.radius * 5;     // two and half cell
+                                    const real interaction_region_scell = adj_cell.radius * 5; // two and half cell
+
+                                    const real interaction_region_tcelli = cell.radius * 3;     // one and half cell
+                                    const real interaction_region_scelli = adj_cell.radius * 3; // one and half cell
+
+                                    const bool bxt = !in_regx_tar || (fabs(body_tar.x[0] - adj_cell.center[0]) + fmm_weights_eval_.getRegAlpha() <= interaction_region_scell);
+                                    const bool byt = !in_regy_tar || (fabs(body_tar.x[1] - adj_cell.center[1]) + fmm_weights_eval_.getRegAlpha() <= interaction_region_scell);
+                                    const bool bzt = !in_regz_tar || (fabs(body_tar.x[2] - adj_cell.center[2]) + fmm_weights_eval_.getRegAlpha() <= interaction_region_scell);
+
+                                    const bool bx = !in_regx_src || (fabs(body_src.x[0] - cell.center[0]) + fmm_weights_eval_.getRegAlpha() <= interaction_region_tcell);
+                                    const bool by = !in_regy_src || (fabs(body_src.x[1] - cell.center[1]) + fmm_weights_eval_.getRegAlpha() <= interaction_region_tcell);
+                                    const bool bz = !in_regz_src || (fabs(body_src.x[2] - cell.center[2]) + fmm_weights_eval_.getRegAlpha() <= interaction_region_tcell);
+
+
+
+                                    const bool bxti = !in_regx_tar || (fabs(body_tar.x[0] - adj_cell.center[0]) + fmm_weights_eval_.getRegAlpha() <= interaction_region_scelli);
+                                    const bool byti = !in_regy_tar || (fabs(body_tar.x[1] - adj_cell.center[1]) + fmm_weights_eval_.getRegAlpha() <= interaction_region_scelli);
+                                    const bool bzti = !in_regz_tar || (fabs(body_tar.x[2] - adj_cell.center[2]) + fmm_weights_eval_.getRegAlpha() <= interaction_region_scelli);
+
+                                    const bool bxi = !in_regx_src || (fabs(body_src.x[0] - cell.center[0]) + fmm_weights_eval_.getRegAlpha() <= interaction_region_tcelli);
+                                    const bool byi = !in_regy_src || (fabs(body_src.x[1] - cell.center[1]) + fmm_weights_eval_.getRegAlpha() <= interaction_region_tcelli);
+                                    const bool bzi = !in_regz_src || (fabs(body_src.x[2] - cell.center[2]) + fmm_weights_eval_.getRegAlpha() <= interaction_region_tcelli);
+
+
+                                    const bool in_rel_regx_src = in_regx_src && is_xsrc_bw_cells;
+                                    const bool in_rel_regy_src = in_regy_src && is_ysrc_bw_cells;
+                                    const bool in_rel_regz_src = in_regz_src && is_zsrc_bw_cells;
+
+                                    const bool in_rel_regx_tar = in_regx_tar && is_xtar_bw_cells;
+                                    const bool in_rel_regy_tar = in_regy_tar && is_ytar_bw_cells;
+                                    const bool in_rel_regz_tar = in_regz_tar && is_ztar_bw_cells;
+
+                                    const bool sif_x = !(dist_x == dist_3cells && in_rel_regx_src);
+                                    const bool sif_y = !(dist_y == dist_3cells && in_rel_regy_src);
+                                    const bool sif_z = !(dist_z == dist_3cells && in_rel_regz_src);
+
+                                    const bool tif_x = !(dist_x == dist_3cells && in_rel_regx_tar);
+                                    const bool tif_y = !(dist_y == dist_3cells && in_rel_regy_tar);
+                                    const bool tif_z = !(dist_z == dist_3cells && in_rel_regz_tar);
+
+                                    // Check if the source particle is within the x-range of the target cell
+                                    const bool srcp_in_tarc_x = fabs(body_src.x[0] - cell.center[0]) <= interaction_region_tcell + fmm_weights_eval_.getRegAlpha();
+
+                                    // Check if the source particle is within the y-range of the target cell
+                                    const bool srcp_in_tarc_y = fabs(body_src.x[1] - cell.center[1]) <= interaction_region_tcell + fmm_weights_eval_.getRegAlpha();
+
+                                    // Check if the source particle is within the z-range of the target cell
+                                    const bool srcp_in_tarc_z = fabs(body_src.x[2] - cell.center[2]) <= interaction_region_tcell + fmm_weights_eval_.getRegAlpha();
+
+                                    // Check if the target particle is within the x-range of the source cell
+                                    const bool tarp_in_srcc_x = fabs(body_tar.x[0] - adj_cell.center[0]) <= interaction_region_scell + fmm_weights_eval_.getRegAlpha();
+
+                                    // Check if the target particle is within the y-range of the source cell
+                                    const bool tarp_in_srcc_y = fabs(body_tar.x[1] - adj_cell.center[1]) <= interaction_region_scell + fmm_weights_eval_.getRegAlpha();
+
+                                    // Check if the target particle is within the z-range of the source cell
+                                    const bool tarp_in_srcc_z = fabs(body_tar.x[2] - adj_cell.center[2]) <= interaction_region_scell + fmm_weights_eval_.getRegAlpha();
+
+                                    // Determine if the source particle is entirely within the range of the target cell
+                                    const bool srcp_in_tarc = srcp_in_tarc_x && srcp_in_tarc_y && srcp_in_tarc_z;
+
+                                    // Determine if the target particle is entirely within the range of the source cell
+                                    const bool tarp_in_srcc = tarp_in_srcc_x && tarp_in_srcc_y && tarp_in_srcc_z;
+
+                                    if ((srcp_in_tarc && (sif_x == false || sif_y == false || sif_z == false)) && (tarp_in_srcc && (tif_x == false || tif_y == false || tif_z == false)))
+                                    {
+                                        if (dist_x == dist_3cells && in_rel_regx_src && in_rel_regx_tar)
+                                        {
+                                            if (dist_y < dist_2cells && dist_z < dist_2cells)
+                                            {
+                                                if (dist_y == 0 || dist_z == 0)
+                                                {
+                                                    pair_list[body_idx_tar].push_back(body_idx_src);
+                                                    pair_list_bxyz_tar[body_idx_tar].push_back({bxt, byt, bzt});
+                                                    pair_list_tif_within[body_idx_tar].push_back({tif_x, tif_y, tif_z});
+
+                                                    pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
+                                                    pair_list_sif_within[body_idx_tar].push_back({sif_x, sif_y, sif_z});
+                                                }
+                                                else
+                                                {
+                                                    pair_list[body_idx_tar].push_back(body_idx_src);
+                                                    pair_list_bxyz_tar[body_idx_tar].push_back({bxti, byti, bzti});
+                                                    pair_list_tif_within[body_idx_tar].push_back({tif_x, tif_y, tif_z});
+
+                                                    pair_list_bxyz_src[body_idx_tar].push_back({bxi, byi, bzi});
+                                                    pair_list_sif_within[body_idx_tar].push_back({sif_x, sif_y, sif_z});
+                                                }
+                                            }
+                                        }
+                                        else if (dist_y == dist_3cells && in_rel_regy_src && in_rel_regy_tar)
+                                        {
+                                            if (dist_x < dist_2cells && dist_z < dist_2cells)
+                                            {
+                                                if (dist_x == 0 || dist_z == 0)
+                                                {
+                                                    pair_list[body_idx_tar].push_back(body_idx_src);
+                                                    pair_list_bxyz_tar[body_idx_tar].push_back({bxt, byt, bzt});
+                                                    pair_list_tif_within[body_idx_tar].push_back({tif_x, tif_y, tif_z});
+
+                                                    pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
+                                                    pair_list_sif_within[body_idx_tar].push_back({sif_x, sif_y, sif_z});
+                                                }
+                                                else
+                                                {
+                                                    pair_list[body_idx_tar].push_back(body_idx_src);
+                                                    pair_list_bxyz_tar[body_idx_tar].push_back({bxti, byti, bzti});
+                                                    pair_list_tif_within[body_idx_tar].push_back({tif_x, tif_y, tif_z});
+
+                                                    pair_list_bxyz_src[body_idx_tar].push_back({bxi, byi, bzi});
+                                                    pair_list_sif_within[body_idx_tar].push_back({sif_x, sif_y, sif_z});
+                                                }
+                                            }
+                                        }
+                                        else if (dist_z == dist_3cells && in_rel_regz_src && in_rel_regz_tar)
+                                        {
+                                            if (dist_x < dist_2cells && dist_y < dist_2cells)
+                                            {
+                                                if (dist_x == 0 || dist_y == 0)
+                                                {
+                                                    pair_list[body_idx_tar].push_back(body_idx_src);
+                                                    pair_list_bxyz_tar[body_idx_tar].push_back({bxt, byt, bzt});
+                                                    pair_list_tif_within[body_idx_tar].push_back({tif_x, tif_y, tif_z});
+
+                                                    pair_list_bxyz_src[body_idx_tar].push_back({bx, by, bz});
+                                                    pair_list_sif_within[body_idx_tar].push_back({sif_x, sif_y, sif_z});
+                                                }
+                                                else
+                                                {
+                                                    pair_list[body_idx_tar].push_back(body_idx_src);
+                                                    pair_list_bxyz_tar[body_idx_tar].push_back({bxti, byti, bzti});
+                                                    pair_list_tif_within[body_idx_tar].push_back({tif_x, tif_y, tif_z});
+
+                                                    pair_list_bxyz_src[body_idx_tar].push_back({bxi, byi, bzi});
+                                                    pair_list_sif_within[body_idx_tar].push_back({sif_x, sif_y, sif_z});
+                                                }
                                             }
                                         }
                                     }
