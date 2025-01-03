@@ -39,10 +39,10 @@ class FMMDirectInteractions
     std::vector<std::vector<BVec>> pair_list_bxyz_src; // Source-particle weighting
     std::vector<std::vector<BVec>> pair_list_bxyz_tar; // Target-particle weighting
 
-    // Flags (tif_i) indicates whether the target has weight outside in the direction of adjacent cells beyond its original cell
+    // Flags (tif_i) indicates whether the target has weight outside in the direction of adjacent cells beyond its original cell for a specific particle pair
     std::vector<std::vector<BVec>> pair_list_tif_within; // Target interactions confined within the original cell or not
 
-    // Flags (sif_i) indicates whether the source has weight outside in the direction of adjacent cells beyond its original cell
+    // Flags (sif_i) indicates whether the source has weight outside in the direction of adjacent cells beyond its original cell for a specific particle pair
     std::vector<std::vector<BVec>> pair_list_sif_within; // Source interactions confined within the original cell or not
 
     // weight values for each atom within its original cell
