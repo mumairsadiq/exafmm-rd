@@ -255,7 +255,7 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                 const bool y_same_dir_ts = !(rty_tc * rsy_tc < 0);
                                 const bool z_same_dir_ts = !(rtz_tc * rsz_tc < 0);
 
-                                // same as above
+                                // same as above, avoiding redundancy
                                 // const bool x_same_dir_src = !(rsx_sc * rtx_sc < 0);
                                 // const bool y_same_dir_src = !(rsy_sc * rty_sc < 0);
                                 // const bool z_same_dir_src = !(rsz_sc * rtz_sc < 0);
