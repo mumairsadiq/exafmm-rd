@@ -30,9 +30,6 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
     pair_list_bxyz_tar.clear();
     pair_list_bxyz_tar.resize(bodies_all_.size());
 
-    pair_list_w_tar.clear();
-    pair_list_w_tar.resize(bodies_all_.size());
-
     pair_list_tif_within.clear();
     pair_list_tif_within.resize(bodies_all_.size());
 
@@ -1440,7 +1437,7 @@ std::vector<std::pair<gmx::RVec, gmx::real>> gmx::fmm::FMMDirectInteractions::ex
 
             const real wtar = wtar_x * wtar_y * wtar_z;
 
-            std::cout << asrc.x << "--" << body_tar.x << "--" << wsrc << "--" << wtar << "" << "\n";
+            // std::cout << asrc.x << "--" << body_tar.x << "--" << wsrc << "--" << wtar << "" << "\n";
             // std::cout << wsrc_ws << "--" << wtar_ws << std::endl;
 
             real pj = 0.0;
