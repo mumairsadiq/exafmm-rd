@@ -32,19 +32,30 @@ class FMMDirectInteractions
 
     std::vector<std::vector<int>> pair_list;
 
-    // not relevant any more, need to be removed (never used in updated code)
-    std::vector<std::vector<real>> pair_list_w_tar;
+    // Boolean flag to determine the source weights for each particle pair:
+    // - If bxy_src[i][d] == 1, use a weight of 1.
+    // - Otherwise, the decision is based on sif[i][d]:
+    //   - If sif[i][d] == 1, use weight w.
+    //   - If sif[i][d] == 0, use weight (1 - w).
+    std::vector<std::vector<BVec>> pair_list_bxyz_src;
 
-    // Flags indicating whether to use a weight (w=1) or compute weights based on the atom's position in its original cell
-    std::vector<std::vector<BVec>> pair_list_bxyz_src; // Source-particle weighting
-    std::vector<std::vector<BVec>> pair_list_bxyz_tar; // Target-particle weighting
+    // Boolean flag indicating whether the weight for a particle pair 
+    // should be taken within the source cell or outside it.
+    // only valid if bxy_src[i][d] != 1
+    std::vector<std::vector<BVec>> pair_list_sif_within; 
 
-    // Flags (tif_i) indicates whether the target has weight outside in the direction of adjacent cells beyond its original cell for a specific particle pair
-    std::vector<std::vector<BVec>> pair_list_tif_within; // Target interactions confined within the original cell or not
+    // Boolean flag indicating whether the target weights for a particle pair
+    // - If bxy_tar[i][d] == 1, use a weight of 1.
+    // - Otherwise, the decision is based on tif[i][d]:
+    //   - If tif[i][d] == 1, use weight w.
+    //   - If tif[i][d] == 0, use weight (1 - w).
+    std::vector<std::vector<BVec>> pair_list_tif_within;
 
-    // Flags (sif_i) indicates whether the source has weight outside in the direction of adjacent cells beyond its original cell for a specific particle pair
-    std::vector<std::vector<BVec>> pair_list_sif_within; // Source interactions confined within the original cell or not
-
+    // Boolean flag indicating whether the weight for a particle pair
+    // should be taken within the target cell or outside it.
+    // only valid if bxy_tar[i][d] != 1
+    std::vector<std::vector<BVec>> pair_list_bxyz_tar;
+    
     // weight values for each atom within its original cell
     std::vector<RVec> w_per_atom;
 
