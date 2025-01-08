@@ -39,10 +39,10 @@ class FMMDirectInteractions
     //   - If sif[i][d] == 0, use weight (1 - w).
     std::vector<std::vector<BVec>> pair_list_bxyz_src;
 
-    // Boolean flag indicating whether the weight for a particle pair 
+    // Boolean flag indicating whether the weight for a particle pair
     // should be taken within the source cell or outside it.
     // only valid if bxy_src[i][d] != 1
-    std::vector<std::vector<BVec>> pair_list_sif_within; 
+    std::vector<std::vector<BVec>> pair_list_sif_within;
 
     // Boolean flag indicating whether the target weights for a particle pair
     // - If bxy_tar[i][d] == 1, use a weight of 1.
@@ -55,7 +55,7 @@ class FMMDirectInteractions
     // should be taken within the target cell or outside it.
     // only valid if bxy_tar[i][d] != 1
     std::vector<std::vector<BVec>> pair_list_bxyz_tar;
-    
+
     // weight values for each atom within its original cell
     std::vector<RVec> w_per_atom;
 
