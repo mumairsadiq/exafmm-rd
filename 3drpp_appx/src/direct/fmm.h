@@ -8,6 +8,78 @@ namespace gmx
 namespace fmm
 {
 
+// Structure to hold flags for source and target weights for each particle pair
+struct PairListEntry
+{
+
+    // Source body ID
+    int body_idx_src;
+
+    // Boolean flag to determine the source weights for each particle pair:
+    // - If bx_src, by_src, or bz_src is true, use a weight of 1.
+    // - Otherwise, the decision is based on sx_within, sy_within, or sz_within:
+    //   - If sx_within, sy_within, or sz_within is true, use weight w.
+    //   - If not, use weight (1 - w).
+    bool bx_src, by_src, bz_src;
+
+    // Boolean flag indicating whether the weight for a particle pair
+    // should be taken within the source cell or outside it.
+    // Only valid if bx_src, by_src, or bz_src is false.
+    bool sx_within, sy_within, sz_within;
+
+    // Boolean flag to determine the target weights for each particle pair:
+    // - If bx_tar, by_tar, or bz_tar is true, use a weight of 1.
+    // - Otherwise, the decision is based on tx_within, ty_within, or tz_within:
+    //   - If tx_within, ty_within, or tz_within is true, use weight w.
+    //   - If not, use weight (1 - w).
+    bool bx_tar, by_tar, bz_tar;
+
+    // Boolean flag indicating whether the weight for a particle pair
+    // should be taken within the target cell or outside it.
+    // Only valid if bx_tar, by_tar, or bz_tar is false.
+    bool tx_within, ty_within, tz_within;
+
+    // Default constructor (sets all flags to true and initializes body_idx_src)
+    PairListEntry(int bd_src_id)
+        : body_idx_src(bd_src_id), bx_src(true), by_src(true), bz_src(true), bx_tar(true), by_tar(true), bz_tar(true), sx_within(true), sy_within(true), sz_within(true), tx_within(true), ty_within(true),
+          tz_within(true)
+    {
+    }
+
+    // Setter methods for source flags
+    void set_src_flags(bool x, bool y, bool z)
+    {
+        bx_src = x;
+        by_src = y;
+        bz_src = z;
+    }
+
+    // Setter methods for target flags
+    void set_tar_flags(bool x, bool y, bool z)
+    {
+        bx_tar = x;
+        by_tar = y;
+        bz_tar = z;
+    }
+
+    // Setter methods for source within-cell flags
+    void set_scw_flags(bool x, bool y, bool z)
+    {
+        sx_within = x;
+        sy_within = y;
+        sz_within = z;
+    }
+
+    // Setter methods for target within-cell flags
+    void set_trw_flags(bool x, bool y, bool z)
+    {
+        tx_within = x;
+        ty_within = y;
+        tz_within = z;
+    }
+};
+
+// Class to manage FMMDirectInteractions
 class FMMDirectInteractions
 {
   public:
@@ -15,10 +87,10 @@ class FMMDirectInteractions
 
     bool is_point_within_radius(const RVec &point1, const RVec &point2, double radius);
 
-    // returns forces and potentials pair
+    // Returns forces and potentials pair
     std::vector<std::pair<RVec, real>> execute_direct_kernel();
 
-    // returns forces and potentials pair
+    // Returns forces and potentials pair
     std::vector<std::pair<RVec, real>> execute_direct_kernel_simd();
 
     void recompute_weights();
@@ -30,33 +102,10 @@ class FMMDirectInteractions
     FMMWeightEvaluator fmm_weights_eval_;
     FMMDirectInteractionsTree fmm_direct_interactions_tree_;
 
-    std::vector<std::vector<int>> pair_list;
+    // List of particle pairs with their associated weight flags
+    std::vector<std::vector<PairListEntry>> pair_list;
 
-    // Boolean flag to determine the source weights for each particle pair:
-    // - If bxy_src[i][d] == 1, use a weight of 1.
-    // - Otherwise, the decision is based on sif[i][d]:
-    //   - If sif[i][d] == 1, use weight w.
-    //   - If sif[i][d] == 0, use weight (1 - w).
-    std::vector<std::vector<BVec>> pair_list_bxyz_src;
-
-    // Boolean flag indicating whether the weight for a particle pair
-    // should be taken within the source cell or outside it.
-    // only valid if bxy_src[i][d] != 1
-    std::vector<std::vector<BVec>> pair_list_sif_within;
-
-    // Boolean flag indicating whether the target weights for a particle pair
-    // - If bxy_tar[i][d] == 1, use a weight of 1.
-    // - Otherwise, the decision is based on tif[i][d]:
-    //   - If tif[i][d] == 1, use weight w.
-    //   - If tif[i][d] == 0, use weight (1 - w).
-    std::vector<std::vector<BVec>> pair_list_tif_within;
-
-    // Boolean flag indicating whether the weight for a particle pair
-    // should be taken within the target cell or outside it.
-    // only valid if bxy_tar[i][d] != 1
-    std::vector<std::vector<BVec>> pair_list_bxyz_tar;
-
-    // weight values for each atom within its original cell
+    // Weight values for each atom within its original cell
     std::vector<RVec> w_per_atom;
 
     void compute_weights_();
