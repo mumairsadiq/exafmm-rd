@@ -386,14 +386,7 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                                 //     pair_list_tif_within[body_idx_tar].push_back({1, 1, 1});
 
                                                 //     pair_list_bxyz_src[body_idx_tar].push_back({bxs, bys, bzs});
-
-                                                //     pair_list[body_idx_tar].push_back(body_idx_src);
-
-                                                //     pair_list_bxyz_tar[body_idx_tar].push_back({bxt, byt, bzt});
-                                                //     pair_list_tif_within[body_idx_tar].push_back({1, 1, 1});
-
-                                                //     pair_list_bxyz_src[body_idx_tar].push_back({bxs, bys, bzs});
-                                                //     pair_list_sif_within[body_idx_tar].push_back({1, 1, 1});      pair_list_sif_within[body_idx_tar].push_back({1, 1, 1});
+                                                //     pair_list_sif_within[body_idx_tar].push_back({1, 1, 1});
 
                                                 //     pair_list[body_idx_tar].push_back(body_idx_src);
 
@@ -406,23 +399,16 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                             }
                                             else if (is_dist_y1 && is_dist_z0)
                                             {
-                                                // pair_list[body_idx_tar].push_back(body_idx_src);
+                                                pair_list[body_idx_tar].push_back(body_idx_src);
 
-                                                // pair_list_bxyz_tar[body_idx_tar].push_back({bxt, byt, bzt});
-                                                // pair_list_tif_within[body_idx_tar].push_back({1, 1, 1});
+                                                pair_list_bxyz_tar[body_idx_tar].push_back({bxt, byt, bzt});
+                                                pair_list_tif_within[body_idx_tar].push_back({1, 1, 1});
 
-                                                // pair_list_bxyz_src[body_idx_tar].push_back({bxs, bys, bzs});
-                                                // pair_list_sif_within[body_idx_tar].push_back({1, 1, 1});
+                                                pair_list_bxyz_src[body_idx_tar].push_back({bxs, bys, bzs});
+                                                pair_list_sif_within[body_idx_tar].push_back({1, 1, 1});
 
                                                 if (in_regy_sct && (in_rel_regy_tar ^ in_rel_regy_src))
                                                 {
-                                                    pair_list[body_idx_tar].push_back(body_idx_src);
-
-                                                    pair_list_bxyz_tar[body_idx_tar].push_back({bxt, byt, bzt});
-                                                    pair_list_tif_within[body_idx_tar].push_back({1, 1, 1});
-
-                                                    pair_list_bxyz_src[body_idx_tar].push_back({bxs, bys, bzs});
-                                                    pair_list_sif_within[body_idx_tar].push_back({1, 1, 1});
 
                                                     if (in_regz_sct && (!in_rel_regz_src && !in_rel_regz_tar))
                                                     {
@@ -436,7 +422,6 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
 
                                                         pair_list_bxyz_src[body_idx_tar].push_back({bxs_am, 0, 1});
                                                         pair_list_sif_within[body_idx_tar].push_back({1, 0, 1});
-                                                       
 
                                                         if (in_rel_regy_tar)
                                                         {
@@ -485,6 +470,36 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                                         pair_list_bxyz_src[body_idx_tar].push_back({bxs_am, 0, 1});
                                                         pair_list_sif_within[body_idx_tar].push_back({1, 0, 1});
                                                     }
+                                                }
+                                                else if (in_regx_sct && in_rel_regx_src != in_rel_regx_tar)
+                                                {
+
+                                                    // pair_list[body_idx_tar].push_back(body_idx_src);
+
+                                                    // pair_list_bxyz_tar[body_idx_tar].push_back({bxt, byt, bzt});
+                                                    // pair_list_tif_within[body_idx_tar].push_back({1, 1, 1});
+
+                                                    // pair_list_bxyz_src[body_idx_tar].push_back({bxs, bys, bzs});
+                                                    // pair_list_sif_within[body_idx_tar].push_back({1, 1, 1});
+
+                                                    pair_list[body_idx_tar].push_back(body_idx_src);
+
+                                                    pair_list_bxyz_tar[body_idx_tar].push_back({0, byt_am, 1});
+                                                    pair_list_tif_within[body_idx_tar].push_back({0, 1, 1});
+
+                                                    pair_list_bxyz_src[body_idx_tar].push_back({0, bys_am, 1});
+                                                    pair_list_sif_within[body_idx_tar].push_back({0, 1, 1});
+                                                }
+                                                else if (in_regz_tar && in_regz_src && !in_rel_regz_tar)
+                                                {
+
+                                                    pair_list[body_idx_tar].push_back(body_idx_src);
+
+                                                    pair_list_bxyz_tar[body_idx_tar].push_back({bxt_am, byt_am, 0});
+                                                    pair_list_tif_within[body_idx_tar].push_back({1, 1, 0});
+
+                                                    pair_list_bxyz_src[body_idx_tar].push_back({bxs_am, bys_am, 0});
+                                                    pair_list_sif_within[body_idx_tar].push_back({1, 1, 1});
                                                 }
                                             }
                                         }
