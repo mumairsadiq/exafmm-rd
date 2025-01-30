@@ -1,109 +1,109 @@
 #include "body.h"
-#include <random>
 #include <algorithm>
+#include <random>
 
-void rtfmm::print_body(const Body3& b)
+void rtfmm::print_body(const Body3 &b)
 {
-    RTLOG("[%d],(%.4f,%.4f,%.4f),%.4f,%.12f,(%.8f,%.8f,%.8f)\n", 
-        b.idx,
-        b.x[0],b.x[1],b.x[2],
-        b.q,
-        b.p,
-        b.f[0],b.f[1],b.f[2]
-    );
+    RTLOG("[%d],(%.4f,%.4f,%.4f),%.4f,%.12f,(%.8f,%.8f,%.8f)\n", b.idx, b.x[0],
+          b.x[1], b.x[2], b.q, b.p, b.f[0], b.f[1], b.f[2]);
 }
 
-void rtfmm::print_bodies(const rtfmm::Bodies3& bs, int num, int offset, std::string name)
+void rtfmm::print_bodies(const rtfmm::Bodies3 &bs, int num, int offset,
+                         std::string name)
 {
-    std::cerr<<name<<":"<<std::endl;
-    if(num == -1) num = bs.size();
+    std::cerr << name << ":" << std::endl;
+    if (num == -1)
+        num = bs.size();
     int s = std::min(num, (int)bs.size());
-    for(int i = offset; i < offset + s; i++)
+    for (int i = offset; i < offset + s; i++)
     {
         print_body(bs[i]);
     }
     RTLOG("\n");
 }
 
-std::vector<rtfmm::vec3r> rtfmm::get_bodies_x(rtfmm::Bodies3& bs, Range range, vec3r offset)
+std::vector<rtfmm::vec3r> rtfmm::get_bodies_x(rtfmm::Bodies3 &bs, Range range,
+                                              vec3r offset)
 {
     std::vector<rtfmm::vec3r> res(range.number);
-    for(int i = 0; i < range.number; i++)
+    for (int i = 0; i < range.number; i++)
     {
         res[i] = bs[range.offset + i].x + offset;
     }
     return res;
 }
 
-rtfmm::Matrix rtfmm::get_bodies_q(rtfmm::Bodies3& bs, Range range)
+rtfmm::Matrix rtfmm::get_bodies_q(rtfmm::Bodies3 &bs, Range range)
 {
     Matrix res(range.number, 1);
-    for(int i = 0; i < range.number; i++)
+    for (int i = 0; i < range.number; i++)
     {
         res[i] = bs[range.offset + i].q;
     }
     return res;
 }
 
-void rtfmm::set_boides_p(Bodies3& bs, Matrix& ps, Range range)
+void rtfmm::set_boides_p(Bodies3 &bs, Matrix &ps, Range range)
 {
     assert_exit(ps.m * ps.n == range.number, "set_boides_p number error");
     int num = range.number;
-    for(int i = 0; i < num; i++)
+    for (int i = 0; i < num; i++)
     {
         bs[range.offset + i].p = ps[i];
     }
 }
 
-void rtfmm::add_boides_p(Bodies3& bs, Matrix& ps, Range range)
+void rtfmm::add_boides_p(Bodies3 &bs, Matrix &ps, Range range)
 {
     assert_exit(ps.m * ps.n == range.number, "add_boides_p number error");
     int num = range.number;
-    for(int i = 0; i < num; i++)
+    for (int i = 0; i < num; i++)
     {
         bs[range.offset + i].p += ps[i];
     }
 }
 
-void rtfmm::set_boides_f(Bodies3& bs, Matriv& fs, Range range)
+void rtfmm::set_boides_f(Bodies3 &bs, Matriv &fs, Range range)
 {
     assert_exit(fs.m * fs.n == range.number, "set_boides_f number error");
     int num = range.number;
-    for(int i = 0; i < num; i++)
+    for (int i = 0; i < num; i++)
     {
         bs[range.offset + i].f = fs[i];
     }
 }
 
-void rtfmm::add_boides_f(Bodies3& bs, Matriv& fs, Range range)
+void rtfmm::add_boides_f(Bodies3 &bs, Matriv &fs, Range range)
 {
     assert_exit(fs.m * fs.n == range.number, "add_boides_f number error");
     int num = range.number;
-    for(int i = 0; i < num; i++)
+    for (int i = 0; i < num; i++)
     {
         bs[range.offset + i].f += fs[i];
     }
 }
 
-void rtfmm::scale_bodies(Bodies3& bs, real scale)
+void rtfmm::scale_bodies(Bodies3 &bs, real scale)
 {
     int num = bs.size();
-    for(int i = 0; i < num; i++)
+    for (int i = 0; i < num; i++)
     {
         bs[i].p *= scale;
         bs[i].f *= scale;
     }
 }
 
-rtfmm::Bodies3 rtfmm::generate_random_bodies(int num, rtfmm::real r, vec3r offset, int seed, int zero_netcharge)
+rtfmm::Bodies3 rtfmm::generate_random_bodies(int num, rtfmm::real r,
+                                             vec3r offset, int seed,
+                                             int zero_netcharge)
 {
     Bodies3 bodies;
     double q_avg = 0;
     srand48(seed);
-	for(int i = 0; i < num; i++)
-	{
+    for (int i = 0; i < num; i++)
+    {
         Body3 body;
-        for(int d = 0; d < 3; d++)
+        for (int d = 0; d < 3; d++)
         {
             body.x[d] = drand48() * r * 2 - r;
         }
@@ -112,14 +112,14 @@ rtfmm::Bodies3 rtfmm::generate_random_bodies(int num, rtfmm::real r, vec3r offse
         body.idx = i;
         body.q = q;
         body.p = 0;
-        body.f = vec3r(0,0,0);
+        body.f = vec3r(0, 0, 0);
         body.x += offset;
         bodies.push_back(body);
-	}
+    }
     q_avg /= num;
-    if(zero_netcharge)
+    if (zero_netcharge)
     {
-        for(int i = 0; i < num; i++)
+        for (int i = 0; i < num; i++)
         {
             bodies[i].q -= q_avg;
         }
@@ -128,7 +128,9 @@ rtfmm::Bodies3 rtfmm::generate_random_bodies(int num, rtfmm::real r, vec3r offse
     return bodies;
 }
 
-rtfmm::BodyCompareResult rtfmm::compare(const Bodies3& bs1, const Bodies3& bs2, std::string name1, std::string name2, int num_compare)
+rtfmm::BodyCompareResult rtfmm::compare(const Bodies3 &bs1, const Bodies3 &bs2,
+                                        std::string name1, std::string name2,
+                                        int num_compare)
 {
     assert_exit(bs1.size() == bs2.size(), "inconsistent size in comparison");
 
@@ -136,18 +138,19 @@ rtfmm::BodyCompareResult rtfmm::compare(const Bodies3& bs1, const Bodies3& bs2, 
     res.name1 = name1;
     res.name2 = name2;
 
-    int num = num_compare == -1 ? bs1.size() : std::min(num_compare, (int)bs1.size());
+    int num =
+        num_compare == -1 ? bs1.size() : std::min(num_compare, (int)bs1.size());
     res.num_compared = num;
 
     real pdif = 0, pnrm = 0;
     real fdif = 0, fnrm = 0;
     real esum1 = 0, esum2 = 0;
     real diff_r_max = 0;
-    for(int i = 0; i < num; i++)
+    for (int i = 0; i < num; i++)
     {
         Body3 b1 = bs1[i];
         Body3 b2 = bs2[i];
-        esum1 += b1.p * b1.q;                   
+        esum1 += b1.p * b1.q;
         esum2 += b2.p * b2.q;
         pdif += std::pow(b1.p - b2.p, 2);
         pnrm += std::pow(b2.p, 2);
@@ -156,15 +159,14 @@ rtfmm::BodyCompareResult rtfmm::compare(const Bodies3& bs1, const Bodies3& bs2, 
         fnrm += b2.f.norm();
         int flag = diff.r() > 1e-4 ? 1 : 0;
         diff_r_max = std::max(diff_r_max, diff.r());
-        /*RTLOG("[%d]  %d  %.4f  %.4f(%.4f,%.4f,%.4f)      %.8f (%.8f,%.8f,%.8f)   %.8f (%.8f,%.8f,%.8f)   %.8f (%.8f,%.8f,%.8f) %.8f\n", 
-            i, flag, diff.r(),
-            b1.q, b1.x[0], b1.x[1], b1.x[2],
-            b1.p, b1.f[0], b1.f[1], b1.f[2],
-            b2.p, b2.f[0], b2.f[1], b2.f[2],
-            std::abs(b1.p - b2.p), diff[0], diff[1], diff[2], std::abs(b1.q-b2.q));*/
+        /*RTLOG("[%d]  %d  %.4f  %.4f(%.4f,%.4f,%.4f)      %.8f (%.8f,%.8f,%.8f)
+           %.8f (%.8f,%.8f,%.8f)   %.8f (%.8f,%.8f,%.8f) %.8f\n", i, flag,
+           diff.r(), b1.q, b1.x[0], b1.x[1], b1.x[2], b1.p, b1.f[0], b1.f[1],
+           b1.f[2], b2.p, b2.f[0], b2.f[1], b2.f[2], std::abs(b1.p - b2.p),
+           diff[0], diff[1], diff[2], std::abs(b1.q-b2.q));*/
     }
-    //RTLOG("diff_r_max = %.4f\n", diff_r_max);
-    //RTLOG("pnrm = %.8f\n", pnrm);
+    // RTLOG("diff_r_max = %.4f\n", diff_r_max);
+    // RTLOG("pnrm = %.8f\n", pnrm);
     res.rmsp = std::sqrt(pdif / num);
     res.rmsf = std::sqrt(fdif / num);
     res.l2p = std::sqrt(pdif / pnrm);
@@ -176,17 +178,11 @@ rtfmm::BodyCompareResult rtfmm::compare(const Bodies3& bs1, const Bodies3& bs2, 
     return res;
 }
 
-rtfmm::Bodies3 rtfmm::sort_bodies_by_idx(const Bodies3& bs)
+rtfmm::Bodies3 rtfmm::sort_bodies_by_idx(const Bodies3 &bs)
 {
     rtfmm::Bodies3 bodies = bs;
-    std::sort(
-        bodies.begin(), 
-        bodies.end(),
-        [](const Body3& a, const Body3& b)
-        {
-            return a.idx < b.idx; 
-        }
-    );
+    std::sort(bodies.begin(), bodies.end(),
+              [](const Body3 &a, const Body3 &b) { return a.idx < b.idx; });
 
     return bodies;
 }
@@ -195,22 +191,25 @@ void rtfmm::BodyCompareResult::show()
 {
     int bar_num = 72 - name1.size() - name2.size() - 4;
     int bar_num_left = bar_num / 2;
-    for(int i = 0; i < bar_num_left; i++) RTLOG("-");
-    std::cerr<<name1<<" vs "<<name2;
-    for(int i = 0; i < bar_num - bar_num_left; i++) RTLOG("-");
+    for (int i = 0; i < bar_num_left; i++)
+        RTLOG("-");
+    std::cerr << name1 << " vs " << name2;
+    for (int i = 0; i < bar_num - bar_num_left; i++)
+        RTLOG("-");
     RTLOG("[%d]\n", num_compared);
-    RTLOG("%-8s : %8.5e   %-8s : %8.5e   %-8s : %8.5e\n", "L2  (p)", l2p , "L2  (f)", l2f, "L2  (e)", l2e); 
+    RTLOG("%-8s : %8.5e   %-8s : %8.5e   %-8s : %8.5e\n", "L2  (p)", l2p,
+          "L2  (f)", l2f, "L2  (e)", l2e);
     RTLOG("%-8s : %8.5e   %-8s : %8.5e\n", "Rms (p)", rmsp, "Rms (f)", rmsf);
     RTLOG("p-energy1 : %8.12e\n", epot1);
     RTLOG("p-energy2 : %8.12e\n", epot2);
     RTLOG("\n");
 }
 
-rtfmm::ManyBody rtfmm::Bodies2Manybody(const Bodies3& bs)
+rtfmm::ManyBody rtfmm::Bodies2Manybody(const Bodies3 &bs)
 {
     ManyBody res;
     res.num = bs.size();
-    for(int i = 0; i < res.num; i++)
+    for (int i = 0; i < res.num; i++)
     {
         Body3 b = bs[i];
         res.idxs.push_back(b.idx);
@@ -226,10 +225,10 @@ rtfmm::ManyBody rtfmm::Bodies2Manybody(const Bodies3& bs)
     return res;
 }
 
-rtfmm::Bodies3 rtfmm::Manybody2Bodies(const ManyBody& bs)
+rtfmm::Bodies3 rtfmm::Manybody2Bodies(const ManyBody &bs)
 {
     Bodies3 res;
-    for(int i = 0; i < bs.num; i++)
+    for (int i = 0; i < bs.num; i++)
     {
         Body3 b;
         b.idx = bs.idxs[i];
