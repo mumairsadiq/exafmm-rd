@@ -79,7 +79,10 @@ rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
     }
 
     gmx::fmm::FMMDirectInteractions fmm_direct_inters(coordinates, charges, args.x, args.r, 3, args.rega);
+
+    TIME_BEGIN(kernel_time);
     auto forces_and_potentials = fmm_direct_inters.execute_direct_kernel();
+    TIME_END(kernel_time);
 
     for (int i = 0; i < bs.size(); i++)
     {
