@@ -16,8 +16,7 @@ void rtfmm::Tree::build(Bodies3 &bodies, vec3r x, real r, int m, TreeType type)
     }
 }
 
-void rtfmm::Tree::build_uniform_octree(Bodies3 &bodies, vec3r x, real r,
-                                       int max_depth)
+void rtfmm::Tree::build_uniform_octree(Bodies3 &bodies, vec3r x, real r, int max_depth)
 {
     if (verbose)
         std::cout << "build complete balanced octree" << std::endl;
@@ -52,9 +51,7 @@ void rtfmm::Tree::build_uniform_octree(Bodies3 &bodies, vec3r x, real r,
             int offset_sum = 0;
             for (int i = begin; i <= end; i++)
             {
-                int idx = ((bodies[i].x[0] > branch_cell.x[0]) << 2) +
-                          ((bodies[i].x[1] > branch_cell.x[1]) << 1) +
-                          ((bodies[i].x[2] > branch_cell.x[2]) << 0);
+                int idx = ((bodies[i].x[0] > branch_cell.x[0]) << 2) + ((bodies[i].x[1] > branch_cell.x[1]) << 1) + ((bodies[i].x[2] > branch_cell.x[2]) << 0);
                 quad_num[idx]++;
             }
             for (int i = 0; i < 8; i++)
@@ -67,9 +64,7 @@ void rtfmm::Tree::build_uniform_octree(Bodies3 &bodies, vec3r x, real r,
             bodies_buffer.resize(num);
             for (int i = begin; i <= end; i++)
             {
-                int idx = ((bodies[i].x[0] > branch_cell.x[0]) << 2) +
-                          ((bodies[i].x[1] > branch_cell.x[1]) << 1) +
-                          ((bodies[i].x[2] > branch_cell.x[2]) << 0);
+                int idx = ((bodies[i].x[0] > branch_cell.x[0]) << 2) + ((bodies[i].x[1] > branch_cell.x[1]) << 1) + ((bodies[i].x[2] > branch_cell.x[2]) << 0);
                 bodies_buffer[offset[idx]] = bodies[i];
                 offset[idx]++;
             }
@@ -89,10 +84,8 @@ void rtfmm::Tree::build_uniform_octree(Bodies3 &bodies, vec3r x, real r,
                 child_cell.depth = branch_cell.depth + 1;
                 child_cell.r = branch_cell.r / 2;
                 child_cell.crange = Range(0, 0);
-                child_cell.brange =
-                    Range(begin + offset[i] - quad_num[i], quad_num[i]);
-                child_cell.x =
-                    get_child_cell_x(branch_cell.x, branch_cell.r, i, 0);
+                child_cell.brange = Range(begin + offset[i] - quad_num[i], quad_num[i]);
+                child_cell.x = get_child_cell_x(branch_cell.x, branch_cell.r, i, 0);
                 this->cells.push_back(child_cell);
                 big_cells.push(insert_offset + i);
             }
@@ -100,8 +93,7 @@ void rtfmm::Tree::build_uniform_octree(Bodies3 &bodies, vec3r x, real r,
     }
 }
 
-void rtfmm::Tree::build_nonuniform_octree(Bodies3 &bodies, vec3r x, real r,
-                                          int max_n_per_cell)
+void rtfmm::Tree::build_nonuniform_octree(Bodies3 &bodies, vec3r x, real r, int max_n_per_cell)
 {
     if (verbose)
         std::cout << "build adaptive octree" << std::endl;
@@ -138,9 +130,7 @@ void rtfmm::Tree::build_nonuniform_octree(Bodies3 &bodies, vec3r x, real r,
             int num_child = 0;
             for (int i = begin; i <= end; i++)
             {
-                int idx = ((bodies[i].x[0] > branch_cell.x[0]) << 2) +
-                          ((bodies[i].x[1] > branch_cell.x[1]) << 1) +
-                          ((bodies[i].x[2] > branch_cell.x[2]) << 0);
+                int idx = ((bodies[i].x[0] > branch_cell.x[0]) << 2) + ((bodies[i].x[1] > branch_cell.x[1]) << 1) + ((bodies[i].x[2] > branch_cell.x[2]) << 0);
                 quad_num[idx]++;
             }
             for (int i = 0; i < 8; i++)
@@ -155,9 +145,7 @@ void rtfmm::Tree::build_nonuniform_octree(Bodies3 &bodies, vec3r x, real r,
             bodies_buffer.resize(num);
             for (int i = begin; i <= end; i++)
             {
-                int idx = ((bodies[i].x[0] > branch_cell.x[0]) << 2) +
-                          ((bodies[i].x[1] > branch_cell.x[1]) << 1) +
-                          ((bodies[i].x[2] > branch_cell.x[2]) << 0);
+                int idx = ((bodies[i].x[0] > branch_cell.x[0]) << 2) + ((bodies[i].x[1] > branch_cell.x[1]) << 1) + ((bodies[i].x[2] > branch_cell.x[2]) << 0);
                 bodies_buffer[offset[idx]] = bodies[i];
                 offset[idx]++;
             }
@@ -171,8 +159,7 @@ void rtfmm::Tree::build_nonuniform_octree(Bodies3 &bodies, vec3r x, real r,
             int insert_offset = this->cells.size();
             if (num_child >= 1)
                 num_child = 8;
-            this->cells[branch_cell_idx].crange =
-                Range(insert_offset, num_child);
+            this->cells[branch_cell_idx].crange = Range(insert_offset, num_child);
             for (int i = 0; i < 8; i++)
             {
                 if (num_child == 8)
@@ -183,10 +170,8 @@ void rtfmm::Tree::build_nonuniform_octree(Bodies3 &bodies, vec3r x, real r,
                     child_cell.depth = branch_cell.depth + 1;
                     child_cell.r = branch_cell.r / 2;
                     child_cell.crange = Range(0, 0);
-                    child_cell.brange =
-                        Range(begin + offset[i] - quad_num[i], quad_num[i]);
-                    child_cell.x =
-                        get_child_cell_x(branch_cell.x, branch_cell.r, i, 0);
+                    child_cell.brange = Range(begin + offset[i] - quad_num[i], quad_num[i]);
+                    child_cell.x = get_child_cell_x(branch_cell.x, branch_cell.r, i, 0);
                     this->cells.push_back(child_cell);
                     big_cells.push(insert_offset + cnt);
                     cnt++;
@@ -198,8 +183,7 @@ void rtfmm::Tree::build_nonuniform_octree(Bodies3 &bodies, vec3r x, real r,
 
 rtfmm::Cells3 rtfmm::Tree::get_cells() { return cells; }
 
-rtfmm::vec3r rtfmm::Tree::get_child_cell_x(vec3r x_par, real r_par, int octant,
-                                           int is_periodic)
+rtfmm::vec3r rtfmm::Tree::get_child_cell_x(vec3r x_par, real r_par, int octant, int is_periodic)
 {
     vec3r x;
     if (!is_periodic)
@@ -224,8 +208,7 @@ rtfmm::vec3r rtfmm::Tree::get_child_cell_x(vec3r x_par, real r_par, int octant,
     }
     else
     {
-        assert_exit(octant >= 0 && octant <= 26,
-                    "periodic octant out of range");
+        assert_exit(octant >= 0 && octant <= 26, "periodic octant out of range");
         int k = octant / 9 - 1;
         int j = (octant % 9) / 3 - 1;
         int i = (octant % 3) - 1;

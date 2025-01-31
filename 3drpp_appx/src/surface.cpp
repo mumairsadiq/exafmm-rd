@@ -1,7 +1,6 @@
 #include "surface.h"
 
-std::vector<rtfmm::vec3r> rtfmm::get_surface_points(int p, real r, vec3r x,
-                                                    int dir)
+std::vector<rtfmm::vec3r> rtfmm::get_surface_points(int p, real r, vec3r x, int dir)
 {
     int num = get_surface_point_num(p);
     std::vector<rtfmm::vec3r> points;
@@ -13,12 +12,9 @@ std::vector<rtfmm::vec3r> rtfmm::get_surface_points(int p, real r, vec3r x,
             {
                 for (int k = 0; k < p; k++)
                 {
-                    if (i == 0 || i == p - 1 || j == 0 || j == p - 1 ||
-                        k == 0 || k == p - 1)
+                    if (i == 0 || i == p - 1 || j == 0 || j == p - 1 || k == 0 || k == p - 1)
                     {
-                        points.push_back(rtfmm::vec3r(
-                            -1.0 + i * 2.0 / (p - 1), -1.0 + j * 2.0 / (p - 1),
-                            -1.0 + k * 2.0 / (p - 1)));
+                        points.push_back(rtfmm::vec3r(-1.0 + i * 2.0 / (p - 1), -1.0 + j * 2.0 / (p - 1), -1.0 + k * 2.0 / (p - 1)));
                     }
                 }
             }
@@ -32,12 +28,9 @@ std::vector<rtfmm::vec3r> rtfmm::get_surface_points(int p, real r, vec3r x,
             {
                 for (int i = 0; i < p; i++)
                 {
-                    if (i == 0 || i == p - 1 || j == 0 || j == p - 1 ||
-                        k == 0 || k == p - 1)
+                    if (i == 0 || i == p - 1 || j == 0 || j == p - 1 || k == 0 || k == p - 1)
                     {
-                        points.push_back(rtfmm::vec3r(
-                            -1.0 + i * 2.0 / (p - 1), -1.0 + j * 2.0 / (p - 1),
-                            -1.0 + k * 2.0 / (p - 1)));
+                        points.push_back(rtfmm::vec3r(-1.0 + i * 2.0 / (p - 1), -1.0 + j * 2.0 / (p - 1), -1.0 + k * 2.0 / (p - 1)));
                     }
                 }
             }
@@ -53,9 +46,7 @@ std::vector<rtfmm::vec3r> rtfmm::get_surface_points(int p, real r, vec3r x,
     return points;
 }
 
-std::vector<rtfmm::vec3r> rtfmm::get_conv_grid(int grid_len, rtfmm::real gmin,
-                                               rtfmm::real delta,
-                                               rtfmm::vec3r offset)
+std::vector<rtfmm::vec3r> rtfmm::get_conv_grid(int grid_len, rtfmm::real gmin, rtfmm::real delta, rtfmm::vec3r offset)
 {
     std::vector<rtfmm::vec3r> grid;
     for (int k = 0; k < grid_len; k++)

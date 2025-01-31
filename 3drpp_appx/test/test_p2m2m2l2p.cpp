@@ -1,12 +1,12 @@
-#include "type.h"
 #include "body.h"
-#include "tree.h"
 #include "kernel.h"
 #include "surface.h"
+#include "tree.h"
+#include "type.h"
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
-    std::cout<<"rtfmm_3d_test_p2m2m2l2p"<<std::endl;
+    std::cout << "rtfmm_3d_test_p2m2m2l2p" << std::endl;
 
     int p = argc > 1 ? atoi(argv[1]) : 4;
     int s = argc > 2 ? atoi(argv[2]) : 10;
@@ -16,24 +16,24 @@ int main(int argc, char* argv[])
     rtfmm::real r = 1.0;
     int num_body_src = s;
     int num_body_tar = t;
-    rtfmm::vec3r x_src(-3,0,0);
-    rtfmm::vec3r x_tar(9,0,0);
+    rtfmm::vec3r x_src(-3, 0, 0);
+    rtfmm::vec3r x_tar(9, 0, 0);
 
     rtfmm::Bodies3 bs_src = rtfmm::generate_random_bodies(num_body_src, r, x_src);
     rtfmm::Cell3 cell_src;
     cell_src.depth = 0;
     cell_src.r = r;
     cell_src.x = x_src;
-    cell_src.crange = {0,0};
-    cell_src.brange = {0,num_body_src};
+    cell_src.crange = {0, 0};
+    cell_src.brange = {0, num_body_src};
     cell_src.q_equiv = rtfmm::Matrix(rtfmm::get_surface_point_num(p), 1);
     cell_src.p_check = rtfmm::Matrix(rtfmm::get_surface_point_num(p), 1);
     rtfmm::Cell3 cell_src_par;
     cell_src_par.depth = -1;
     cell_src_par.r = r * 3;
     cell_src_par.x = x_src;
-    cell_src_par.crange = {1,1};
-    cell_src_par.brange = {0,num_body_src};
+    cell_src_par.crange = {1, 1};
+    cell_src_par.brange = {0, num_body_src};
     cell_src_par.q_equiv = rtfmm::Matrix(rtfmm::get_surface_point_num(p), 1);
     cell_src_par.p_check = rtfmm::Matrix(rtfmm::get_surface_point_num(p), 1);
     rtfmm::Cells3 cs;
@@ -45,8 +45,8 @@ int main(int argc, char* argv[])
     cell_tar.depth = 0;
     cell_tar.r = r;
     cell_tar.x = x_tar;
-    cell_tar.crange = {0,0};
-    cell_tar.brange = {0,num_body_tar};
+    cell_tar.crange = {0, 0};
+    cell_tar.brange = {0, num_body_tar};
     cell_tar.q_equiv = rtfmm::Matrix(rtfmm::get_surface_point_num(p), 1);
     cell_tar.p_check = rtfmm::Matrix(rtfmm::get_surface_point_num(p), 1);
 

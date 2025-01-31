@@ -2,15 +2,9 @@
 #include "argument.h"
 #include "surface.h"
 
-rtfmm::InteractionPair rtfmm::make_pair(int tar, int src)
-{
-    return std::make_pair(tar, src);
-}
+rtfmm::InteractionPair rtfmm::make_pair(int tar, int src) { return std::make_pair(tar, src); }
 
-rtfmm::PeriodicInteractionPair rtfmm::make_pair(int tar, int src, vec3r offset)
-{
-    return std::make_pair(tar, std::make_pair(src, offset));
-}
+rtfmm::PeriodicInteractionPair rtfmm::make_pair(int tar, int src, vec3r offset) { return std::make_pair(tar, std::make_pair(src, offset)); }
 
 rtfmm::Traverser::Traverser() {}
 
@@ -69,8 +63,7 @@ void rtfmm::Traverser::traverse(Tree &tree, real cycle, int images, int P_)
                                 vec3r offset = vec3r(px, py, pz) * c.r * 2;
                                 // since c's child is hitorikko, we should mark
                                 // c->c as image/periodic interaction()
-                                M2L_parent_map[cidx].push_back(
-                                    PeriodicParentSource(cidx, offset, 1));
+                                M2L_parent_map[cidx].push_back(PeriodicParentSource(cidx, offset, 1));
                             }
                         }
                     }
@@ -81,20 +74,16 @@ void rtfmm::Traverser::traverse(Tree &tree, real cycle, int images, int P_)
     }
 }
 
-void rtfmm::Traverser::horizontal_origin(int tc, int sc, int tcp, int scp,
-                                         vec3r offset)
+void rtfmm::Traverser::horizontal_origin(int tc, int sc, int tcp, int scp, vec3r offset)
 {
     int divide = 0; // 0: nodivide, 1:tc, 2:sc
     if (!adjacent(tc, sc, offset))
     {
-        if (adjacent(tc, scp, offset) && is_leaf(tc) &&
-            cells[scp].depth >= cells[tc].depth)
+        if (adjacent(tc, scp, offset) && is_leaf(tc) && cells[scp].depth >= cells[tc].depth)
         {
-            if (is_leaf(sc) &&
-                cells[sc].bodies.size() <= get_surface_point_num(P))
+            if (is_leaf(sc) && cells[sc].bodies.size() <= get_surface_point_num(P))
             {
-                P2P_map[cells[tc].leaf_idx].push_back(
-                    std::make_pair(sc, offset));
+                P2P_map[cells[tc].leaf_idx].push_back(std::make_pair(sc, offset));
             }
             else
             {
@@ -103,14 +92,11 @@ void rtfmm::Traverser::horizontal_origin(int tc, int sc, int tcp, int scp,
                     std::cout << "M2P" << std::endl;
             }
         }
-        else if (adjacent(tcp, sc, offset) && is_leaf(sc) &&
-                 cells[tcp].depth >= cells[sc].depth)
+        else if (adjacent(tcp, sc, offset) && is_leaf(sc) && cells[tcp].depth >= cells[sc].depth)
         {
-            if (is_leaf(tc) &&
-                cells[tc].bodies.size() <= get_surface_point_num(P))
+            if (is_leaf(tc) && cells[tc].bodies.size() <= get_surface_point_num(P))
             {
-                P2P_map[cells[tc].leaf_idx].push_back(
-                    std::make_pair(sc, offset));
+                P2P_map[cells[tc].leaf_idx].push_back(std::make_pair(sc, offset));
             }
             else
             {
@@ -193,8 +179,7 @@ void rtfmm::Traverser::horizontal_periodic_near(real cycle)
     cells.push_back(c);
     int cidx = cells.size() - 1;
     if (verbose)
-        printf("add cell %ld, r = %.4f, depth = %d, child = %d\n",
-               cells.size() - 1, c.r, c.depth, c.crange.offset);
+        printf("add cell %ld, r = %.4f, depth = %d, child = %d\n", cells.size() - 1, c.r, c.depth, c.crange.offset);
     for (int pz = -1; pz <= 1; pz++)
     {
         for (int py = -1; py <= 1; py++)
@@ -227,8 +212,7 @@ void rtfmm::Traverser::horizontal_periodic_far(real cycle, int images)
         cells.push_back(c);
         child_idx = cells.size() - 1;
         if (verbose)
-            printf("add cell %ld, r = %.4f, depth = %d, child = %d\n",
-                   cells.size() - 1, c.r, c.depth, c.crange.offset);
+            printf("add cell %ld, r = %.4f, depth = %d, child = %d\n", cells.size() - 1, c.r, c.depth, c.crange.offset);
     }
     for (int m = 0; m < images - 1; m++)
     {
@@ -256,11 +240,8 @@ void rtfmm::Traverser::horizontal_periodic_far(real cycle, int images)
                                 // * cycle));
                                 // M2L_map[0].push_back(std::make_pair(icell_idx,
                                 // vec3r(ox,oy,oz) * cycle));
-                                M2L_pairs.push_back(
-                                    make_pair(icell_idx, icell_idx,
-                                              vec3r(ox, oy, oz) * cycle));
-                                M2L_map[icell_idx].push_back(std::make_pair(
-                                    icell_idx, vec3r(ox, oy, oz) * cycle));
+                                M2L_pairs.push_back(make_pair(icell_idx, icell_idx, vec3r(ox, oy, oz) * cycle));
+                                M2L_map[icell_idx].push_back(std::make_pair(icell_idx, vec3r(ox, oy, oz) * cycle));
                             }
                         }
                     }
@@ -284,8 +265,7 @@ void rtfmm::Traverser::make_M2L_parent_map()
             if (i != j && !is_leaf(j) && !is_leaf(i) && neighbour(i, j))
             {
                 // M2L_parent_map[j].push_back(std::make_pair(i, vec3r(0,0,0)));
-                M2L_parent_map[j].push_back(
-                    PeriodicParentSource(i, vec3r(0, 0, 0), 0));
+                M2L_parent_map[j].push_back(PeriodicParentSource(i, vec3r(0, 0, 0), 0));
             }
         }
     }
@@ -313,13 +293,11 @@ void rtfmm::Traverser::make_M2L_parent_map_i1(real cycle)
                         if (px != 0 || py != 0 || pz != 0)
                         {
                             vec3r offset = vec3r(px, py, pz) * cycle;
-                            if (!is_leaf(j) && !is_leaf(i) &&
-                                neighbour(j, i, offset))
+                            if (!is_leaf(j) && !is_leaf(i) && neighbour(j, i, offset))
                             {
                                 // M2L_parent_map[j].push_back(std::make_pair(i,
                                 // offset));
-                                M2L_parent_map[j].push_back(
-                                    PeriodicParentSource(i, offset, 0));
+                                M2L_parent_map[j].push_back(PeriodicParentSource(i, offset, 0));
                             }
                         }
                     }
@@ -329,12 +307,10 @@ void rtfmm::Traverser::make_M2L_parent_map_i1(real cycle)
     }
 }
 
-rtfmm::PeriodicInteractionMapM2L
-rtfmm::Traverser::get_m2l_map_from_m2l_parent_map()
+rtfmm::PeriodicInteractionMapM2L rtfmm::Traverser::get_m2l_map_from_m2l_parent_map()
 {
     if (verbose)
-        std::cout << "M2L_parent_map_size: " << M2L_parent_map.size()
-                  << std::endl;
+        std::cout << "M2L_parent_map_size: " << M2L_parent_map.size() << std::endl;
     PeriodicInteractionMapM2L res;
     for (auto m2l_parent : M2L_parent_map)
     {
@@ -372,10 +348,7 @@ int rtfmm::Traverser::adjacent(int a, int b, vec3r offset)
     return dx[0] <= dist && dx[1] <= dist && dx[2] <= dist;
 }
 
-int rtfmm::Traverser::neighbour(int a, int b, vec3r offset)
-{
-    return adjacent(a, b, offset) && cells[a].depth == cells[b].depth;
-}
+int rtfmm::Traverser::neighbour(int a, int b, vec3r offset) { return adjacent(a, b, offset) && cells[a].depth == cells[b].depth; }
 
 int rtfmm::Traverser::is_leaf(int c) { return cells[c].crange.number == 0; }
 
@@ -397,17 +370,8 @@ rtfmm::PeriodicInteractionPairs rtfmm::Traverser::get_pairs(OperatorType type)
     }
 }
 
-rtfmm::PeriodicInteractionMapM2L rtfmm::Traverser::get_m2l_map()
-{
-    return M2L_map;
-}
+rtfmm::PeriodicInteractionMapM2L rtfmm::Traverser::get_m2l_map() { return M2L_map; }
 
-rtfmm::PeriodicInteractionMapP2P rtfmm::Traverser::get_p2p_map()
-{
-    return P2P_map;
-}
+rtfmm::PeriodicInteractionMapP2P rtfmm::Traverser::get_p2p_map() { return P2P_map; }
 
-rtfmm::PeriodicM2LMap rtfmm::Traverser::get_M2L_parent_map()
-{
-    return M2L_parent_map;
-}
+rtfmm::PeriodicM2LMap rtfmm::Traverser::get_M2L_parent_map() { return M2L_parent_map; }

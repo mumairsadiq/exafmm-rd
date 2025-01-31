@@ -1,7 +1,7 @@
 #pragma once
-#include "type.h"
 #include "body.h"
 #include "tree.h"
+#include "type.h"
 
 namespace rtfmm
 {
@@ -12,10 +12,10 @@ struct Cell3
     int leaf_idx; // if cell is leaf then a valid id otherwise -1
     /**
      * @brief octant relative to parent cell
-     * @note 
+     * @note
      * when [0,7], it means a relative position of 2x2x2 children of the parent cell;
      * when == 13, it means the central position of a 3x3x3 child of the image parent cell, namely, it is hitorikko of its parent(cells whose depth <= 0 are hitorikko).
-    */
+     */
     int octant;
     int depth;
     real r;
@@ -26,7 +26,7 @@ struct Cell3
     Matrix p_check;
     std::vector<std::pair<int, vec3r>> reg_body_idx;
 
-    std::vector<Body3> bodies; 
+    std::vector<Body3> bodies;
     std::vector<real> weights;
 
     int M;
@@ -39,15 +39,10 @@ struct Cell3
         leaf_idx = -1;
     }
 
-    friend std::ostream &operator<<(std::ostream & os, const Cell3 & cell) 
+    friend std::ostream &operator<<(std::ostream &os, const Cell3 &cell)
     {
         os << "---[cell]--- "
-        <<"idx=" << cell.idx
-        << ",depth=" << cell.depth
-        << ",r=" << cell.r
-        <<",center=" << cell.x
-        << ",crange=" << cell.crange
-        << ",brange=" << cell.brange;
+           << "idx=" << cell.idx << ",depth=" << cell.depth << ",r=" << cell.r << ",center=" << cell.x << ",crange=" << cell.crange << ",brange=" << cell.brange;
         return os;
     }
 
@@ -58,7 +53,7 @@ using Cells3 = std::vector<Cell3>;
 
 class Tree
 {
-public:
+  public:
     enum class TreeType
     {
         uniform,
@@ -66,7 +61,7 @@ public:
     };
 
     Tree();
-    
+
     /**
      * @brief build tree from bodies
      * @warning this function will shuffle the bodies, so DO NOT FORGET to re-sort the bodies in the end
@@ -76,21 +71,19 @@ public:
      * @param m for uniform-tree it stands for max_depth; for nonuniform-tree it stands for max_n_per_cell
      * @param type type of tree (namely, uniform or nonuniform)
      */
-    void build(Bodies3& bodies, vec3r x, real r, int m, TreeType type);
-    
+    void build(Bodies3 &bodies, vec3r x, real r, int m, TreeType type);
+
     Cells3 get_cells();
 
     static vec3r get_child_cell_x(vec3r x_par, real r_par, int octant, int is_periodic);
 
-private:
+  private:
+    void build_uniform_octree(Bodies3 &bodies, vec3r x, real r, int max_depth);
 
-    void build_uniform_octree(Bodies3& bodies, vec3r x, real r, int max_depth);
+    void build_nonuniform_octree(Bodies3 &bodies, vec3r x, real r, int max_n_per_cell);
 
-    void build_nonuniform_octree(Bodies3& bodies, vec3r x, real r, int max_n_per_cell);
-
-private:
-
+  private:
     std::vector<Cell3> cells;
 };
 
-}
+} // namespace rtfmm

@@ -1,10 +1,10 @@
-#include "type.h"
 #include "body.h"
 #include "tree.h"
+#include "type.h"
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
-    std::cout<<"rtfmm_3d_test_cell"<<std::endl;
+    std::cout << "rtfmm_3d_test_cell" << std::endl;
 
     rtfmm::real r = 1.0;
     int num_body = 5;
@@ -14,9 +14,9 @@ int main(int argc, char* argv[])
     rtfmm::Cell3 cell;
     cell.depth = 0;
     cell.r = r;
-    cell.x = {0,0,0};
-    cell.crange = {0,0};
-    cell.brange = {0,num_body};
+    cell.x = {0, 0, 0};
+    cell.crange = {0, 0};
+    cell.brange = {0, num_body};
 
     rtfmm::print_bodies(bs, cell.brange.number, cell.brange.offset);
 

@@ -12,16 +12,14 @@ rtfmm::Matrix rtfmm::mat_vec_mul(const Matrix &A, const Matrix &b, real k)
 {
     int m = A.m, n = A.n;
     Matrix C(m, 1);
-    cblas_dgemv(CblasRowMajor, CblasNoTrans, m, n, k, A.d.data(), n, b.d.data(),
-                1, 0.0, C.d.data(), 1);
+    cblas_dgemv(CblasRowMajor, CblasNoTrans, m, n, k, A.d.data(), n, b.d.data(), 1, 0.0, C.d.data(), 1);
     return C;
 }
 
 void rtfmm::mat_vec_mul(const Matrix &A, const Matrix &b, Matrix &c, real k)
 {
     int m = A.m, n = A.n;
-    cblas_dgemv(CblasRowMajor, CblasNoTrans, m, n, k, A.d.data(), n, b.d.data(),
-                1, 0.0, c.d.data(), 1);
+    cblas_dgemv(CblasRowMajor, CblasNoTrans, m, n, k, A.d.data(), n, b.d.data(), 1, 0.0, c.d.data(), 1);
 }
 
 rtfmm::Matrix rtfmm::mat_mat_add(Matrix &A, Matrix &B)
@@ -57,8 +55,7 @@ rtfmm::Matrix rtfmm::mat_mat_mul(const Matrix &A, const Matrix &B)
     assert_exit(A.n == B.m, "mat_mat_mul size error");
     int m = A.m, n = A.n, k = B.n;
     Matrix C(m, k);
-    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, m, k, n, 1.0,
-                A.d.data(), n, B.d.data(), k, 0.0, C.d.data(), k);
+    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, m, k, n, 1.0, A.d.data(), n, B.d.data(), k, 0.0, C.d.data(), k);
     return C;
 }
 
@@ -95,12 +92,10 @@ void rtfmm::svd(Matrix A, Matrix &U, Matrix &S, Matrix &VT)
     double wkopt;
     int info;
     int lwork = -1;
-    dgesvd_(&jobu, &jobvt, &n, &m, A.d.data(), &n, s.d.data(), VT.d.data(), &n,
-            U.d.data(), &k, &wkopt, &lwork, &info);
+    dgesvd_(&jobu, &jobvt, &n, &m, A.d.data(), &n, s.d.data(), VT.d.data(), &n, U.d.data(), &k, &wkopt, &lwork, &info);
     lwork = (int)wkopt;
     Matrix wbuff(lwork, 1);
-    dgesvd_(&jobu, &jobvt, &n, &m, A.d.data(), &n, s.d.data(), VT.d.data(), &n,
-            U.d.data(), &k, wbuff.d.data(), &lwork, &info);
+    dgesvd_(&jobu, &jobvt, &n, &m, A.d.data(), &n, s.d.data(), VT.d.data(), &n, U.d.data(), &k, wbuff.d.data(), &lwork, &info);
 
     S = Matrix(m, n);
 
@@ -198,8 +193,7 @@ void rtfmm::print_matriv(Matriv &A)
         printf("{");
         for (int i = 0; i < A.n; i++)
         {
-            printf("(%.4f,%.4f,%.4f),", A[j * A.n + i][0], A[j * A.n + i][1],
-                   A[j * A.n + i][2]);
+            printf("(%.4f,%.4f,%.4f),", A[j * A.n + i][0], A[j * A.n + i][1], A[j * A.n + i][2]);
         }
         printf("}\n");
     }

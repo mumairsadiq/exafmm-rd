@@ -3,8 +3,7 @@
 
 // #define EWALD_USE_HALF
 
-rtfmm::EwaldSolver::EwaldSolver(const Bodies3 &bs_, const Argument &args_)
-    : bs(bs_), args(args_)
+rtfmm::EwaldSolver::EwaldSolver(const Bodies3 &bs_, const Argument &args_) : bs(bs_), args(args_)
 {
     ksize = args.ewald_ksize;
     if (verbose)
@@ -162,8 +161,7 @@ void rtfmm::EwaldSolver::child(int this_cell_idx, int that_cell_idx)
     }
 }
 
-void rtfmm::EwaldSolver::real_p2p(int this_cell_idx, int that_cell_idx,
-                                  rtfmm::vec3r offset)
+void rtfmm::EwaldSolver::real_p2p(int this_cell_idx, int that_cell_idx, rtfmm::vec3r offset)
 {
     rtfmm::Cell3 &this_cell = cells[this_cell_idx];
     rtfmm::Cell3 &that_cell = cells[that_cell_idx];
@@ -178,18 +176,13 @@ void rtfmm::EwaldSolver::real_p2p(int this_cell_idx, int that_cell_idx,
             if (r > 0 && r < cutoff)
             {
                 bi.p += bj.q * std::erfc(alpha * r) / r;
-                bi.f +=
-                    -bj.q * dx / std::pow(r, 3) *
-                    (std::erfc(alpha * r) +
-                     (2 * alpha * r * std::pow(M_E, -alpha * alpha * r * r)) /
-                         std::sqrt(M_PI));
+                bi.f += -bj.q * dx / std::pow(r, 3) * (std::erfc(alpha * r) + (2 * alpha * r * std::pow(M_E, -alpha * alpha * r * r)) / std::sqrt(M_PI));
             }
         }
     }
 }
 
-void rtfmm::EwaldSolver::DFT(std::vector<Wave> &ws,
-                             std::vector<rtfmm::Body3> &bs)
+void rtfmm::EwaldSolver::DFT(std::vector<Wave> &ws, std::vector<rtfmm::Body3> &bs)
 {
 #pragma omp parallel for
     for (int w = 0; w < ws.size(); w++)
@@ -202,8 +195,7 @@ void rtfmm::EwaldSolver::DFT(std::vector<Wave> &ws,
     }
 }
 
-void rtfmm::EwaldSolver::IDFT(std::vector<Wave> &ws,
-                              std::vector<rtfmm::Body3> &bs)
+void rtfmm::EwaldSolver::IDFT(std::vector<Wave> &ws, std::vector<rtfmm::Body3> &bs)
 {
 #pragma omp parallel for
     for (int i = 0; i < bs.size(); i++)
@@ -211,13 +203,8 @@ void rtfmm::EwaldSolver::IDFT(std::vector<Wave> &ws,
         for (int w = 0; w < ws.size(); w++)
         {
             rtfmm::real ph = (ws[w].K * bs[i].x).sum() * scale;
-            bs[i].p += std::real(ws[w].val *
-                                 std::pow(rtfmm::real(M_E), complexr(0, ph)));
-            bs[i].f +=
-                std::real(ws[w].val *
-                          std::pow(rtfmm::real(M_E), complexr(0, ph)) *
-                          complexr(0, 1) * scale) *
-                ws[w].K; // actually this is dp/dx, while real f is -dp/dx*q
+            bs[i].p += std::real(ws[w].val * std::pow(rtfmm::real(M_E), complexr(0, ph)));
+            bs[i].f += std::real(ws[w].val * std::pow(rtfmm::real(M_E), complexr(0, ph)) * complexr(0, 1) * scale) * ws[w].K; // actually this is dp/dx, while real f is -dp/dx*q
         }
     }
 }

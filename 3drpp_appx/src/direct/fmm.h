@@ -41,8 +41,8 @@ struct PairListEntry
 
     // Default constructor (sets all flags to true and initializes body_idx_src)
     PairListEntry(int bd_src_id)
-        : body_idx_src(bd_src_id), bx_src(true), by_src(true), bz_src(true), bx_tar(true), by_tar(true), bz_tar(true), sx_within(true), sy_within(true), sz_within(true), tx_within(true), ty_within(true),
-          tz_within(true)
+        : body_idx_src(bd_src_id), bx_src(true), by_src(true), bz_src(true), bx_tar(true), by_tar(true), bz_tar(true), sx_within(true), sy_within(true), sz_within(true),
+          tx_within(true), ty_within(true), tz_within(true)
     {
     }
 
@@ -82,7 +82,8 @@ struct PairListEntry
 class FMMDirectInteractions
 {
   public:
-    FMMDirectInteractions(const std::vector<RVec> coordinates, const std::vector<real> charges, const RVec box_center, const real box_radius, const size_t max_depth, const real reg_alpha);
+    FMMDirectInteractions(const std::vector<RVec> coordinates, const std::vector<real> charges, const RVec box_center, const real box_radius, const size_t max_depth,
+                          const real reg_alpha);
 
     bool is_point_within_radius(const RVec &point1, const RVec &point2, double radius);
 

@@ -2,14 +2,9 @@
 #include <algorithm>
 #include <random>
 
-void rtfmm::print_body(const Body3 &b)
-{
-    RTLOG("[%d],(%.4f,%.4f,%.4f),%.4f,%.12f,(%.8f,%.8f,%.8f)\n", b.idx, b.x[0],
-          b.x[1], b.x[2], b.q, b.p, b.f[0], b.f[1], b.f[2]);
-}
+void rtfmm::print_body(const Body3 &b) { RTLOG("[%d],(%.4f,%.4f,%.4f),%.4f,%.12f,(%.8f,%.8f,%.8f)\n", b.idx, b.x[0], b.x[1], b.x[2], b.q, b.p, b.f[0], b.f[1], b.f[2]); }
 
-void rtfmm::print_bodies(const rtfmm::Bodies3 &bs, int num, int offset,
-                         std::string name)
+void rtfmm::print_bodies(const rtfmm::Bodies3 &bs, int num, int offset, std::string name)
 {
     std::cerr << name << ":" << std::endl;
     if (num == -1)
@@ -22,8 +17,7 @@ void rtfmm::print_bodies(const rtfmm::Bodies3 &bs, int num, int offset,
     RTLOG("\n");
 }
 
-std::vector<rtfmm::vec3r> rtfmm::get_bodies_x(rtfmm::Bodies3 &bs, Range range,
-                                              vec3r offset)
+std::vector<rtfmm::vec3r> rtfmm::get_bodies_x(rtfmm::Bodies3 &bs, Range range, vec3r offset)
 {
     std::vector<rtfmm::vec3r> res(range.number);
     for (int i = 0; i < range.number; i++)
@@ -93,9 +87,7 @@ void rtfmm::scale_bodies(Bodies3 &bs, real scale)
     }
 }
 
-rtfmm::Bodies3 rtfmm::generate_random_bodies(int num, rtfmm::real r,
-                                             vec3r offset, int seed,
-                                             int zero_netcharge)
+rtfmm::Bodies3 rtfmm::generate_random_bodies(int num, rtfmm::real r, vec3r offset, int seed, int zero_netcharge)
 {
     Bodies3 bodies;
     double q_avg = 0;
@@ -128,9 +120,7 @@ rtfmm::Bodies3 rtfmm::generate_random_bodies(int num, rtfmm::real r,
     return bodies;
 }
 
-rtfmm::BodyCompareResult rtfmm::compare(const Bodies3 &bs1, const Bodies3 &bs2,
-                                        std::string name1, std::string name2,
-                                        int num_compare)
+rtfmm::BodyCompareResult rtfmm::compare(const Bodies3 &bs1, const Bodies3 &bs2, std::string name1, std::string name2, int num_compare)
 {
     assert_exit(bs1.size() == bs2.size(), "inconsistent size in comparison");
 
@@ -138,8 +128,7 @@ rtfmm::BodyCompareResult rtfmm::compare(const Bodies3 &bs1, const Bodies3 &bs2,
     res.name1 = name1;
     res.name2 = name2;
 
-    int num =
-        num_compare == -1 ? bs1.size() : std::min(num_compare, (int)bs1.size());
+    int num = num_compare == -1 ? bs1.size() : std::min(num_compare, (int)bs1.size());
     res.num_compared = num;
 
     real pdif = 0, pnrm = 0;
@@ -181,8 +170,7 @@ rtfmm::BodyCompareResult rtfmm::compare(const Bodies3 &bs1, const Bodies3 &bs2,
 rtfmm::Bodies3 rtfmm::sort_bodies_by_idx(const Bodies3 &bs)
 {
     rtfmm::Bodies3 bodies = bs;
-    std::sort(bodies.begin(), bodies.end(),
-              [](const Body3 &a, const Body3 &b) { return a.idx < b.idx; });
+    std::sort(bodies.begin(), bodies.end(), [](const Body3 &a, const Body3 &b) { return a.idx < b.idx; });
 
     return bodies;
 }
@@ -197,8 +185,7 @@ void rtfmm::BodyCompareResult::show()
     for (int i = 0; i < bar_num - bar_num_left; i++)
         RTLOG("-");
     RTLOG("[%d]\n", num_compared);
-    RTLOG("%-8s : %8.5e   %-8s : %8.5e   %-8s : %8.5e\n", "L2  (p)", l2p,
-          "L2  (f)", l2f, "L2  (e)", l2e);
+    RTLOG("%-8s : %8.5e   %-8s : %8.5e   %-8s : %8.5e\n", "L2  (p)", l2p, "L2  (f)", l2f, "L2  (e)", l2e);
     RTLOG("%-8s : %8.5e   %-8s : %8.5e\n", "Rms (p)", rmsp, "Rms (f)", rmsf);
     RTLOG("p-energy1 : %8.12e\n", epot1);
     RTLOG("p-energy2 : %8.12e\n", epot2);

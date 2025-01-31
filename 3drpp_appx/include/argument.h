@@ -1,7 +1,7 @@
 #pragma once
 
-#include "type.h"
 #include "cmdline.h"
+#include "type.h"
 
 namespace rtfmm
 {
@@ -10,12 +10,12 @@ extern int verbose;
 
 class Argument
 {
-public:
+  public:
     Argument();
-    Argument(int argc, char* argv[]);
+    Argument(int argc, char *argv[]);
     void show();
 
-public:
+  public:
     int override_gtest_setting;
     vec3r x;
     real r;
@@ -54,4 +54,4 @@ public:
     real rega; // regularization alpha
 };
 
-}
+} // namespace rtfmm

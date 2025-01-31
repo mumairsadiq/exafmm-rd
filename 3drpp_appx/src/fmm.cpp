@@ -5,11 +5,7 @@
 #include "tree.h"
 #include <omp.h>
 
-rtfmm::LaplaceFMM::LaplaceFMM(const Bodies3 &bs_, const Argument &args_)
-    : bs(bs_), args(args_)
-{
-    assert_exit(bs.size() == args.n, "LaplaceFMM init body size error");
-}
+rtfmm::LaplaceFMM::LaplaceFMM(const Bodies3 &bs_, const Argument &args_) : bs(bs_), args(args_) { assert_exit(bs.size() == args.n, "LaplaceFMM init body size error"); }
 
 rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
 {
@@ -54,8 +50,7 @@ rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
         kernel.precompute(args.P, args.r, args.images);
         TIME_END(precompute_others);
         TIME_BEGIN(precompute_m2l);
-        kernel.precompute_m2l(args.P, args.r, cs, traverser.get_m2l_map(),
-                              args.images);
+        kernel.precompute_m2l(args.P, args.r, cs, traverser.get_m2l_map(), args.images);
         TIME_END(precompute_m2l);
         if (args.timing)
         {
@@ -83,8 +78,7 @@ rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
         charges.push_back(bs[i].q);
     }
 
-    gmx::fmm::FMMDirectInteractions fmm_direct_inters(
-        coordinates, charges, args.x, args.r, 3, args.rega);
+    gmx::fmm::FMMDirectInteractions fmm_direct_inters(coordinates, charges, args.x, args.r, 3, args.rega);
     auto forces_and_potentials = fmm_direct_inters.execute_direct_kernel();
 
     for (int i = 0; i < bs.size(); i++)
@@ -160,11 +154,9 @@ void rtfmm::LaplaceFMM::M2M()
             else
             {
                 if (args.use_precompute)
-                    kernel.m2m_img_precompute(
-                        args.P, ci, cs, args.cycle * std::pow(3, -depth - 1));
+                    kernel.m2m_img_precompute(args.P, ci, cs, args.cycle * std::pow(3, -depth - 1));
                 else
-                    kernel.m2m_img(args.P, ci, cs,
-                                   args.cycle * std::pow(3, -depth - 1));
+                    kernel.m2m_img(args.P, ci, cs, args.cycle * std::pow(3, -depth - 1));
             }
         }
     }
@@ -364,8 +356,7 @@ void rtfmm::LaplaceFMM::init_reg_body(Cells3 &cells)
             cell.weights.resize(cell.brange.number);
             cell.bodies.resize(cell.brange.number);
             int rx = 0;
-            for (int body_idx = cell.brange.offset;
-                 body_idx < cell.brange.offset + cell.brange.number; body_idx++)
+            for (int body_idx = cell.brange.offset; body_idx < cell.brange.offset + cell.brange.number; body_idx++)
             {
                 const Body3 &body = bs[body_idx];
                 const vec3r dx = body.x - cell.x;
@@ -410,9 +401,7 @@ void rtfmm::LaplaceFMM::init_reg_body(Cells3 &cells)
                 if (cell.idx != cells[adj_cell_info.first].idx)
                 {
                     // check for regularization bodies from adjacent cells
-                    for (const int &body_idx :
-                         boundary_bodies_idxs[cells[adj_cell_info.first]
-                                                  .leaf_idx])
+                    for (const int &body_idx : boundary_bodies_idxs[cells[adj_cell_info.first].leaf_idx])
                     {
 
                         const Body3 &body = bs[body_idx];
@@ -421,8 +410,7 @@ void rtfmm::LaplaceFMM::init_reg_body(Cells3 &cells)
 
                         if (w > 0)
                         {
-                            cell.reg_body_idx.push_back(
-                                std::make_pair(body_idx, adj_cell_info.second));
+                            cell.reg_body_idx.push_back(std::make_pair(body_idx, adj_cell_info.second));
                         }
                     }
                 }
@@ -467,8 +455,7 @@ void rtfmm::LaplaceFMM::init_reg_body(Cells3 &cells)
         for (int leaf_idx = 0; leaf_idx < leaves.size(); leaf_idx++)
         {
             Cell3 &cell = cells[leaves[leaf_idx]];
-            for (int i = cell.brange.offset;
-                 i < cell.brange.offset + cell.brange.number; i++)
+            for (int i = cell.brange.offset; i < cell.brange.offset + cell.brange.number; i++)
             {
                 Body3 body = bs[i];
                 cell.bodies.push_back(body);
@@ -477,8 +464,7 @@ void rtfmm::LaplaceFMM::init_reg_body(Cells3 &cells)
                 {
                     if (body.idx == 0)
                     {
-                        std::cout << body.x << ", " << body.idx << ", "
-                                  << cell.idx << std::endl;
+                        std::cout << body.x << ", " << body.idx << ", " << cell.idx << std::endl;
                     }
                 }
             }
@@ -510,8 +496,7 @@ rtfmm::Indices rtfmm::LaplaceFMM::get_leaf_cell_indices(const Cells3 &cells)
     return res;
 }
 
-rtfmm::Indices rtfmm::LaplaceFMM::get_nonleaf_cell_indices(const Cells3 &cells,
-                                                           int depth)
+rtfmm::Indices rtfmm::LaplaceFMM::get_nonleaf_cell_indices(const Cells3 &cells, int depth)
 {
     Indices res;
     for (int i = 0; i < cells.size(); i++)
@@ -536,8 +521,7 @@ void rtfmm::LaplaceFMM::check_tree(const Cells3 &cells)
         {
             Body3 b = bs[c.brange.offset + j];
             vec3r dx = (b.x - c.x).abs();
-            assert_exit(dx[0] <= c.r && dx[1] <= c.r && dx[2] <= c.r,
-                        "tree body range error");
+            assert_exit(dx[0] <= c.r && dx[1] <= c.r && dx[2] <= c.r, "tree body range error");
         }
         if (c.crange.number == 0)
         {
@@ -574,8 +558,7 @@ void rtfmm::LaplaceFMM::check_traverser(Traverser &traverser)
             int found = 0;
             for (auto m2l2 : M2L_pairs)
             {
-                if (m2l.first == m2l2.second.first &&
-                    m2l.second.first == m2l2.first)
+                if (m2l.first == m2l2.second.first && m2l.second.first == m2l2.first)
                 {
                     found++;
                 }
@@ -624,10 +607,7 @@ void rtfmm::LaplaceFMM::check_cells(const Cells3 &cells)
     }
 }
 
-rtfmm::real rtfmm::LaplaceFMM::reg_w(real x)
-{
-    return 0.25 * (2 + 3 * x - x * x * x);
-}
+rtfmm::real rtfmm::LaplaceFMM::reg_w(real x) { return 0.25 * (2 + 3 * x - x * x * x); }
 
 rtfmm::real rtfmm::LaplaceFMM::get_w_single(real dx, real R, real rega)
 {

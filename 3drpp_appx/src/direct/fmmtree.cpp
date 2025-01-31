@@ -96,7 +96,8 @@ gmx::RVec gmx::fmm::FMMTree::get_child_cell_x_(RVec x_par, real r_par, int octan
     return x;
 }
 
-gmx::fmm::FMMTree::FMMTree(const FBodies &bodies, const RVec box_center, const real box_radius, const size_t max_depth) : bodies_(bodies), box_center_(box_center), box_radius_(box_radius), max_depth_(max_depth)
+gmx::fmm::FMMTree::FMMTree(const FBodies &bodies, const RVec box_center, const real box_radius, const size_t max_depth)
+    : bodies_(bodies), box_center_(box_center), box_radius_(box_radius), max_depth_(max_depth)
 {
     build_tree_uniform();
 }

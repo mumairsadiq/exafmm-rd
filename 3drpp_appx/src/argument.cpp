@@ -7,21 +7,14 @@ int rtfmm::verbose;
 rtfmm::Argument::Argument()
 {
     cmdline::parser cmd;
-    cmd.add<int>("P", 'P', "point number per edge of surface point box", false,
-                 4, cmdline::range(2, 32));
+    cmd.add<int>("P", 'P', "point number per edge of surface point box", false, 4, cmdline::range(2, 32));
     cmd.add<int>("nbody", 'n', "number of bodies", false, 1000);
-    cmd.add<int>("ncrit", 'm', "minimum number of bodies per leaf box", false,
-                 16);
-    cmd.add<int>("timing", 't',
-                 "if measure execution time of computational steps", false, 1);
-    cmd.add<int>("images", 'i', "periodic images depth", false, 0,
-                 cmdline::range(0, 20));
+    cmd.add<int>("ncrit", 'm', "minimum number of bodies per leaf box", false, 16);
+    cmd.add<int>("timing", 't', "if measure execution time of computational steps", false, 1);
+    cmd.add<int>("images", 'i', "periodic images depth", false, 0, cmdline::range(0, 20));
     cmd.add<int>("verbose", 'v', "is verbose", false, 0);
     cmd.add<real>("cycle", 'c', "cycle of images(or box_r)", false, 2 * M_PI);
-    cmd.add<int>(
-        "num_compare", 0,
-        "compare number of target body(also direct calculation number)", false,
-        -1);
+    cmd.add<int>("num_compare", 0, "compare number of target body(also direct calculation number)", false, -1);
     cmd.add<int>("ewald_ksize", 0, "ksize of ewald DFT", false, 11);
     cmd.add<int>("th_num", 0, "number of omp threads", false, 8);
     cmd.add<int>("seed", 0, "random seed", false, 5);
@@ -30,14 +23,11 @@ rtfmm::Argument::Argument()
     cmd.add<int>("use_fft", 0, "if use fft in M2L", false, 1);
     cmd.add<int>("use_precompute", 0, "if use precomputed kernel", false, 1);
     cmd.add<int>("use_simd", 0, "if use simd in P2P", false, 1);
-    cmd.add<int>("dipole_correction", 0,
-                 "if use dipole correction for FMM/direct", false, 1);
+    cmd.add<int>("dipole_correction", 0, "if use dipole correction for FMM/direct", false, 1);
     cmd.add<int>("zero_netcharge", 0, "if zero net charge", false, 1);
     cmd.add<int>("print_body_number", 0, "print body number", false, 3);
     cmd.add<int>("divide_4pi", 0, "if divide 4pi", false, 0);
-    cmd.add<int>("setting_t", 0,
-                 "set some parameters to match the result with exafmm-t", false,
-                 0);
+    cmd.add<int>("setting_t", 0, "set some parameters to match the result with exafmm-t", false, 0);
     cmd.add<real>("rega", 'r', "regularization alpha", false, 0);
     cmd.add<int>("override", 0, "override gtest setting", false, 0);
 
@@ -60,10 +50,8 @@ rtfmm::Argument::Argument()
     cmd.add<real>("x0", 0, "x0", false, 0.0);
     cmd.add<real>("y0", 0, "y0", false, 0.0);
     cmd.add<real>("z0", 0, "z0", false, 0.0);
-    cmd.add<int>("body0_idx", 0, "index of body moved(for reg plot check)",
-                 false, -1);
-    cmd.add<int>("check_body_idx", 0, "index of body check(for reg plot check)",
-                 false, 0);
+    cmd.add<int>("body0_idx", 0, "index of body moved(for reg plot check)", false, -1);
+    cmd.add<int>("check_body_idx", 0, "index of body check(for reg plot check)", false, 0);
 
     num_compare = cmd.get<int>("num_compare");
     if (num_compare == -1)
@@ -100,21 +88,14 @@ rtfmm::Argument::Argument()
 rtfmm::Argument::Argument(int argc, char *argv[])
 {
     cmdline::parser cmd;
-    cmd.add<int>("P", 'P', "point number per edge of surface point box", false,
-                 4, cmdline::range(2, 32));
+    cmd.add<int>("P", 'P', "point number per edge of surface point box", false, 4, cmdline::range(2, 32));
     cmd.add<int>("nbody", 'n', "number of bodies", false, 1000);
-    cmd.add<int>("ncrit", 'm', "minimum number of bodies per leaf box", false,
-                 16);
-    cmd.add<int>("timing", 't',
-                 "if measure execution time of computational steps", false, 1);
-    cmd.add<int>("images", 'i', "periodic images depth", false, 0,
-                 cmdline::range(0, 20));
+    cmd.add<int>("ncrit", 'm', "minimum number of bodies per leaf box", false, 16);
+    cmd.add<int>("timing", 't', "if measure execution time of computational steps", false, 1);
+    cmd.add<int>("images", 'i', "periodic images depth", false, 0, cmdline::range(0, 20));
     cmd.add<int>("verbose", 'v', "is verbose", false, 0);
     cmd.add<real>("cycle", 'c', "cycle of images(or box_r)", false, 2 * M_PI);
-    cmd.add<int>(
-        "num_compare", 0,
-        "compare number of target body(also direct calculation number)", false,
-        -1);
+    cmd.add<int>("num_compare", 0, "compare number of target body(also direct calculation number)", false, -1);
     cmd.add<int>("ewald_ksize", 0, "ksize of ewald DFT", false, 11);
     cmd.add<int>("th_num", 0, "number of omp threads", false, 8);
     cmd.add<int>("seed", 0, "random seed", false, 5);
@@ -123,23 +104,18 @@ rtfmm::Argument::Argument(int argc, char *argv[])
     cmd.add<int>("use_fft", 0, "if use fft in M2L", false, 1);
     cmd.add<int>("use_precompute", 0, "if use precomputed kernel", false, 1);
     cmd.add<int>("use_simd", 0, "if use simd in P2P", false, 1);
-    cmd.add<int>("dipole_correction", 0,
-                 "if use dipole correction for FMM/direct", false, 1);
+    cmd.add<int>("dipole_correction", 0, "if use dipole correction for FMM/direct", false, 1);
     cmd.add<int>("zero_netcharge", 0, "if zero net charge", false, 1);
     cmd.add<int>("print_body_number", 0, "print body number", false, 3);
     cmd.add<int>("divide_4pi", 0, "if divide 4pi", false, 0);
-    cmd.add<int>("setting_t", 0,
-                 "set some parameters to match the result with exafmm-t", false,
-                 0);
+    cmd.add<int>("setting_t", 0, "set some parameters to match the result with exafmm-t", false, 0);
     cmd.add<real>("rega", 'r', "regularization alpha", false, 0);
     cmd.add<int>("override", 0, "override gtest setting", false, 0);
     cmd.add<real>("x0", 0, "x0", false, 0.0);
     cmd.add<real>("y0", 0, "y0", false, 0.0);
     cmd.add<real>("z0", 0, "z0", false, 0.0);
-    cmd.add<int>("body0_idx", 0, "index of body moved(for reg plot check)",
-                 false, -1);
-    cmd.add<int>("check_body_idx", 0, "index of body check(for reg plot check)",
-                 false, 0);
+    cmd.add<int>("body0_idx", 0, "index of body moved(for reg plot check)", false, -1);
+    cmd.add<int>("check_body_idx", 0, "index of body check(for reg plot check)", false, 0);
     cmd.parse_check(argc, argv);
     P = cmd.get<int>("P");
     n = cmd.get<int>("nbody");
@@ -200,8 +176,7 @@ void rtfmm::Argument::show()
     RTLOG("  %-20s = %.4f\n", "cycle", cycle);
     RTLOG("  %-20s = %.4f\n", "rega", rega);
     RTLOG("  %-20s = %d\n", "ewald_ksize", ewald_ksize);
-    RTLOG("  %-20s = (%d,%d,%d)\n", "(f,d,e)", enable_fmm, enable_direct,
-          enable_ewald);
+    RTLOG("  %-20s = (%d,%d,%d)\n", "(f,d,e)", enable_fmm, enable_direct, enable_ewald);
     RTLOG("  %-20s = %d\n", "num_compare", num_compare);
     RTLOG("  %-20s = %d\n", "th_num", th_num);
     RTLOG("  %-20s = %d\n", "seed", seed);
@@ -216,7 +191,6 @@ void rtfmm::Argument::show()
     RTLOG("  %-20s = %d\n", "print_body_number", print_body_number);
     RTLOG("  %-20s = %d\n", "divide_4pi", divide_4pi);
     RTLOG("  %-20s = %d\n", "setting_t", setting_t);
-    RTLOG("  %-20s = [%.6f,%.6f,%.6f] for body[%d], check body[%d]\n",
-          "[x0,y0,z0]", x0, y0, z0, body0_idx, check_body_idx);
+    RTLOG("  %-20s = [%.6f,%.6f,%.6f] for body[%d], check body[%d]\n", "[x0,y0,z0]", x0, y0, z0, body0_idx, check_body_idx);
     RTLOG("]\n\n");
 }

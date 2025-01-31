@@ -1,12 +1,13 @@
 
 #include <omp.h>
-int main(void) {
+int main(void)
+{
 #ifdef _OPENMP
-  omp_get_max_threads();
-  return 0;
+    omp_get_max_threads();
+    return 0;
 #elif defined(__HIP_DEVICE_COMPILE__)
-  return 0;
+    return 0;
 #else
-  breaks_on_purpose
+    breaks_on_purpose
 #endif
 }

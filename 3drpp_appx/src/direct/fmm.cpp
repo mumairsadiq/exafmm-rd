@@ -3,8 +3,8 @@
 #include <fstream>
 #include <iomanip>
 
-gmx::fmm::FMMDirectInteractions::FMMDirectInteractions(const std::vector<RVec> coordinates, const std::vector<real> charges, const RVec box_center, const real box_radius, const size_t max_depth,
-                                                       const real reg_alpha)
+gmx::fmm::FMMDirectInteractions::FMMDirectInteractions(const std::vector<RVec> coordinates, const std::vector<real> charges, const RVec box_center, const real box_radius,
+                                                       const size_t max_depth, const real reg_alpha)
     : bodies_all_(coordinates, charges), fmm_weights_eval_(box_center, box_radius, reg_alpha), fmm_direct_interactions_tree_(bodies_all_, box_center, box_radius, max_depth)
 {
     compute_weights_();
@@ -50,7 +50,7 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                 boundary_bodies_idxs[k].push_back(body_idx);
                 is_reg_body[body_idx] = true;
             }
-            
+
             const RVec ws = w_per_atom[body_idx];
             const bool is_x_fully_in = ws[0] == 1;
             const bool is_y_fully_in = ws[1] == 1;
@@ -208,18 +208,17 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                         {
                             for (const int &body_idx_src : adj_cell.bodiesIndices)
                             {
+                                
+                                const FBody &body_src = bodies_all_[body_idx_src];
+                                const RVec ws = w_per_atom[body_idx_src];
+                                const bool bx = (ws[0] == 1) || (fabs(body_src.x[0] - cell.center[0]) + fmm_weights_eval_.getRegAlpha() <= region_of_tcell);
+                                const bool by = (ws[1] == 1) || (fabs(body_src.x[1] - cell.center[1]) + fmm_weights_eval_.getRegAlpha() <= region_of_tcell);
+                                const bool bz = (ws[2] == 1) || (fabs(body_src.x[2] - cell.center[2]) + fmm_weights_eval_.getRegAlpha() <= region_of_tcell);
+
                                 if (num_away == 1)
                                 {
-                                    const FBody &body_src = bodies_all_[body_idx_src];
                                     if (body_idx_tar != body_idx_src)
                                     {
-                                        const RVec ws = w_per_atom[body_idx_src];
-                                        bool bx = ws[0] < 1 ? (fabs(body_src.x[0] - cell.center[0]) + fmm_weights_eval_.getRegAlpha() <= region_of_tcell ? 1 : 0) : 1;
-
-                                        bool by = ws[1] < 1 ? (fabs(body_src.x[1] - cell.center[1]) + fmm_weights_eval_.getRegAlpha() <= region_of_tcell ? 1 : 0) : 1;
-
-                                        bool bz = ws[2] < 1 ? (fabs(body_src.x[2] - cell.center[2]) + fmm_weights_eval_.getRegAlpha() <= region_of_tcell ? 1 : 0) : 1;
-
                                         PairListEntry entry(body_idx_src);
                                         entry.set_src_flags(bx, by, bz);
                                         entry.set_scw_flags(1, 1, 1);
@@ -230,18 +229,11 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                 }
                                 else if (num_away == 2)
                                 {
-                                    const FBody &body_src = bodies_all_[body_idx_src];
                                     if (dist_x > dist_y && dist_x > dist_z)
                                     {
                                         const real interaction_region_x = dist_x - adj_cell.radius;
                                         if (fabs(body_src.x[0] - cell.center[0]) <= interaction_region_x + fmm_weights_eval_.getRegAlpha())
                                         {
-
-                                            const RVec ws = w_per_atom[body_idx_src];
-                                            bool bx = ws[0] < 1 ? (fabs(body_src.x[0] - cell.center[0]) + fmm_weights_eval_.getRegAlpha() > region_of_tcell ? 0 : 1) : 1;
-                                            bool by = ws[1] < 1 ? (fabs(body_src.x[1] - cell.center[1]) + fmm_weights_eval_.getRegAlpha() > region_of_tcell ? 0 : 1) : 1;
-                                            bool bz = ws[2] < 1 ? (fabs(body_src.x[2] - cell.center[2]) + fmm_weights_eval_.getRegAlpha() > region_of_tcell ? 0 : 1) : 1;
-
                                             PairListEntry entry(body_idx_src);
                                             entry.set_src_flags(bx, by, bz);
                                             entry.set_scw_flags(0, 1, 1);
@@ -255,11 +247,6 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                         const real interaction_region_y = dist_y - adj_cell.radius;
                                         if (fabs(body_src.x[1] - cell.center[1]) <= interaction_region_y + fmm_weights_eval_.getRegAlpha())
                                         {
-                                            const RVec ws = w_per_atom[body_idx_src];
-                                            bool bx = ws[0] < 1 ? (fabs(body_src.x[0] - cell.center[0]) + fmm_weights_eval_.getRegAlpha() > region_of_tcell ? 0 : 1) : 1;
-                                            bool by = ws[1] < 1 ? (fabs(body_src.x[1] - cell.center[1]) + fmm_weights_eval_.getRegAlpha() > region_of_tcell ? 0 : 1) : 1;
-                                            bool bz = ws[2] < 1 ? (fabs(body_src.x[2] - cell.center[2]) + fmm_weights_eval_.getRegAlpha() > region_of_tcell ? 0 : 1) : 1;
-
                                             PairListEntry entry(body_idx_src);
                                             entry.set_src_flags(bx, by, bz);
                                             entry.set_scw_flags(1, 0, 1);
@@ -273,11 +260,6 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                         const real interaction_region_z = dist_z - adj_cell.radius;
                                         if (fabs(body_src.x[2] - cell.center[2]) <= interaction_region_z + fmm_weights_eval_.getRegAlpha())
                                         {
-                                            const RVec ws = w_per_atom[body_idx_src];
-                                            bool bx = ws[0] < 1 ? (fabs(body_src.x[0] - cell.center[0]) + fmm_weights_eval_.getRegAlpha() > region_of_tcell ? 0 : 1) : 1;
-                                            bool by = ws[1] < 1 ? (fabs(body_src.x[1] - cell.center[1]) + fmm_weights_eval_.getRegAlpha() > region_of_tcell ? 0 : 1) : 1;
-                                            bool bz = ws[2] < 1 ? (fabs(body_src.x[2] - cell.center[2]) + fmm_weights_eval_.getRegAlpha() > region_of_tcell ? 0 : 1) : 1;
-
                                             PairListEntry entry(body_idx_src);
                                             entry.set_src_flags(bx, by, bz);
                                             entry.set_scw_flags(1, 1, 0);
@@ -293,11 +275,6 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                         if (fabs(body_src.x[2] - cell.center[2]) <= interaction_region_z + fmm_weights_eval_.getRegAlpha() &&
                                             fabs(body_src.x[1] - cell.center[1]) <= interaction_region_y + fmm_weights_eval_.getRegAlpha())
                                         {
-                                            const RVec ws = w_per_atom[body_idx_src];
-                                            bool bx = ws[0] < 1 ? (fabs(body_src.x[0] - cell.center[0]) + fmm_weights_eval_.getRegAlpha() > region_of_tcell ? 0 : 1) : 1;
-                                            bool by = ws[1] < 1 ? (fabs(body_src.x[1] - cell.center[1]) + fmm_weights_eval_.getRegAlpha() > region_of_tcell ? 0 : 1) : 1;
-                                            bool bz = ws[2] < 1 ? (fabs(body_src.x[2] - cell.center[2]) + fmm_weights_eval_.getRegAlpha() > region_of_tcell ? 0 : 1) : 1;
-
                                             PairListEntry entry(body_idx_src);
                                             entry.set_src_flags(bx, by, bz);
                                             entry.set_scw_flags(1, 0, 0);
@@ -313,11 +290,6 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                         if (fabs(body_src.x[2] - cell.center[2]) <= interaction_region_z + fmm_weights_eval_.getRegAlpha() &&
                                             fabs(body_src.x[0] - cell.center[0]) <= interaction_region_x + fmm_weights_eval_.getRegAlpha())
                                         {
-                                            const RVec ws = w_per_atom[body_idx_src];
-                                            bool bx = ws[0] < 1 ? (fabs(body_src.x[0] - cell.center[0]) + fmm_weights_eval_.getRegAlpha() > region_of_tcell ? 0 : 1) : 1;
-                                            bool by = ws[1] < 1 ? (fabs(body_src.x[1] - cell.center[1]) + fmm_weights_eval_.getRegAlpha() > region_of_tcell ? 0 : 1) : 1;
-                                            bool bz = ws[2] < 1 ? (fabs(body_src.x[2] - cell.center[2]) + fmm_weights_eval_.getRegAlpha() > region_of_tcell ? 0 : 1) : 1;
-
                                             PairListEntry entry(body_idx_src);
                                             entry.set_src_flags(bx, by, bz);
                                             entry.set_scw_flags(0, 1, 0);
@@ -333,11 +305,6 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                         if (fabs(body_src.x[0] - cell.center[0]) <= interaction_region_x + fmm_weights_eval_.getRegAlpha() &&
                                             fabs(body_src.x[1] - cell.center[1]) <= interaction_region_y + fmm_weights_eval_.getRegAlpha())
                                         {
-                                            const RVec ws = w_per_atom[body_idx_src];
-                                            bool bx = ws[0] < 1 ? (fabs(body_src.x[0] - cell.center[0]) + fmm_weights_eval_.getRegAlpha() > region_of_tcell ? 0 : 1) : 1;
-                                            bool by = ws[1] < 1 ? (fabs(body_src.x[1] - cell.center[1]) + fmm_weights_eval_.getRegAlpha() > region_of_tcell ? 0 : 1) : 1;
-                                            bool bz = ws[2] < 1 ? (fabs(body_src.x[2] - cell.center[2]) + fmm_weights_eval_.getRegAlpha() > region_of_tcell ? 0 : 1) : 1;
-
                                             PairListEntry entry(body_idx_src);
                                             entry.set_src_flags(bx, by, bz);
                                             entry.set_scw_flags(0, 0, 1);
@@ -353,11 +320,6 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                         if (fabs(body_src.x[0] - cell.center[0]) <= interaction_region_x + fmm_weights_eval_.getRegAlpha() &&
                                             fabs(body_src.x[2] - cell.center[2]) <= interaction_region_z + fmm_weights_eval_.getRegAlpha())
                                         {
-                                            const RVec ws = w_per_atom[body_idx_src];
-                                            bool bx = ws[0] < 1 ? (fabs(body_src.x[0] - cell.center[0]) + fmm_weights_eval_.getRegAlpha() > region_of_tcell ? 0 : 1) : 1;
-                                            bool by = ws[1] < 1 ? (fabs(body_src.x[1] - cell.center[1]) + fmm_weights_eval_.getRegAlpha() > region_of_tcell ? 0 : 1) : 1;
-                                            bool bz = ws[2] < 1 ? (fabs(body_src.x[2] - cell.center[2]) + fmm_weights_eval_.getRegAlpha() > region_of_tcell ? 0 : 1) : 1;
-
                                             PairListEntry entry(body_idx_src);
                                             entry.set_src_flags(bx, by, bz);
                                             entry.set_scw_flags(0, 1, 0);
@@ -373,11 +335,6 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                         if (fabs(body_src.x[1] - cell.center[1]) <= interaction_region_y + fmm_weights_eval_.getRegAlpha() &&
                                             fabs(body_src.x[2] - cell.center[2]) <= interaction_region_z + fmm_weights_eval_.getRegAlpha())
                                         {
-                                            const RVec ws = w_per_atom[body_idx_src];
-                                            bool bx = ws[0] < 1 ? (fabs(body_src.x[0] - cell.center[0]) + fmm_weights_eval_.getRegAlpha() > region_of_tcell ? 0 : 1) : 1;
-                                            bool by = ws[1] < 1 ? (fabs(body_src.x[1] - cell.center[1]) + fmm_weights_eval_.getRegAlpha() > region_of_tcell ? 0 : 1) : 1;
-                                            bool bz = ws[2] < 1 ? (fabs(body_src.x[2] - cell.center[2]) + fmm_weights_eval_.getRegAlpha() > region_of_tcell ? 0 : 1) : 1;
-
                                             PairListEntry entry(body_idx_src);
                                             entry.set_src_flags(bx, by, bz);
                                             entry.set_scw_flags(1, 0, 0);
@@ -393,11 +350,6 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                         if (fabs(body_src.x[1] - cell.center[1]) <= interaction_region_y + fmm_weights_eval_.getRegAlpha() &&
                                             fabs(body_src.x[0] - cell.center[0]) <= interaction_region_x + fmm_weights_eval_.getRegAlpha())
                                         {
-                                            const RVec ws = w_per_atom[body_idx_src];
-                                            bool bx = ws[0] < 1 ? (fabs(body_src.x[0] - cell.center[0]) + fmm_weights_eval_.getRegAlpha() > region_of_tcell ? 0 : 1) : 1;
-                                            bool by = ws[1] < 1 ? (fabs(body_src.x[1] - cell.center[1]) + fmm_weights_eval_.getRegAlpha() > region_of_tcell ? 0 : 1) : 1;
-                                            bool bz = ws[2] < 1 ? (fabs(body_src.x[2] - cell.center[2]) + fmm_weights_eval_.getRegAlpha() > region_of_tcell ? 0 : 1) : 1;
-
                                             PairListEntry entry(body_idx_src);
                                             entry.set_src_flags(bx, by, bz);
                                             entry.set_scw_flags(0, 0, 1);
@@ -415,11 +367,6 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                             fabs(body_src.x[1] - cell.center[1]) <= interaction_region_y + fmm_weights_eval_.getRegAlpha() &&
                                             fabs(body_src.x[2] - cell.center[2]) <= interaction_region_z + fmm_weights_eval_.getRegAlpha())
                                         {
-                                            const RVec ws = w_per_atom[body_idx_src];
-                                            bool bx = ws[0] < 1 ? (fabs(body_src.x[0] - cell.center[0]) + fmm_weights_eval_.getRegAlpha() > region_of_tcell ? 0 : 1) : 1;
-                                            bool by = ws[1] < 1 ? (fabs(body_src.x[1] - cell.center[1]) + fmm_weights_eval_.getRegAlpha() > region_of_tcell ? 0 : 1) : 1;
-                                            bool bz = ws[2] < 1 ? (fabs(body_src.x[2] - cell.center[2]) + fmm_weights_eval_.getRegAlpha() > region_of_tcell ? 0 : 1) : 1;
-
                                             PairListEntry entry(body_idx_src);
                                             entry.set_src_flags(bx, by, bz);
                                             entry.set_scw_flags(0, 0, 0);
@@ -484,16 +431,26 @@ std::vector<std::pair<gmx::RVec, gmx::real>> gmx::fmm::FMMDirectInteractions::ex
             const real dy = yt - ys;
             const real dz = zt - zs;
 
-            real wsrc_x = bxyz_src[0] == 1 ? 1 : (is_wihin_src[0] == 1 ? wsrc_ws[0] : 1 - wsrc_ws[0]);
-            real wsrc_y = bxyz_src[1] == 1 ? 1 : (is_wihin_src[1] == 1 ? wsrc_ws[1] : 1 - wsrc_ws[1]);
-            real wsrc_z = bxyz_src[2] == 1 ? 1 : (is_wihin_src[2] == 1 ? wsrc_ws[2] : 1 - wsrc_ws[2]);
+            real wsrc_x = (bxyz_src[0] == 1) + (bxyz_src[0] != 1) * ((is_wihin_src[0] == 1) * wsrc_ws[0] + (is_wihin_src[0] != 1) * (1 - wsrc_ws[0]));
+            real wsrc_y = (bxyz_src[1] == 1) + (bxyz_src[1] != 1) * ((is_wihin_src[1] == 1) * wsrc_ws[1] + (is_wihin_src[1] != 1) * (1 - wsrc_ws[1]));
+            real wsrc_z = (bxyz_src[2] == 1) + (bxyz_src[2] != 1) * ((is_wihin_src[2] == 1) * wsrc_ws[2] + (is_wihin_src[2] != 1) * (1 - wsrc_ws[2]));
             real wsrc = wsrc_x * wsrc_y * wsrc_z;
 
-            real wtar_x = bxyz_tar[0] == 1 ? 1 : (is_within_tar[0] == 1 ? wtar_ws[0] : 1 - wtar_ws[0]);
-            real wtar_y = bxyz_tar[1] == 1 ? 1 : (is_within_tar[1] == 1 ? wtar_ws[1] : 1 - wtar_ws[1]);
-            real wtar_z = bxyz_tar[2] == 1 ? 1 : (is_within_tar[2] == 1 ? wtar_ws[2] : 1 - wtar_ws[2]);
-
+            real wtar_x = (bxyz_tar[0] == 1) + (bxyz_tar[0] != 1) * ((is_within_tar[0] == 1) * wtar_ws[0] + (is_within_tar[0] != 1) * (1 - wtar_ws[0]));
+            real wtar_y = (bxyz_tar[1] == 1) + (bxyz_tar[1] != 1) * ((is_within_tar[1] == 1) * wtar_ws[1] + (is_within_tar[1] != 1) * (1 - wtar_ws[1]));
+            real wtar_z = (bxyz_tar[2] == 1) + (bxyz_tar[2] != 1) * ((is_within_tar[2] == 1) * wtar_ws[2] + (is_within_tar[2] != 1) * (1 - wtar_ws[2]));
             const real wtar = wtar_x * wtar_y * wtar_z;
+
+            // real wsrc_x = bxyz_src[0] == 1 ? 1 : (is_wihin_src[0] == 1 ? wsrc_ws[0] : 1 - wsrc_ws[0]);
+            // real wsrc_y = bxyz_src[1] == 1 ? 1 : (is_wihin_src[1] == 1 ? wsrc_ws[1] : 1 - wsrc_ws[1]);
+            // real wsrc_z = bxyz_src[2] == 1 ? 1 : (is_wihin_src[2] == 1 ? wsrc_ws[2] : 1 - wsrc_ws[2]);
+            // real wsrc = wsrc_x * wsrc_y * wsrc_z;
+
+            // real wtar_x = bxyz_tar[0] == 1 ? 1 : (is_within_tar[0] == 1 ? wtar_ws[0] : 1 - wtar_ws[0]);
+            // real wtar_y = bxyz_tar[1] == 1 ? 1 : (is_within_tar[1] == 1 ? wtar_ws[1] : 1 - wtar_ws[1]);
+            // real wtar_z = bxyz_tar[2] == 1 ? 1 : (is_within_tar[2] == 1 ? wtar_ws[2] : 1 - wtar_ws[2]);
+
+            // const real wtar = wtar_x * wtar_y * wtar_z;
             // real wtar = ent.wtar;
             // std::cout << wtar << "--" << ent.wtar << std::endl;
 
