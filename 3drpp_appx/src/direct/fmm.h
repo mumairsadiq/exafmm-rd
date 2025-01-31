@@ -39,8 +39,6 @@ struct PairListEntry
     // Only valid if bx_tar, by_tar, or bz_tar is false.
     bool tx_within, ty_within, tz_within;
 
-    real wtar = 0.0;
-
     // Default constructor (sets all flags to true and initializes body_idx_src)
     PairListEntry(int bd_src_id)
         : body_idx_src(bd_src_id), bx_src(true), by_src(true), bz_src(true), bx_tar(true), by_tar(true), bz_tar(true), sx_within(true), sy_within(true), sz_within(true), tx_within(true), ty_within(true),

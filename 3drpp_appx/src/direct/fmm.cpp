@@ -34,7 +34,6 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
     std::vector<bool> is_reg_body(bodies_all_.size(), false);
 
     std::vector<FPIndices> bodiesIndicesReg(fmm_cells.size());
-    std::vector<std::vector<real>> weightsReg(fmm_cells.size());
     std::vector<std::vector<BVec>> bxyz_ts(fmm_cells.size());
     std::vector<std::vector<BVec>> is_within_ts(fmm_cells.size());
 
@@ -51,13 +50,12 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                 boundary_bodies_idxs[k].push_back(body_idx);
                 is_reg_body[body_idx] = true;
             }
-            bodiesIndicesReg[k].push_back(body_idx);
-            weightsReg[k].push_back(w);
-
+            
             const RVec ws = w_per_atom[body_idx];
             const bool is_x_fully_in = ws[0] == 1;
             const bool is_y_fully_in = ws[1] == 1;
             const bool is_z_fully_in = ws[2] == 1;
+            bodiesIndicesReg[k].push_back(body_idx);
             bxyz_ts[k].push_back({is_x_fully_in, is_y_fully_in, is_z_fully_in});
             is_within_ts[k].push_back({1, 1, 1});
         }
@@ -107,21 +105,19 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                             const FBody &body = bodies_all_[body_idx];
                             const RVec dx = body.x - cell.center;
 
-                            const bool is_dist_x_in_range = dx[0] <= cell.radius + fmm_weights_eval_.getRegAlpha();
-                            const bool is_dist_y_in_range = dx[1] <= cell.radius + fmm_weights_eval_.getRegAlpha();
-                            const bool is_dist_z_in_range = dx[2] <= cell.radius + fmm_weights_eval_.getRegAlpha();
+                            const real dist_x = fabs(dx[0]);
+                            const real dist_y = fabs(dx[1]);
+                            const real dist_z = fabs(dx[2]);
+
+                            const bool is_dist_x_in_range = dist_x <= cell.radius + fmm_weights_eval_.getRegAlpha();
+                            const bool is_dist_y_in_range = dist_y <= cell.radius + fmm_weights_eval_.getRegAlpha();
+                            const bool is_dist_z_in_range = dist_z <= cell.radius + fmm_weights_eval_.getRegAlpha();
 
                             if (is_dist_x_in_range && is_dist_y_in_range && is_dist_z_in_range)
                             {
-                                bxyz_ts[k].push_back({is_x_fully_in, is_y_fully_in, is_z_fully_in});
-                                is_within_ts[k].push_back({dx[0] <= cell.radius, dx[1] <= cell.radius, dx[2] <= cell.radius});
-                            }
-
-                            const real w = fmm_weights_eval_.compute_weight_outside_cell(body.x, cell.center, cell.radius, false);
-                            if (w > 0)
-                            {
                                 bodiesIndicesReg[k].push_back(body_idx);
-                                weightsReg[k].push_back(w);
+                                bxyz_ts[k].push_back({is_x_fully_in, is_y_fully_in, is_z_fully_in});
+                                is_within_ts[k].push_back({dist_x <= cell.radius, dist_y <= cell.radius, dist_z <= cell.radius});
                             }
                         }
                     }
@@ -149,7 +145,6 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                     entry.set_scw_flags(1, 1, 1);
                     entry.set_tar_flags(bxyz_ts[k][bidxt][0], bxyz_ts[k][bidxt][1], bxyz_ts[k][bidxt][2]);
                     entry.set_trw_flags(is_within_ts[k][bidxt][0], is_within_ts[k][bidxt][1], is_within_ts[k][bidxt][2]);
-                    entry.wtar = weightsReg[k][bidxt];
                     pair_list[body_idx_tar].push_back(entry);
                 }
             }
@@ -230,7 +225,6 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                         entry.set_scw_flags(1, 1, 1);
                                         entry.set_tar_flags(bxyz_ts[k][bidxt][0], bxyz_ts[k][bidxt][1], bxyz_ts[k][bidxt][2]);
                                         entry.set_trw_flags(is_within_ts[k][bidxt][0], is_within_ts[k][bidxt][1], is_within_ts[k][bidxt][2]);
-                                        entry.wtar = weightsReg[k][bidxt];
                                         pair_list[body_idx_tar].push_back(entry);
                                     }
                                 }
@@ -253,7 +247,6 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                             entry.set_scw_flags(0, 1, 1);
                                             entry.set_tar_flags(bxyz_ts[k][bidxt][0], bxyz_ts[k][bidxt][1], bxyz_ts[k][bidxt][2]);
                                             entry.set_trw_flags(is_within_ts[k][bidxt][0], is_within_ts[k][bidxt][1], is_within_ts[k][bidxt][2]);
-                                            entry.wtar = weightsReg[k][bidxt];
                                             pair_list[body_idx_tar].push_back(entry);
                                         }
                                     }
@@ -272,7 +265,6 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                             entry.set_scw_flags(1, 0, 1);
                                             entry.set_tar_flags(bxyz_ts[k][bidxt][0], bxyz_ts[k][bidxt][1], bxyz_ts[k][bidxt][2]);
                                             entry.set_trw_flags(is_within_ts[k][bidxt][0], is_within_ts[k][bidxt][1], is_within_ts[k][bidxt][2]);
-                                            entry.wtar = weightsReg[k][bidxt];
                                             pair_list[body_idx_tar].push_back(entry);
                                         }
                                     }
@@ -291,7 +283,6 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                             entry.set_scw_flags(1, 1, 0);
                                             entry.set_tar_flags(bxyz_ts[k][bidxt][0], bxyz_ts[k][bidxt][1], bxyz_ts[k][bidxt][2]);
                                             entry.set_trw_flags(is_within_ts[k][bidxt][0], is_within_ts[k][bidxt][1], is_within_ts[k][bidxt][2]);
-                                            entry.wtar = weightsReg[k][bidxt];
                                             pair_list[body_idx_tar].push_back(entry);
                                         }
                                     }
@@ -312,7 +303,6 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                             entry.set_scw_flags(1, 0, 0);
                                             entry.set_tar_flags(bxyz_ts[k][bidxt][0], bxyz_ts[k][bidxt][1], bxyz_ts[k][bidxt][2]);
                                             entry.set_trw_flags(is_within_ts[k][bidxt][0], is_within_ts[k][bidxt][1], is_within_ts[k][bidxt][2]);
-                                            entry.wtar = weightsReg[k][bidxt];
                                             pair_list[body_idx_tar].push_back(entry);
                                         }
                                     }
@@ -333,7 +323,6 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                             entry.set_scw_flags(0, 1, 0);
                                             entry.set_tar_flags(bxyz_ts[k][bidxt][0], bxyz_ts[k][bidxt][1], bxyz_ts[k][bidxt][2]);
                                             entry.set_trw_flags(is_within_ts[k][bidxt][0], is_within_ts[k][bidxt][1], is_within_ts[k][bidxt][2]);
-                                            entry.wtar = weightsReg[k][bidxt];
                                             pair_list[body_idx_tar].push_back(entry);
                                         }
                                     }
@@ -354,7 +343,6 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                             entry.set_scw_flags(0, 0, 1);
                                             entry.set_tar_flags(bxyz_ts[k][bidxt][0], bxyz_ts[k][bidxt][1], bxyz_ts[k][bidxt][2]);
                                             entry.set_trw_flags(is_within_ts[k][bidxt][0], is_within_ts[k][bidxt][1], is_within_ts[k][bidxt][2]);
-                                            entry.wtar = weightsReg[k][bidxt];
                                             pair_list[body_idx_tar].push_back(entry);
                                         }
                                     }
@@ -375,7 +363,6 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                             entry.set_scw_flags(0, 1, 0);
                                             entry.set_tar_flags(bxyz_ts[k][bidxt][0], bxyz_ts[k][bidxt][1], bxyz_ts[k][bidxt][2]);
                                             entry.set_trw_flags(is_within_ts[k][bidxt][0], is_within_ts[k][bidxt][1], is_within_ts[k][bidxt][2]);
-                                            entry.wtar = weightsReg[k][bidxt];
                                             pair_list[body_idx_tar].push_back(entry);
                                         }
                                     }
@@ -396,7 +383,6 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                             entry.set_scw_flags(1, 0, 0);
                                             entry.set_tar_flags(bxyz_ts[k][bidxt][0], bxyz_ts[k][bidxt][1], bxyz_ts[k][bidxt][2]);
                                             entry.set_trw_flags(is_within_ts[k][bidxt][0], is_within_ts[k][bidxt][1], is_within_ts[k][bidxt][2]);
-                                            entry.wtar = weightsReg[k][bidxt];
                                             pair_list[body_idx_tar].push_back(entry);
                                         }
                                     }
@@ -417,7 +403,6 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                             entry.set_scw_flags(0, 0, 1);
                                             entry.set_tar_flags(bxyz_ts[k][bidxt][0], bxyz_ts[k][bidxt][1], bxyz_ts[k][bidxt][2]);
                                             entry.set_trw_flags(is_within_ts[k][bidxt][0], is_within_ts[k][bidxt][1], is_within_ts[k][bidxt][2]);
-                                            entry.wtar = weightsReg[k][bidxt];
                                             pair_list[body_idx_tar].push_back(entry);
                                         }
                                     }
@@ -440,7 +425,6 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                             entry.set_scw_flags(0, 0, 0);
                                             entry.set_tar_flags(bxyz_ts[k][bidxt][0], bxyz_ts[k][bidxt][1], bxyz_ts[k][bidxt][2]);
                                             entry.set_trw_flags(is_within_ts[k][bidxt][0], is_within_ts[k][bidxt][1], is_within_ts[k][bidxt][2]);
-                                            entry.wtar = weightsReg[k][bidxt];
                                             pair_list[body_idx_tar].push_back(entry);
                                         }
                                     }
