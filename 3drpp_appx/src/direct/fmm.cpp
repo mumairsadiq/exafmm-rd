@@ -215,7 +215,6 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                 const real dist_x_bd = fabs(body_src.x[0] - cell.center[0]);
                                 const real dist_z_bd = fabs(body_src.x[2] - cell.center[2]);
                                 const real dist_y_bd = fabs(body_src.x[1] - cell.center[1]);
-                                
 
                                 const bool dist_x_bd_in_region = dist_x_bd <= interaction_region_x + fmm_weights_eval_.getRegAlpha();
                                 const bool dist_y_bd_in_region = dist_y_bd <= interaction_region_y + fmm_weights_eval_.getRegAlpha();
@@ -550,19 +549,9 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
     }
 }
 
-std::vector<std::pair<gmx::RVec, gmx::real>> gmx::fmm::FMMDirectInteractions::execute_direct_kernel()
+void gmx::fmm::FMMDirectInteractions::execute_direct_kernel(real *forces_and_potentials)
 {
-
-    std::vector<std::pair<gmx::RVec, real>> forces_and_potentials(bodies_all_.size());
-
-    for (size_t i = 0; i < bodies_all_.size(); i++)
-    {
-        forces_and_potentials[i] = std::make_pair(RVec(0, 0, 0), 0);
-    }
-
-    // std::unordered_map<std::string, std::array<real, 4>> st;
-    // std::ofstream fout1("log_file_my_interactons.txt");
-
+    size_t fp_idx = 0;
     for (size_t i = 0; i < bodies_all_.size(); i++)
     {
         const FBody &body_tar = bodies_all_[i];
@@ -579,10 +568,10 @@ std::vector<std::pair<gmx::RVec, gmx::real>> gmx::fmm::FMMDirectInteractions::ex
         {
             int body_idx_src = ent.first;                      // Extract the key (body_idx_src)
             gmx::fmm::FBody &asrc = bodies_all_[body_idx_src]; // Retrieve the corresponding body
-
+            real pj = 0.0;
+            real fxj = 0.0, fyj = 0.0, fzj = 0.0;
             for (auto &pair_entry : ent.second) // Iterate over PairListMap (unordered_map<PairListEntrySrcFlags, PairListEntryTargetFlags>)
             {
-
                 const PairListEntrySrcFlags &srcFlags = pair_entry.first; // Extract source flags
                 PairListEntryTargetFlags &tarFlags = pair_entry.second;   // Extract target flags
 
@@ -611,27 +600,6 @@ std::vector<std::pair<gmx::RVec, gmx::real>> gmx::fmm::FMMDirectInteractions::ex
                 real wtar_z = (bxyz_tar[2] == 1) + (bxyz_tar[2] != 1) * ((is_within_tar[2] == 1) * wtar_ws[2] + (is_within_tar[2] != 1) * (1 - wtar_ws[2]));
                 const real wtar = wtar_x * wtar_y * wtar_z;
 
-                // const real wsrc_x = bxyz_src[0] == 1 ? 1 : (is_wihin_src[0] == 1 ? wsrc_ws[0] : 1 - wsrc_ws[0]);
-                // const real wsrc_y = bxyz_src[1] == 1 ? 1 : (is_wihin_src[1] == 1 ? wsrc_ws[1] : 1 - wsrc_ws[1]);
-                // const real wsrc_z = bxyz_src[2] == 1 ? 1 : (is_wihin_src[2] == 1 ? wsrc_ws[2] : 1 - wsrc_ws[2]);
-                // const real wsrc = wsrc_x * wsrc_y * wsrc_z;
-
-                // const real wtar_x = bxyz_tar[0] == 1 ? 1 : (is_within_tar[0] == 1 ? wtar_ws[0] : 1 - wtar_ws[0]);
-                // const real wtar_y = bxyz_tar[1] == 1 ? 1 : (is_within_tar[1] == 1 ? wtar_ws[1] : 1 - wtar_ws[1]);
-                // const real wtar_z = bxyz_tar[2] == 1 ? 1 : (is_within_tar[2] == 1 ? wtar_ws[2] : 1 - wtar_ws[2]);
-
-                // const real wtar = wtar_x * wtar_y * wtar_z;
-                // real wtar = ent.wtar;
-                // std::cout << wtar << "--" << ent.wtar << std::endl;
-
-                // std::cout << asrc.x << "--" << body_tar.x << "--" << wsrc << "--" << wtar << "" << "\n";
-                // fout1 << asrc.x << "--" << body_tar.x << "--" << wsrc << "--" << wtar << "" << "\n";
-                // std::string key = std::to_string(body_idx_src) + "--" + std::to_string(i);
-                // std::cout << wsrc_ws << "--" << wtar_ws << std::endl;
-
-                real pj = 0.0;
-                real fxj = 0.0, fyj = 0.0, fzj = 0.0;
-
                 // Compute squared distance
                 real invr = dx * dx + dy * dy + dz * dz;
 
@@ -640,65 +608,26 @@ std::vector<std::pair<gmx::RVec, gmx::real>> gmx::fmm::FMMDirectInteractions::ex
                 const real qi = asrc.q * wsrc;
 
                 real qinvr = qi * invr;
-                pj = qinvr;
+                pj += qinvr * wtar;
                 qinvr = qinvr * invr * invr;
 
-                fxj = qinvr * dx;
-                fyj = qinvr * dy;
-                fzj = qinvr * dz;
-
-                // if (st.find(key) != st.end())
-                // {
-                //     st[key][0] += wtar * qinvr;
-                //     st[key][1] += wtar * fxj;
-                //     st[key][2] += wtar * fyj;
-                //     st[key][3] += wtar * fzj;
-                // }
-                // else
-                // {
-                //     st[key] = {wtar * qinvr, wtar * fxj, wtar * fyj, wtar * fzj};
-                // }
-
-                pj_effective += pj * wtar;
-                fxj_effective += fxj * wtar;
-                fyj_effective += fyj * wtar;
-                fzj_effective += fzj * wtar;
+                fxj += qinvr * dx * wtar;
+                fyj += qinvr * dy * wtar;
+                fzj += qinvr * dz * wtar;
                 ix++;
             }
+            pj_effective += pj;
+            fxj_effective += fxj;
+            fyj_effective += fyj;
+            fzj_effective += fzj;
         }
 
         // Apply accumulated forces and potential to target bodies
-        forces_and_potentials[i].second += pj_effective;
-        forces_and_potentials[i].first[0] -= fxj_effective;
-        forces_and_potentials[i].first[1] -= fyj_effective;
-        forces_and_potentials[i].first[2] -= fzj_effective;
+        forces_and_potentials[fp_idx++] = -fxj_effective;
+        forces_and_potentials[fp_idx++] = -fyj_effective;
+        forces_and_potentials[fp_idx++] = -fzj_effective;
+        forces_and_potentials[fp_idx++] = pj_effective;
     }
-
-    // fout1.close();
-
-    // std::ofstream fout("log_file_my_fps.txt");
-    // // Iterate through the map
-    // for (const auto &[key, values] : st)
-    // {
-    //     // Find the position of the delimiter "--"
-    //     size_t delimiter_pos = key.find("--");
-    //     if (delimiter_pos == std::string::npos)
-    //     {
-    //         std::cerr << "Invalid key format for key: " << key << std::endl;
-    //         continue;
-    //     }
-
-    //     // Extract the two integers from the key
-    //     std::string part1 = key.substr(0, delimiter_pos);  // First part
-    //     std::string part2 = key.substr(delimiter_pos + 2); // Second part
-    //     int bidx_src = std::stoi(part1);
-    //     int bidx_tar = std::stoi(part2);
-
-    //     fout << bodies_all_[bidx_src].x << "--" << bodies_all_[bidx_tar].x << "--[" << values[0] << "," << values[1] << "," << values[2] << "," << values[3] << "]\n";
-    // }
-    // fout.close();
-
-    return forces_and_potentials;
 }
 
 void gmx::fmm::FMMDirectInteractions::recompute_weights() { compute_weights_(); }

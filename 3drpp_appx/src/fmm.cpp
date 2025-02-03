@@ -3,6 +3,8 @@
 #include "mathfunc.h"
 #include "surface.h"
 #include "tree.h"
+#include <algorithm>
+#include <memory>
 #include <omp.h>
 
 rtfmm::LaplaceFMM::LaplaceFMM(const Bodies3 &bs_, const Argument &args_) : bs(bs_), args(args_) { assert_exit(bs.size() == args.n, "LaplaceFMM init body size error"); }
@@ -81,14 +83,25 @@ rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
     gmx::fmm::FMMDirectInteractions fmm_direct_inters(coordinates, charges, args.x, args.r, 3, args.rega);
 
     TIME_BEGIN(kernel_time);
-    auto forces_and_potentials = fmm_direct_inters.execute_direct_kernel();
+    TIME_BEGIN(kernel_time1);
+
+    // For std::fill
+
+    const size_t bs_size4 = bs.size() * 4;
+    std::unique_ptr<real[]> forces_and_potentials = std::make_unique<real[]>(bs_size4);
+
+    std::fill(forces_and_potentials.get(), forces_and_potentials.get() + bs_size4, 0.0);
+    TIME_END(kernel_time1);
+
+    fmm_direct_inters.execute_direct_kernel(forces_and_potentials.get());
     TIME_END(kernel_time);
 
-    for (int i = 0; i < bs.size(); i++)
+    for (size_t i = 0; i < bs.size(); i++)
     {
-        bs[i].f += forces_and_potentials[i].first;
-        bs[i].p += forces_and_potentials[i].second;
+        bs[i].f += {forces_and_potentials[i * 4], forces_and_potentials[i * 4 + 1], forces_and_potentials[i * 4 + 2]};
+        bs[i].p += forces_and_potentials[i * 4 + 3];
     }
+
     TIME_END(fmm_p2p_standalone);
 
     bs = sort_bodies_by_idx(bs);

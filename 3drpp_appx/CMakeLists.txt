@@ -4,7 +4,7 @@ project(rtfmm_3dpp_appx VERSION 1.0 LANGUAGES CUDA CXX)
 #set(CMAKE_CXX_STANDARD 20)
 
 #add_compile_options(-march=native)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -ffast-math -O3")
 #set(CMAKE_CXX_FLAGS_RELEASE "-O2") 
 #add_compile_options(-std=c++11 -fopenmp -mmmx -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -msse4a -msha -maes -mavx -mfma -mavx2 -mrdrnd -mbmi -mbmi2 -madx -mabm -g -O2)
 

@@ -123,10 +123,7 @@ class FMMDirectInteractions
     bool is_point_within_radius(const RVec &point1, const RVec &point2, double radius);
 
     // returns forces and potentials pair
-    std::vector<std::pair<RVec, real>> execute_direct_kernel();
-
-    // returns forces and potentials pair
-    std::vector<std::pair<RVec, real>> execute_direct_kernel_simd();
+    void execute_direct_kernel(real *forces_and_potentials);
 
     void recompute_weights();
 
