@@ -32,6 +32,8 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
 
     FMMCells &fmm_cells = fmm_direct_interactions_tree_.get_cells();
 
+    std::vector<std::unordered_map<int, PairListMap>> pair_list_aux(bodies_all_.size());
+
     std::vector<FPIndices> boundary_bodies_idxs(fmm_cells.size());
     std::vector<bool> is_reg_body(bodies_all_.size(), false);
 
@@ -137,7 +139,7 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                     entry_tar.set_tar_flags(bxyz_ts[k][bidxt][0], bxyz_ts[k][bidxt][1], bxyz_ts[k][bidxt][2]);
                     entry_tar.set_trw_flags(is_within_ts[k][bidxt][0], is_within_ts[k][bidxt][1], is_within_ts[k][bidxt][2]);
 
-                    auto &outer_map = pair_list[body_idx_tar];
+                    auto &outer_map = pair_list_aux[body_idx_tar];
                     auto it_src = outer_map.find(body_idx_src);
                     if (it_src != outer_map.end())
                     {
@@ -149,16 +151,16 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                             entry_tar.bx_tar = entry_tar_pre.bx_tar || (entry_tar.tx_within ^ entry_tar_pre.tx_within);
                             entry_tar.by_tar = entry_tar_pre.by_tar || (entry_tar.ty_within ^ entry_tar_pre.ty_within);
                             entry_tar.bz_tar = entry_tar_pre.bz_tar || (entry_tar.tz_within ^ entry_tar_pre.tz_within);
-                            pair_list[body_idx_tar][body_idx_src][entry_src] = entry_tar;
+                            pair_list_aux[body_idx_tar][body_idx_src][entry_src] = entry_tar;
                         }
                         else
                         {
-                            pair_list[body_idx_tar][body_idx_src][entry_src] = entry_tar;
+                            pair_list_aux[body_idx_tar][body_idx_src][entry_src] = entry_tar;
                         }
                     }
                     else
                     {
-                        pair_list[body_idx_tar][body_idx_src][entry_src] = entry_tar;
+                        pair_list_aux[body_idx_tar][body_idx_src][entry_src] = entry_tar;
                     }
                 }
             }
@@ -231,7 +233,7 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                         entry_tar.set_tar_flags(bxyz_ts[k][bidxt][0], bxyz_ts[k][bidxt][1], bxyz_ts[k][bidxt][2]);
                                         entry_tar.set_trw_flags(is_within_ts[k][bidxt][0], is_within_ts[k][bidxt][1], is_within_ts[k][bidxt][2]);
 
-                                        auto &entry_map = pair_list[body_idx_tar][body_idx_src];
+                                        auto &entry_map = pair_list_aux[body_idx_tar][body_idx_src];
                                         auto it_entry = entry_map.find(entry_src);
                                         if (it_entry != entry_map.end())
                                         {
@@ -262,7 +264,7 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                             entry_tar.set_tar_flags(bxyz_ts[k][bidxt][0], bxyz_ts[k][bidxt][1], bxyz_ts[k][bidxt][2]);
                                             entry_tar.set_trw_flags(is_within_ts[k][bidxt][0], is_within_ts[k][bidxt][1], is_within_ts[k][bidxt][2]);
 
-                                            auto &entry_map = pair_list[body_idx_tar][body_idx_src];
+                                            auto &entry_map = pair_list_aux[body_idx_tar][body_idx_src];
                                             auto it_entry = entry_map.find(entry_src);
                                             if (it_entry != entry_map.end())
                                             {
@@ -291,7 +293,7 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                             entry_tar.set_tar_flags(bxyz_ts[k][bidxt][0], bxyz_ts[k][bidxt][1], bxyz_ts[k][bidxt][2]);
                                             entry_tar.set_trw_flags(is_within_ts[k][bidxt][0], is_within_ts[k][bidxt][1], is_within_ts[k][bidxt][2]);
 
-                                            auto &entry_map = pair_list[body_idx_tar][body_idx_src];
+                                            auto &entry_map = pair_list_aux[body_idx_tar][body_idx_src];
                                             auto it_entry = entry_map.find(entry_src);
                                             if (it_entry != entry_map.end())
                                             {
@@ -320,7 +322,7 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                             entry_tar.set_tar_flags(bxyz_ts[k][bidxt][0], bxyz_ts[k][bidxt][1], bxyz_ts[k][bidxt][2]);
                                             entry_tar.set_trw_flags(is_within_ts[k][bidxt][0], is_within_ts[k][bidxt][1], is_within_ts[k][bidxt][2]);
 
-                                            auto &entry_map = pair_list[body_idx_tar][body_idx_src];
+                                            auto &entry_map = pair_list_aux[body_idx_tar][body_idx_src];
                                             auto it_entry = entry_map.find(entry_src);
                                             if (it_entry != entry_map.end())
                                             {
@@ -349,7 +351,7 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                             entry_tar.set_tar_flags(bxyz_ts[k][bidxt][0], bxyz_ts[k][bidxt][1], bxyz_ts[k][bidxt][2]);
                                             entry_tar.set_trw_flags(is_within_ts[k][bidxt][0], is_within_ts[k][bidxt][1], is_within_ts[k][bidxt][2]);
 
-                                            auto &entry_map = pair_list[body_idx_tar][body_idx_src];
+                                            auto &entry_map = pair_list_aux[body_idx_tar][body_idx_src];
                                             auto it_entry = entry_map.find(entry_src);
                                             if (it_entry != entry_map.end())
                                             {
@@ -378,7 +380,7 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                             entry_tar.set_tar_flags(bxyz_ts[k][bidxt][0], bxyz_ts[k][bidxt][1], bxyz_ts[k][bidxt][2]);
                                             entry_tar.set_trw_flags(is_within_ts[k][bidxt][0], is_within_ts[k][bidxt][1], is_within_ts[k][bidxt][2]);
 
-                                            auto &entry_map = pair_list[body_idx_tar][body_idx_src];
+                                            auto &entry_map = pair_list_aux[body_idx_tar][body_idx_src];
                                             auto it_entry = entry_map.find(entry_src);
                                             if (it_entry != entry_map.end())
                                             {
@@ -407,7 +409,7 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                             entry_tar.set_tar_flags(bxyz_ts[k][bidxt][0], bxyz_ts[k][bidxt][1], bxyz_ts[k][bidxt][2]);
                                             entry_tar.set_trw_flags(is_within_ts[k][bidxt][0], is_within_ts[k][bidxt][1], is_within_ts[k][bidxt][2]);
 
-                                            auto &entry_map = pair_list[body_idx_tar][body_idx_src];
+                                            auto &entry_map = pair_list_aux[body_idx_tar][body_idx_src];
                                             auto it_entry = entry_map.find(entry_src);
                                             if (it_entry != entry_map.end())
                                             {
@@ -436,7 +438,7 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                             entry_tar.set_tar_flags(bxyz_ts[k][bidxt][0], bxyz_ts[k][bidxt][1], bxyz_ts[k][bidxt][2]);
                                             entry_tar.set_trw_flags(is_within_ts[k][bidxt][0], is_within_ts[k][bidxt][1], is_within_ts[k][bidxt][2]);
 
-                                            auto &entry_map = pair_list[body_idx_tar][body_idx_src];
+                                            auto &entry_map = pair_list_aux[body_idx_tar][body_idx_src];
                                             auto it_entry = entry_map.find(entry_src);
                                             if (it_entry != entry_map.end())
                                             {
@@ -465,7 +467,7 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                             entry_tar.set_tar_flags(bxyz_ts[k][bidxt][0], bxyz_ts[k][bidxt][1], bxyz_ts[k][bidxt][2]);
                                             entry_tar.set_trw_flags(is_within_ts[k][bidxt][0], is_within_ts[k][bidxt][1], is_within_ts[k][bidxt][2]);
 
-                                            auto &entry_map = pair_list[body_idx_tar][body_idx_src];
+                                            auto &entry_map = pair_list_aux[body_idx_tar][body_idx_src];
                                             auto it_entry = entry_map.find(entry_src);
                                             if (it_entry != entry_map.end())
                                             {
@@ -494,7 +496,7 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                             entry_tar.set_tar_flags(bxyz_ts[k][bidxt][0], bxyz_ts[k][bidxt][1], bxyz_ts[k][bidxt][2]);
                                             entry_tar.set_trw_flags(is_within_ts[k][bidxt][0], is_within_ts[k][bidxt][1], is_within_ts[k][bidxt][2]);
 
-                                            auto &entry_map = pair_list[body_idx_tar][body_idx_src];
+                                            auto &entry_map = pair_list_aux[body_idx_tar][body_idx_src];
                                             auto it_entry = entry_map.find(entry_src);
                                             if (it_entry != entry_map.end())
                                             {
@@ -521,7 +523,7 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                         entry_tar.set_tar_flags(bxyz_ts[k][bidxt][0], bxyz_ts[k][bidxt][1], bxyz_ts[k][bidxt][2]);
                                         entry_tar.set_trw_flags(is_within_ts[k][bidxt][0], is_within_ts[k][bidxt][1], is_within_ts[k][bidxt][2]);
 
-                                        auto &entry_map = pair_list[body_idx_tar][body_idx_src];
+                                        auto &entry_map = pair_list_aux[body_idx_tar][body_idx_src];
                                         auto it_entry = entry_map.find(entry_src);
                                         if (it_entry != entry_map.end())
                                         {
@@ -547,6 +549,20 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
             }
         }
     }
+
+    pair_list.resize(bodies_all_.size()); // Ensure correct size before indexing
+
+    for (size_t i = 0; i < bodies_all_.size(); i++)
+    {
+        for (const auto &[body_idx_src, pairListMap] : pair_list_aux[i]) // Structured binding (C++17)
+        {
+            for (const auto &[srcFlags, tarFlags] : pairListMap) // Iterate over PairListMap
+            {
+                pair_list[i].emplace_back(body_idx_src, srcFlags.bx_src, srcFlags.by_src, srcFlags.bz_src, srcFlags.sx_within, srcFlags.sy_within, srcFlags.sz_within,
+                                          tarFlags.bx_tar, tarFlags.by_tar, tarFlags.bz_tar, tarFlags.tx_within, tarFlags.ty_within, tarFlags.tz_within);
+            }
+        }
+    }
 }
 
 void gmx::fmm::FMMDirectInteractions::execute_direct_kernel(real *forces_and_potentials)
@@ -562,66 +578,60 @@ void gmx::fmm::FMMDirectInteractions::execute_direct_kernel(real *forces_and_pot
 
         real pj_effective = 0.0;
         real fxj_effective = 0.0, fyj_effective = 0.0, fzj_effective = 0.0;
-        int ix = 0;
 
         for (auto &ent : pair_list[i])
         {
-            int body_idx_src = ent.first;                      // Extract the key (body_idx_src)
-            gmx::fmm::FBody &asrc = bodies_all_[body_idx_src]; // Retrieve the corresponding body
+
+            gmx::fmm::FBody &asrc = bodies_all_[ent.body_idx_src];
+
+            const BVec bxyz_src = {ent.bx_src, ent.by_src, ent.bz_src};
+            const BVec bxyz_tar = {ent.bx_tar, ent.by_tar, ent.bz_tar};
+            const BVec is_wihin_src = {ent.sx_within, ent.sy_within, ent.sz_within};
+            const BVec is_within_tar = {ent.tx_within, ent.ty_within, ent.tz_within};
+
+            const RVec wsrc_ws = w_per_atom[ent.body_idx_src];
+
+            const real xs = asrc.x[0];
+            const real ys = asrc.x[1];
+            const real zs = asrc.x[2];
+
+            const real dx = xt - xs;
+            const real dy = yt - ys;
+            const real dz = zt - zs;
+
+            real wsrc_x = (bxyz_src[0] == 1) + (bxyz_src[0] != 1) * ((is_wihin_src[0] == 1) * wsrc_ws[0] + (is_wihin_src[0] != 1) * (1 - wsrc_ws[0]));
+            real wsrc_y = (bxyz_src[1] == 1) + (bxyz_src[1] != 1) * ((is_wihin_src[1] == 1) * wsrc_ws[1] + (is_wihin_src[1] != 1) * (1 - wsrc_ws[1]));
+            real wsrc_z = (bxyz_src[2] == 1) + (bxyz_src[2] != 1) * ((is_wihin_src[2] == 1) * wsrc_ws[2] + (is_wihin_src[2] != 1) * (1 - wsrc_ws[2]));
+            real wsrc = wsrc_x * wsrc_y * wsrc_z;
+
+            real wtar_x = (bxyz_tar[0] == 1) + (bxyz_tar[0] != 1) * ((is_within_tar[0] == 1) * wtar_ws[0] + (is_within_tar[0] != 1) * (1 - wtar_ws[0]));
+            real wtar_y = (bxyz_tar[1] == 1) + (bxyz_tar[1] != 1) * ((is_within_tar[1] == 1) * wtar_ws[1] + (is_within_tar[1] != 1) * (1 - wtar_ws[1]));
+            real wtar_z = (bxyz_tar[2] == 1) + (bxyz_tar[2] != 1) * ((is_within_tar[2] == 1) * wtar_ws[2] + (is_within_tar[2] != 1) * (1 - wtar_ws[2]));
+            const real wtar = wtar_x * wtar_y * wtar_z;
+
             real pj = 0.0;
             real fxj = 0.0, fyj = 0.0, fzj = 0.0;
-            for (auto &pair_entry : ent.second) // Iterate over PairListMap (unordered_map<PairListEntrySrcFlags, PairListEntryTargetFlags>)
-            {
-                const PairListEntrySrcFlags &srcFlags = pair_entry.first; // Extract source flags
-                PairListEntryTargetFlags &tarFlags = pair_entry.second;   // Extract target flags
 
-                const BVec bxyz_src = {srcFlags.bx_src, srcFlags.by_src, srcFlags.bz_src};
-                const BVec bxyz_tar = {tarFlags.bx_tar, tarFlags.by_tar, tarFlags.bz_tar};
-                const BVec is_wihin_src = {srcFlags.sx_within, srcFlags.sy_within, srcFlags.sz_within};
-                const BVec is_within_tar = {tarFlags.tx_within, tarFlags.ty_within, tarFlags.tz_within};
+            // Compute squared distance
+            real invr = dx * dx + dy * dy + dz * dz;
 
-                const RVec wsrc_ws = w_per_atom[ent.first];
+            invr = 1.0 / std::sqrt(invr); // Compute inverse distance
 
-                const real xs = asrc.x[0];
-                const real ys = asrc.x[1];
-                const real zs = asrc.x[2];
+            const real qi = asrc.q * wsrc;
 
-                const real dx = xt - xs;
-                const real dy = yt - ys;
-                const real dz = zt - zs;
+            real qinvr = qi * invr;
+            pj = qinvr;
+            qinvr = qinvr * invr * invr;
 
-                real wsrc_x = (bxyz_src[0] == 1) + (bxyz_src[0] != 1) * ((is_wihin_src[0] == 1) * wsrc_ws[0] + (is_wihin_src[0] != 1) * (1 - wsrc_ws[0]));
-                real wsrc_y = (bxyz_src[1] == 1) + (bxyz_src[1] != 1) * ((is_wihin_src[1] == 1) * wsrc_ws[1] + (is_wihin_src[1] != 1) * (1 - wsrc_ws[1]));
-                real wsrc_z = (bxyz_src[2] == 1) + (bxyz_src[2] != 1) * ((is_wihin_src[2] == 1) * wsrc_ws[2] + (is_wihin_src[2] != 1) * (1 - wsrc_ws[2]));
-                real wsrc = wsrc_x * wsrc_y * wsrc_z;
+            fxj = qinvr * dx;
+            fyj = qinvr * dy;
+            fzj = qinvr * dz;
 
-                real wtar_x = (bxyz_tar[0] == 1) + (bxyz_tar[0] != 1) * ((is_within_tar[0] == 1) * wtar_ws[0] + (is_within_tar[0] != 1) * (1 - wtar_ws[0]));
-                real wtar_y = (bxyz_tar[1] == 1) + (bxyz_tar[1] != 1) * ((is_within_tar[1] == 1) * wtar_ws[1] + (is_within_tar[1] != 1) * (1 - wtar_ws[1]));
-                real wtar_z = (bxyz_tar[2] == 1) + (bxyz_tar[2] != 1) * ((is_within_tar[2] == 1) * wtar_ws[2] + (is_within_tar[2] != 1) * (1 - wtar_ws[2]));
-                const real wtar = wtar_x * wtar_y * wtar_z;
-
-                // Compute squared distance
-                real invr = dx * dx + dy * dy + dz * dz;
-
-                invr = 1.0 / std::sqrt(invr); // Compute inverse distance
-
-                const real qi = asrc.q * wsrc;
-
-                real qinvr = qi * invr;
-                pj += qinvr * wtar;
-                qinvr = qinvr * invr * invr;
-
-                fxj += qinvr * dx * wtar;
-                fyj += qinvr * dy * wtar;
-                fzj += qinvr * dz * wtar;
-                ix++;
-            }
-            pj_effective += pj;
-            fxj_effective += fxj;
-            fyj_effective += fyj;
-            fzj_effective += fzj;
+            pj_effective += pj * wtar;
+            fxj_effective += fxj * wtar;
+            fyj_effective += fyj * wtar;
+            fzj_effective += fzj * wtar;
         }
-
         // Apply accumulated forces and potential to target bodies
         forces_and_potentials[fp_idx++] = -fxj_effective;
         forces_and_potentials[fp_idx++] = -fyj_effective;

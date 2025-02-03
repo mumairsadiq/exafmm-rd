@@ -112,6 +112,45 @@ struct PairListEntryTargetFlags
 // Define the nested hash map structure
 using PairListMap = std::unordered_map<PairListEntrySrcFlags, PairListEntryTargetFlags, PairListEntrySrcFlagsHash>;
 
+// Structure to hold flags for source and target weights for each particle pair
+struct PairListEntry
+{
+    // Source body ID
+    int body_idx_src;
+
+    // Boolean flag to determine the source weights for each particle pair:
+    // - If bx_src, by_src, or bz_src is true, use a weight of 1.
+    // - Otherwise, the decision is based on sx_within, sy_within, or sz_within:
+    //   - If sx_within, sy_within, or sz_within is true, use weight w.
+    //   - If not, use weight (1 - w).
+    bool bx_src, by_src, bz_src;
+
+    // Boolean flag indicating whether the weight for a particle pair
+    // should be taken within the source cell or outside it.
+    // Only valid if bx_src, by_src, or bz_src is false.
+    bool sx_within, sy_within, sz_within;
+
+    // Boolean flag to determine the target weights for each particle pair:
+    // - If bx_tar, by_tar, or bz_tar is true, use a weight of 1.
+    // - Otherwise, the decision is based on tx_within, ty_within, or tz_within:
+    //   - If tx_within, ty_within, or tz_within is true, use weight w.
+    //   - If not, use weight (1 - w).
+    bool bx_tar, by_tar, bz_tar;
+
+    // Boolean flag indicating whether the weight for a particle pair
+    // should be taken within the target cell or outside it.
+    // Only valid if bx_tar, by_tar, or bz_tar is false.
+    bool tx_within, ty_within, tz_within;
+
+    PairListEntry() = default;
+
+    PairListEntry(int bd_src_id, bool bx_s, bool by_s, bool bz_s, bool sx_w, bool sy_w, bool sz_w, bool bx_t, bool by_t, bool bz_t, bool tx_w, bool ty_w, bool tz_w)
+        : body_idx_src(bd_src_id), bx_src(bx_s), by_src(by_s), bz_src(bz_s), sx_within(sx_w), sy_within(sy_w), sz_within(sz_w), bx_tar(bx_t), by_tar(by_t), bz_tar(bz_t),
+          tx_within(tx_w), ty_within(ty_w), tz_within(tz_w)
+    {
+    }
+};
+
 // Vector of unordered_maps indexed by `body_idx_tar`
 
 class FMMDirectInteractions
@@ -134,7 +173,8 @@ class FMMDirectInteractions
     FMMWeightEvaluator fmm_weights_eval_;
     FMMDirectInteractionsTree fmm_direct_interactions_tree_;
 
-    std::vector<std::unordered_map<int, PairListMap>> pair_list;
+    std::vector<std::vector<PairListEntry>> pair_list;
+
     // weight values for each atom within its original cell
     std::vector<RVec> w_per_atom;
 

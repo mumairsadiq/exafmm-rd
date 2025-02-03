@@ -89,7 +89,6 @@ rtfmm::Bodies3 rtfmm::LaplaceFMM::solve()
 
     const size_t bs_size4 = bs.size() * 4;
     std::unique_ptr<real[]> forces_and_potentials = std::make_unique<real[]>(bs_size4);
-
     std::fill(forces_and_potentials.get(), forces_and_potentials.get() + bs_size4, 0.0);
     TIME_END(kernel_time1);
 
