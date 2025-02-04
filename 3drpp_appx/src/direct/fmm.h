@@ -2,7 +2,10 @@
 #define GMX_FMM_H
 
 #include "fmmdirectinteractionstree.h"
+#include <array>
 #include <functional>
+
+constexpr int MAX_ENTRIES = 8;
 
 namespace gmx
 {
@@ -30,44 +33,11 @@ struct PairListEntrySrcFlags
     // Constructor with parameters
     PairListEntrySrcFlags(bool x, bool y, bool z, bool sx, bool sy, bool sz) : bx_src(x), by_src(y), bz_src(z), sx_within(sx), sy_within(sy), sz_within(sz) {}
 
-    // Setter methods for source flags
-    void set_src_flags(bool x, bool y, bool z)
-    {
-        bx_src = x;
-        by_src = y;
-        bz_src = z;
-    }
-
-    // Setter methods for source within-cell flags
-    void set_scw_flags(bool x, bool y, bool z)
-    {
-        sx_within = x;
-        sy_within = y;
-        sz_within = z;
-    }
-
     // Define equality operator for unordered_map key comparison
     bool operator==(const PairListEntrySrcFlags &other) const
     {
         return bx_src == other.bx_src && by_src == other.by_src && bz_src == other.bz_src && sx_within == other.sx_within && sy_within == other.sy_within &&
                sz_within == other.sz_within;
-    }
-};
-
-// Custom hash function for PairListEntrySrcFlags
-struct PairListEntrySrcFlagsHash
-{
-    std::size_t operator()(const PairListEntrySrcFlags &flags) const
-    {
-        std::size_t h1 = std::hash<bool>{}(flags.bx_src);
-        std::size_t h2 = std::hash<bool>{}(flags.by_src);
-        std::size_t h3 = std::hash<bool>{}(flags.bz_src);
-        std::size_t h4 = std::hash<bool>{}(flags.sx_within);
-        std::size_t h5 = std::hash<bool>{}(flags.sy_within);
-        std::size_t h6 = std::hash<bool>{}(flags.sz_within);
-
-        // Mix the hashes together using bitwise operations
-        return (h1 ^ (h2 << 1) ^ (h3 << 2) ^ (h4 << 3) ^ (h5 << 4) ^ (h6 << 5)) * 2654435761u;
     }
 };
 
@@ -91,26 +61,86 @@ struct PairListEntryTargetFlags
 
     // Constructor with parameters
     PairListEntryTargetFlags(bool x, bool y, bool z, bool tx, bool ty, bool tz) : bx_tar(x), by_tar(y), bz_tar(z), tx_within(tx), ty_within(ty), tz_within(tz) {}
-
-    // Setter methods for target flags
-    void set_tar_flags(bool x, bool y, bool z)
-    {
-        bx_tar = x;
-        by_tar = y;
-        bz_tar = z;
-    }
-
-    // Setter methods for target within-cell flags
-    void set_trw_flags(bool x, bool y, bool z)
-    {
-        tx_within = x;
-        ty_within = y;
-        tz_within = z;
-    }
 };
 
-// Define the nested hash map structure
-using PairListMap = std::unordered_map<PairListEntrySrcFlags, PairListEntryTargetFlags, PairListEntrySrcFlagsHash>;
+constexpr int MAX_ENTRIES_IN_FIXED_MAP = 8;
+
+struct FixedPairListMap
+{
+    struct Entry
+    {
+        int key = -1;
+        PairListEntrySrcFlags entry_src;
+        PairListEntryTargetFlags entry_tar;
+    };
+
+    std::array<Entry, MAX_ENTRIES_IN_FIXED_MAP> data = {};
+    int size = 0;
+
+    static constexpr int encode(const PairListEntrySrcFlags &entry)
+    {
+        return (entry.bx_src << 5) | (entry.by_src << 4) | (entry.bz_src << 3) | (entry.sx_within << 2) | (entry.sy_within << 1) | entry.sz_within;
+    }
+
+    PairListEntryTargetFlags *find(const PairListEntrySrcFlags &entry_src)
+    {
+        int key = encode(entry_src);
+        if (size > 0 && data[0].key == key)
+            return &data[0].entry_tar;
+        if (size > 1 && data[1].key == key)
+            return &data[1].entry_tar;
+        if (size > 2 && data[2].key == key)
+            return &data[2].entry_tar;
+        if (size > 3 && data[3].key == key)
+            return &data[3].entry_tar;
+        if (size > 4 && data[4].key == key)
+            return &data[4].entry_tar;
+        if (size > 5 && data[5].key == key)
+            return &data[5].entry_tar;
+        if (size > 6 && data[6].key == key)
+            return &data[6].entry_tar;
+        if (size > 7 && data[7].key == key)
+            return &data[7].entry_tar;
+        return nullptr;
+    }
+
+    void insert(const PairListEntrySrcFlags &entry_src, const PairListEntryTargetFlags &entry_tar)
+    {
+        int key = encode(entry_src);
+        PairListEntryTargetFlags *existing = find(entry_src);
+        if (existing)
+        {
+            *existing = entry_tar;
+            return;
+        }
+        if (size < MAX_ENTRIES_IN_FIXED_MAP)
+        {
+            data[size++] = {key, entry_src, entry_tar};
+        }
+    }
+
+    struct Iterator
+    {
+        Entry *ptr;
+        bool operator!=(const Iterator &other) const { return ptr != other.ptr; }
+        void operator++() { ++ptr; }
+        std::pair<const PairListEntrySrcFlags &, PairListEntryTargetFlags &> operator*() { return {ptr->entry_src, ptr->entry_tar}; }
+    };
+
+    struct ConstIterator
+    {
+        const Entry *ptr;
+        bool operator!=(const ConstIterator &other) const { return ptr != other.ptr; }
+        void operator++() { ++ptr; }
+        std::pair<const PairListEntrySrcFlags &, const PairListEntryTargetFlags &> operator*() const { return {ptr->entry_src, ptr->entry_tar}; }
+    };
+
+    Iterator begin() { return {data.data()}; }
+    Iterator end() { return {data.data() + size}; }
+
+    ConstIterator begin() const { return {data.data()}; }
+    ConstIterator end() const { return {data.data() + size}; }
+};
 
 // Structure to hold flags for source and target weights for each particle pair
 struct PairListEntry

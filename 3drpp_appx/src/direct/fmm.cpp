@@ -32,15 +32,13 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
 
     FMMCells &fmm_cells = fmm_direct_interactions_tree_.get_cells();
 
-    std::vector<std::unordered_map<int, PairListMap>> pair_list_aux(bodies_all_.size());
-
+    std::vector<std::unordered_map<int, FixedPairListMap>> pair_list_aux(bodies_all_.size());
     std::vector<FPIndices> boundary_bodies_idxs(fmm_cells.size());
     std::vector<bool> is_reg_body(bodies_all_.size(), false);
 
     std::vector<FPIndices> bodiesIndicesReg(fmm_cells.size());
     std::vector<std::vector<BVec>> bxyz_ts(fmm_cells.size());
     std::vector<std::vector<BVec>> is_within_ts(fmm_cells.size());
-
     for (size_t k = 0; k < fmm_cells.size(); k++)
     {
         const FMMCell &cell = fmm_cells[k];
@@ -104,7 +102,6 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                             const bool is_dist_x_in_range = dist_x <= cell.radius + fmm_weights_eval_.getRegAlpha();
                             const bool is_dist_y_in_range = dist_y <= cell.radius + fmm_weights_eval_.getRegAlpha();
                             const bool is_dist_z_in_range = dist_z <= cell.radius + fmm_weights_eval_.getRegAlpha();
-
                             if (is_dist_x_in_range && is_dist_y_in_range && is_dist_z_in_range)
                             {
                                 bodiesIndicesReg[k].push_back(body_idx);
@@ -125,43 +122,24 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
         size_t bidxt = 0;
         for (const int &body_idx_tar : bodiesIndicesReg[k])
         {
-            const FBody &body_tar = bodies_all_[body_idx_tar];
-
             for (const int body_idx_src : cell.bodiesIndices)
             {
+                PairListEntryTargetFlags entry_tar(bxyz_ts[k][bidxt][0], bxyz_ts[k][bidxt][1], bxyz_ts[k][bidxt][2], is_within_ts[k][bidxt][0], is_within_ts[k][bidxt][1],
+                                                   is_within_ts[k][bidxt][2]);
                 if (body_idx_tar != body_idx_src)
                 {
-                    const FBody &body_src = bodies_all_[body_idx_src];
-                    PairListEntrySrcFlags entry_src;
-                    entry_src.set_src_flags(1, 1, 1);
-                    entry_src.set_scw_flags(1, 1, 1);
-                    PairListEntryTargetFlags entry_tar;
-                    entry_tar.set_tar_flags(bxyz_ts[k][bidxt][0], bxyz_ts[k][bidxt][1], bxyz_ts[k][bidxt][2]);
-                    entry_tar.set_trw_flags(is_within_ts[k][bidxt][0], is_within_ts[k][bidxt][1], is_within_ts[k][bidxt][2]);
+                    PairListEntrySrcFlags entry_src(true, true, true, true, true, true);
 
-                    auto &outer_map = pair_list_aux[body_idx_tar];
-                    auto it_src = outer_map.find(body_idx_src);
-                    if (it_src != outer_map.end())
+                    auto &entry_map = pair_list_aux[body_idx_tar][body_idx_src];
+                    PairListEntryTargetFlags *entry_ref = entry_map.find(entry_src);
+                    if (entry_ref)
                     {
-                        auto &inner_map = it_src->second;
-                        auto it_entry = inner_map.find(entry_src);
-                        if (it_entry != inner_map.end())
-                        {
-                            PairListEntryTargetFlags entry_tar_pre = it_entry->second;
-                            entry_tar.bx_tar = entry_tar_pre.bx_tar || (entry_tar.tx_within ^ entry_tar_pre.tx_within);
-                            entry_tar.by_tar = entry_tar_pre.by_tar || (entry_tar.ty_within ^ entry_tar_pre.ty_within);
-                            entry_tar.bz_tar = entry_tar_pre.bz_tar || (entry_tar.tz_within ^ entry_tar_pre.tz_within);
-                            pair_list_aux[body_idx_tar][body_idx_src][entry_src] = entry_tar;
-                        }
-                        else
-                        {
-                            pair_list_aux[body_idx_tar][body_idx_src][entry_src] = entry_tar;
-                        }
+                        entry_ref->bx_tar |= (entry_tar.tx_within ^ entry_ref->tx_within);
+                        entry_ref->by_tar |= (entry_tar.ty_within ^ entry_ref->ty_within);
+                        entry_ref->bz_tar |= (entry_tar.tz_within ^ entry_ref->tz_within);
+                        entry_tar = *entry_ref;
                     }
-                    else
-                    {
-                        pair_list_aux[body_idx_tar][body_idx_src][entry_src] = entry_tar;
-                    }
+                    entry_map.insert(entry_src, entry_tar);
                 }
             }
             bidxt++;
@@ -192,6 +170,19 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                         const real dist_y = fabs(adj_cell.center[1] - cell.center[1]);
                         const real dist_z = fabs(adj_cell.center[2] - cell.center[2]);
 
+                        const bool is_distx_largest = dist_x >= dist_y && dist_x >= dist_z;
+                        const bool is_disty_largest = dist_y >= dist_x && dist_y >= dist_z;
+                        const bool is_distz_largest = dist_z >= dist_x && dist_z >= dist_y;
+
+                        const bool is_disx_gty = dist_x > dist_y;
+                        const bool is_disx_gtz = dist_x > dist_z;
+
+                        const bool is_disy_gtx = dist_y > dist_x;
+                        const bool is_disy_gtz = dist_y > dist_z;
+
+                        const bool is_disz_gtx = dist_z > dist_x;
+                        const bool is_disz_gty = dist_z > dist_y;
+
                         const real interaction_region_x = dist_x - adj_cell.radius;
                         const real interaction_region_y = dist_y - adj_cell.radius;
                         const real interaction_region_z = dist_z - adj_cell.radius;
@@ -206,9 +197,13 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                         bidxt = 0;
                         for (const int &body_idx_tar : bodiesIndicesReg[k])
                         {
+
                             for (const int &body_idx_src : adj_cell.bodiesIndices)
                             {
                                 const FBody &body_src = bodies_all_[body_idx_src];
+                                PairListEntryTargetFlags entry_tar(bxyz_ts[k][bidxt][0], bxyz_ts[k][bidxt][1], bxyz_ts[k][bidxt][2], is_within_ts[k][bidxt][0],
+                                                                   is_within_ts[k][bidxt][1], is_within_ts[k][bidxt][2]);
+
                                 const RVec ws = w_per_atom[body_idx_src];
                                 const bool bx = (ws[0] == 1) || (fabs(body_src.x[0] - cell.center[0]) + fmm_weights_eval_.getRegAlpha() <= region_of_tcell);
                                 const bool by = (ws[1] == 1) || (fabs(body_src.x[1] - cell.center[1]) + fmm_weights_eval_.getRegAlpha() <= region_of_tcell);
@@ -226,319 +221,42 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                 {
                                     if (body_idx_tar != body_idx_src)
                                     {
-                                        PairListEntrySrcFlags entry_src;
-                                        entry_src.set_src_flags(bx, by, bz);
-                                        entry_src.set_scw_flags(1, 1, 1);
-                                        PairListEntryTargetFlags entry_tar;
-                                        entry_tar.set_tar_flags(bxyz_ts[k][bidxt][0], bxyz_ts[k][bidxt][1], bxyz_ts[k][bidxt][2]);
-                                        entry_tar.set_trw_flags(is_within_ts[k][bidxt][0], is_within_ts[k][bidxt][1], is_within_ts[k][bidxt][2]);
-
+                                        PairListEntrySrcFlags entry_src(bx, by, bz, true, true, true);
                                         auto &entry_map = pair_list_aux[body_idx_tar][body_idx_src];
-                                        auto it_entry = entry_map.find(entry_src);
-                                        if (it_entry != entry_map.end())
+                                        PairListEntryTargetFlags *entry_ref = entry_map.find(entry_src);
+                                        if (entry_ref)
                                         {
-                                            PairListEntryTargetFlags &entry_tar_pre = it_entry->second;
-
-                                            entry_tar.bx_tar = entry_tar_pre.bx_tar || (entry_tar.tx_within ^ entry_tar_pre.tx_within);
-                                            entry_tar.by_tar = entry_tar_pre.by_tar || (entry_tar.ty_within ^ entry_tar_pre.ty_within);
-                                            entry_tar.bz_tar = entry_tar_pre.bz_tar || (entry_tar.tz_within ^ entry_tar_pre.tz_within);
-
-                                            it_entry->second = entry_tar;
+                                            entry_ref->bx_tar |= (entry_tar.tx_within ^ entry_ref->tx_within);
+                                            entry_ref->by_tar |= (entry_tar.ty_within ^ entry_ref->ty_within);
+                                            entry_ref->bz_tar |= (entry_tar.tz_within ^ entry_ref->tz_within);
+                                            entry_tar = *entry_ref;
                                         }
-                                        else
-                                        {
-                                            entry_map[entry_src] = entry_tar;
-                                        }
+                                        entry_map.insert(entry_src, entry_tar);
                                     }
                                 }
                                 else if (num_away == 2)
                                 {
-                                    if (dist_x > dist_y && dist_x > dist_z)
+
+                                    const bool sx_within = !(is_distx_largest && dist_x_bd_in_region);
+                                    const bool sy_within = !(is_disty_largest && dist_y_bd_in_region);
+                                    const bool sz_within = !(is_distz_largest && dist_z_bd_in_region);
+                                    const bool is_valid_interaction =
+                                        !((is_distx_largest && !dist_x_bd_in_region) || (is_disty_largest && !dist_y_bd_in_region) || (is_distz_largest && !dist_z_bd_in_region));
+
+                                    if (is_valid_interaction && (!sx_within || !sy_within || !sz_within))
                                     {
-                                        if (dist_x_bd_in_region)
-                                        {
-                                            PairListEntrySrcFlags entry_src;
-                                            entry_src.set_src_flags(bx, by, bz);
-                                            entry_src.set_scw_flags(0, 1, 1);
-                                            PairListEntryTargetFlags entry_tar;
-                                            entry_tar.set_tar_flags(bxyz_ts[k][bidxt][0], bxyz_ts[k][bidxt][1], bxyz_ts[k][bidxt][2]);
-                                            entry_tar.set_trw_flags(is_within_ts[k][bidxt][0], is_within_ts[k][bidxt][1], is_within_ts[k][bidxt][2]);
-
-                                            auto &entry_map = pair_list_aux[body_idx_tar][body_idx_src];
-                                            auto it_entry = entry_map.find(entry_src);
-                                            if (it_entry != entry_map.end())
-                                            {
-                                                PairListEntryTargetFlags &entry_tar_pre = it_entry->second;
-
-                                                entry_tar.bx_tar = entry_tar_pre.bx_tar || (entry_tar.tx_within ^ entry_tar_pre.tx_within);
-                                                entry_tar.by_tar = entry_tar_pre.by_tar || (entry_tar.ty_within ^ entry_tar_pre.ty_within);
-                                                entry_tar.bz_tar = entry_tar_pre.bz_tar || (entry_tar.tz_within ^ entry_tar_pre.tz_within);
-
-                                                it_entry->second = entry_tar;
-                                            }
-                                            else
-                                            {
-                                                entry_map[entry_src] = entry_tar;
-                                            }
-                                        }
-                                    }
-                                    else if (dist_y > dist_x && dist_y > dist_z)
-                                    {
-                                        if (dist_y_bd_in_region)
-                                        {
-                                            PairListEntrySrcFlags entry_src;
-                                            entry_src.set_src_flags(bx, by, bz);
-                                            entry_src.set_scw_flags(1, 0, 1);
-                                            PairListEntryTargetFlags entry_tar;
-                                            entry_tar.set_tar_flags(bxyz_ts[k][bidxt][0], bxyz_ts[k][bidxt][1], bxyz_ts[k][bidxt][2]);
-                                            entry_tar.set_trw_flags(is_within_ts[k][bidxt][0], is_within_ts[k][bidxt][1], is_within_ts[k][bidxt][2]);
-
-                                            auto &entry_map = pair_list_aux[body_idx_tar][body_idx_src];
-                                            auto it_entry = entry_map.find(entry_src);
-                                            if (it_entry != entry_map.end())
-                                            {
-                                                PairListEntryTargetFlags &entry_tar_pre = it_entry->second;
-
-                                                entry_tar.bx_tar = entry_tar_pre.bx_tar || (entry_tar.tx_within ^ entry_tar_pre.tx_within);
-                                                entry_tar.by_tar = entry_tar_pre.by_tar || (entry_tar.ty_within ^ entry_tar_pre.ty_within);
-                                                entry_tar.bz_tar = entry_tar_pre.bz_tar || (entry_tar.tz_within ^ entry_tar_pre.tz_within);
-
-                                                it_entry->second = entry_tar;
-                                            }
-                                            else
-                                            {
-                                                entry_map[entry_src] = entry_tar;
-                                            }
-                                        }
-                                    }
-                                    else if (dist_z > dist_x && dist_z > dist_y)
-                                    {
-                                        if (dist_z_bd_in_region)
-                                        {
-                                            PairListEntrySrcFlags entry_src;
-                                            entry_src.set_src_flags(bx, by, bz);
-                                            entry_src.set_scw_flags(1, 1, 0);
-                                            PairListEntryTargetFlags entry_tar;
-                                            entry_tar.set_tar_flags(bxyz_ts[k][bidxt][0], bxyz_ts[k][bidxt][1], bxyz_ts[k][bidxt][2]);
-                                            entry_tar.set_trw_flags(is_within_ts[k][bidxt][0], is_within_ts[k][bidxt][1], is_within_ts[k][bidxt][2]);
-
-                                            auto &entry_map = pair_list_aux[body_idx_tar][body_idx_src];
-                                            auto it_entry = entry_map.find(entry_src);
-                                            if (it_entry != entry_map.end())
-                                            {
-                                                PairListEntryTargetFlags &entry_tar_pre = it_entry->second;
-
-                                                entry_tar.bx_tar = entry_tar_pre.bx_tar || (entry_tar.tx_within ^ entry_tar_pre.tx_within);
-                                                entry_tar.by_tar = entry_tar_pre.by_tar || (entry_tar.ty_within ^ entry_tar_pre.ty_within);
-                                                entry_tar.bz_tar = entry_tar_pre.bz_tar || (entry_tar.tz_within ^ entry_tar_pre.tz_within);
-
-                                                it_entry->second = entry_tar;
-                                            }
-                                            else
-                                            {
-                                                entry_map[entry_src] = entry_tar;
-                                            }
-                                        }
-                                    }
-                                    else if (dist_z > dist_x && dist_z == dist_y)
-                                    {
-                                        if (dist_y_bd_in_region && dist_z_bd_in_region)
-                                        {
-                                            PairListEntrySrcFlags entry_src;
-                                            entry_src.set_src_flags(bx, by, bz);
-                                            entry_src.set_scw_flags(1, 0, 0);
-                                            PairListEntryTargetFlags entry_tar;
-                                            entry_tar.set_tar_flags(bxyz_ts[k][bidxt][0], bxyz_ts[k][bidxt][1], bxyz_ts[k][bidxt][2]);
-                                            entry_tar.set_trw_flags(is_within_ts[k][bidxt][0], is_within_ts[k][bidxt][1], is_within_ts[k][bidxt][2]);
-
-                                            auto &entry_map = pair_list_aux[body_idx_tar][body_idx_src];
-                                            auto it_entry = entry_map.find(entry_src);
-                                            if (it_entry != entry_map.end())
-                                            {
-                                                PairListEntryTargetFlags &entry_tar_pre = it_entry->second;
-
-                                                entry_tar.bx_tar = entry_tar_pre.bx_tar || (entry_tar.tx_within ^ entry_tar_pre.tx_within);
-                                                entry_tar.by_tar = entry_tar_pre.by_tar || (entry_tar.ty_within ^ entry_tar_pre.ty_within);
-                                                entry_tar.bz_tar = entry_tar_pre.bz_tar || (entry_tar.tz_within ^ entry_tar_pre.tz_within);
-
-                                                it_entry->second = entry_tar;
-                                            }
-                                            else
-                                            {
-                                                entry_map[entry_src] = entry_tar;
-                                            }
-                                        }
-                                    }
-                                    else if (dist_z > dist_y && dist_z == dist_x)
-                                    {
-                                        if (dist_x_bd_in_region && dist_z_bd_in_region)
-                                        {
-                                            PairListEntrySrcFlags entry_src;
-                                            entry_src.set_src_flags(bx, by, bz);
-                                            entry_src.set_scw_flags(0, 1, 0);
-                                            PairListEntryTargetFlags entry_tar;
-                                            entry_tar.set_tar_flags(bxyz_ts[k][bidxt][0], bxyz_ts[k][bidxt][1], bxyz_ts[k][bidxt][2]);
-                                            entry_tar.set_trw_flags(is_within_ts[k][bidxt][0], is_within_ts[k][bidxt][1], is_within_ts[k][bidxt][2]);
-
-                                            auto &entry_map = pair_list_aux[body_idx_tar][body_idx_src];
-                                            auto it_entry = entry_map.find(entry_src);
-                                            if (it_entry != entry_map.end())
-                                            {
-                                                PairListEntryTargetFlags &entry_tar_pre = it_entry->second;
-
-                                                entry_tar.bx_tar = entry_tar_pre.bx_tar || (entry_tar.tx_within ^ entry_tar_pre.tx_within);
-                                                entry_tar.by_tar = entry_tar_pre.by_tar || (entry_tar.ty_within ^ entry_tar_pre.ty_within);
-                                                entry_tar.bz_tar = entry_tar_pre.bz_tar || (entry_tar.tz_within ^ entry_tar_pre.tz_within);
-
-                                                it_entry->second = entry_tar;
-                                            }
-                                            else
-                                            {
-                                                entry_map[entry_src] = entry_tar;
-                                            }
-                                        }
-                                    }
-                                    else if (dist_x > dist_z && dist_x == dist_y)
-                                    {
-                                        if (dist_x_bd_in_region && dist_y_bd_in_region)
-                                        {
-                                            PairListEntrySrcFlags entry_src;
-                                            entry_src.set_src_flags(bx, by, bz);
-                                            entry_src.set_scw_flags(0, 0, 1);
-                                            PairListEntryTargetFlags entry_tar;
-                                            entry_tar.set_tar_flags(bxyz_ts[k][bidxt][0], bxyz_ts[k][bidxt][1], bxyz_ts[k][bidxt][2]);
-                                            entry_tar.set_trw_flags(is_within_ts[k][bidxt][0], is_within_ts[k][bidxt][1], is_within_ts[k][bidxt][2]);
-
-                                            auto &entry_map = pair_list_aux[body_idx_tar][body_idx_src];
-                                            auto it_entry = entry_map.find(entry_src);
-                                            if (it_entry != entry_map.end())
-                                            {
-                                                PairListEntryTargetFlags &entry_tar_pre = it_entry->second;
-
-                                                entry_tar.bx_tar = entry_tar_pre.bx_tar || (entry_tar.tx_within ^ entry_tar_pre.tx_within);
-                                                entry_tar.by_tar = entry_tar_pre.by_tar || (entry_tar.ty_within ^ entry_tar_pre.ty_within);
-                                                entry_tar.bz_tar = entry_tar_pre.bz_tar || (entry_tar.tz_within ^ entry_tar_pre.tz_within);
-
-                                                it_entry->second = entry_tar;
-                                            }
-                                            else
-                                            {
-                                                entry_map[entry_src] = entry_tar;
-                                            }
-                                        }
-                                    }
-                                    else if (dist_x > dist_y && dist_x == dist_z)
-                                    {
-                                        if (dist_x_bd_in_region && dist_z_bd_in_region)
-                                        {
-                                            PairListEntrySrcFlags entry_src;
-                                            entry_src.set_src_flags(bx, by, bz);
-                                            entry_src.set_scw_flags(0, 1, 0);
-                                            PairListEntryTargetFlags entry_tar;
-                                            entry_tar.set_tar_flags(bxyz_ts[k][bidxt][0], bxyz_ts[k][bidxt][1], bxyz_ts[k][bidxt][2]);
-                                            entry_tar.set_trw_flags(is_within_ts[k][bidxt][0], is_within_ts[k][bidxt][1], is_within_ts[k][bidxt][2]);
-
-                                            auto &entry_map = pair_list_aux[body_idx_tar][body_idx_src];
-                                            auto it_entry = entry_map.find(entry_src);
-                                            if (it_entry != entry_map.end())
-                                            {
-                                                PairListEntryTargetFlags &entry_tar_pre = it_entry->second;
-
-                                                entry_tar.bx_tar = entry_tar_pre.bx_tar || (entry_tar.tx_within ^ entry_tar_pre.tx_within);
-                                                entry_tar.by_tar = entry_tar_pre.by_tar || (entry_tar.ty_within ^ entry_tar_pre.ty_within);
-                                                entry_tar.bz_tar = entry_tar_pre.bz_tar || (entry_tar.tz_within ^ entry_tar_pre.tz_within);
-
-                                                it_entry->second = entry_tar;
-                                            }
-                                            else
-                                            {
-                                                entry_map[entry_src] = entry_tar;
-                                            }
-                                        }
-                                    }
-                                    else if (dist_y > dist_x && dist_y == dist_z)
-                                    {
-                                        if (dist_z_bd_in_region && dist_y_bd_in_region)
-                                        {
-                                            PairListEntrySrcFlags entry_src;
-                                            entry_src.set_src_flags(bx, by, bz);
-                                            entry_src.set_scw_flags(1, 0, 0);
-                                            PairListEntryTargetFlags entry_tar;
-                                            entry_tar.set_tar_flags(bxyz_ts[k][bidxt][0], bxyz_ts[k][bidxt][1], bxyz_ts[k][bidxt][2]);
-                                            entry_tar.set_trw_flags(is_within_ts[k][bidxt][0], is_within_ts[k][bidxt][1], is_within_ts[k][bidxt][2]);
-
-                                            auto &entry_map = pair_list_aux[body_idx_tar][body_idx_src];
-                                            auto it_entry = entry_map.find(entry_src);
-                                            if (it_entry != entry_map.end())
-                                            {
-                                                PairListEntryTargetFlags &entry_tar_pre = it_entry->second;
-
-                                                entry_tar.bx_tar = entry_tar_pre.bx_tar || (entry_tar.tx_within ^ entry_tar_pre.tx_within);
-                                                entry_tar.by_tar = entry_tar_pre.by_tar || (entry_tar.ty_within ^ entry_tar_pre.ty_within);
-                                                entry_tar.bz_tar = entry_tar_pre.bz_tar || (entry_tar.tz_within ^ entry_tar_pre.tz_within);
-
-                                                it_entry->second = entry_tar;
-                                            }
-                                            else
-                                            {
-                                                entry_map[entry_src] = entry_tar;
-                                            }
-                                        }
-                                    }
-                                    else if (dist_y > dist_z && dist_y == dist_x)
-                                    {
-                                        if (dist_x_bd_in_region && dist_y_bd_in_region)
-                                        {
-                                            PairListEntrySrcFlags entry_src;
-                                            entry_src.set_src_flags(bx, by, bz);
-                                            entry_src.set_scw_flags(0, 0, 1);
-                                            PairListEntryTargetFlags entry_tar;
-                                            entry_tar.set_tar_flags(bxyz_ts[k][bidxt][0], bxyz_ts[k][bidxt][1], bxyz_ts[k][bidxt][2]);
-                                            entry_tar.set_trw_flags(is_within_ts[k][bidxt][0], is_within_ts[k][bidxt][1], is_within_ts[k][bidxt][2]);
-
-                                            auto &entry_map = pair_list_aux[body_idx_tar][body_idx_src];
-                                            auto it_entry = entry_map.find(entry_src);
-                                            if (it_entry != entry_map.end())
-                                            {
-                                                PairListEntryTargetFlags &entry_tar_pre = it_entry->second;
-
-                                                entry_tar.bx_tar = entry_tar_pre.bx_tar || (entry_tar.tx_within ^ entry_tar_pre.tx_within);
-                                                entry_tar.by_tar = entry_tar_pre.by_tar || (entry_tar.ty_within ^ entry_tar_pre.ty_within);
-                                                entry_tar.bz_tar = entry_tar_pre.bz_tar || (entry_tar.tz_within ^ entry_tar_pre.tz_within);
-
-                                                it_entry->second = entry_tar;
-                                            }
-                                            else
-                                            {
-                                                entry_map[entry_src] = entry_tar;
-                                            }
-                                        }
-                                    }
-                                    else if (dist_x_bd_in_region && dist_y_bd_in_region && dist_z_bd_in_region)
-                                    {
-                                        PairListEntrySrcFlags entry_src;
-                                        entry_src.set_src_flags(bx, by, bz);
-                                        entry_src.set_scw_flags(0, 0, 0);
-                                        PairListEntryTargetFlags entry_tar;
-                                        entry_tar.set_tar_flags(bxyz_ts[k][bidxt][0], bxyz_ts[k][bidxt][1], bxyz_ts[k][bidxt][2]);
-                                        entry_tar.set_trw_flags(is_within_ts[k][bidxt][0], is_within_ts[k][bidxt][1], is_within_ts[k][bidxt][2]);
+                                        PairListEntrySrcFlags entry_src(bx, by, bz, sx_within, sy_within, sz_within);
 
                                         auto &entry_map = pair_list_aux[body_idx_tar][body_idx_src];
-                                        auto it_entry = entry_map.find(entry_src);
-                                        if (it_entry != entry_map.end())
+                                        PairListEntryTargetFlags *entry_ref = entry_map.find(entry_src);
+                                        if (entry_ref)
                                         {
-                                            PairListEntryTargetFlags &entry_tar_pre = it_entry->second;
-
-                                            entry_tar.bx_tar = entry_tar_pre.bx_tar || (entry_tar.tx_within ^ entry_tar_pre.tx_within);
-                                            entry_tar.by_tar = entry_tar_pre.by_tar || (entry_tar.ty_within ^ entry_tar_pre.ty_within);
-                                            entry_tar.bz_tar = entry_tar_pre.bz_tar || (entry_tar.tz_within ^ entry_tar_pre.tz_within);
-
-                                            it_entry->second = entry_tar;
+                                            entry_ref->bx_tar |= (entry_tar.tx_within ^ entry_ref->tx_within);
+                                            entry_ref->by_tar |= (entry_tar.ty_within ^ entry_ref->ty_within);
+                                            entry_ref->bz_tar |= (entry_tar.tz_within ^ entry_ref->tz_within);
+                                            entry_tar = *entry_ref;
                                         }
-                                        else
-                                        {
-                                            entry_map[entry_src] = entry_tar;
-                                        }
+                                        entry_map.insert(entry_src, entry_tar);
                                     }
                                 }
                             }
@@ -550,13 +268,11 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
         }
     }
 
-    pair_list.resize(bodies_all_.size()); // Ensure correct size before indexing
-
     for (size_t i = 0; i < bodies_all_.size(); i++)
     {
-        for (const auto &[body_idx_src, pairListMap] : pair_list_aux[i]) // Structured binding (C++17)
+        for (const auto &[body_idx_src, pairListMap] : pair_list_aux[i])
         {
-            for (const auto &[srcFlags, tarFlags] : pairListMap) // Iterate over PairListMap
+            for (const auto &[srcFlags, tarFlags] : pairListMap)
             {
                 pair_list[i].emplace_back(body_idx_src, srcFlags.bx_src, srcFlags.by_src, srcFlags.bz_src, srcFlags.sx_within, srcFlags.sy_within, srcFlags.sz_within,
                                           tarFlags.bx_tar, tarFlags.by_tar, tarFlags.bz_tar, tarFlags.tx_within, tarFlags.ty_within, tarFlags.tz_within);
