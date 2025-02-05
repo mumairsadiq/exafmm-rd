@@ -2,12 +2,6 @@ cmake_minimum_required(VERSION 3.20)
 
 message("configure src")
 
-# find_package(BLAS REQUIRED)
-# message(STATUS BLAS found: ${BLAS_LIBRARIES})
-
-# find_package(LAPACK REQUIRED)
-# message(STATUS LAPACK found: ${LAPACK_LIBRARIES})
-
 # Find the CUDA toolkit
 find_package(CUDAToolkit REQUIRED)
 

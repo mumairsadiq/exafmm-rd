@@ -23,6 +23,7 @@ bool gmx::fmm::FMMDirectInteractions::is_point_within_radius(const RVec &point1,
 void gmx::fmm::FMMDirectInteractions::compute_weights_()
 {
     TIME_BEGIN(compute_weights_func);
+    const real reg_alpha = fmm_weights_eval_.getRegAlpha();
 
     pair_list.clear();
     pair_list.resize(bodies_all_.size());
@@ -37,8 +38,7 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
     std::vector<bool> is_reg_body(bodies_all_.size(), false);
 
     std::vector<FPIndices> bodiesIndicesReg(fmm_cells.size());
-    std::vector<std::vector<BVec>> bxyz_ts(fmm_cells.size());
-    std::vector<std::vector<BVec>> is_within_ts(fmm_cells.size());
+    std::vector<std::vector<WeightFlags>> w_flags(fmm_cells.size());
     for (size_t k = 0; k < fmm_cells.size(); k++)
     {
         const FMMCell &cell = fmm_cells[k];
@@ -58,8 +58,7 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
             const bool is_y_fully_in = ws[1] == 1;
             const bool is_z_fully_in = ws[2] == 1;
             bodiesIndicesReg[k].push_back(body_idx);
-            bxyz_ts[k].push_back({is_x_fully_in, is_y_fully_in, is_z_fully_in});
-            is_within_ts[k].push_back({1, 1, 1});
+            w_flags[k].emplace_back(is_x_fully_in, is_y_fully_in, is_z_fully_in, 1, 1, 1);
         }
     }
 
@@ -99,14 +98,13 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                             const real dist_y = fabs(dx[1]);
                             const real dist_z = fabs(dx[2]);
 
-                            const bool is_dist_x_in_range = dist_x <= cell.radius + fmm_weights_eval_.getRegAlpha();
-                            const bool is_dist_y_in_range = dist_y <= cell.radius + fmm_weights_eval_.getRegAlpha();
-                            const bool is_dist_z_in_range = dist_z <= cell.radius + fmm_weights_eval_.getRegAlpha();
+                            const bool is_dist_x_in_range = dist_x <= cell.radius + reg_alpha;
+                            const bool is_dist_y_in_range = dist_y <= cell.radius + reg_alpha;
+                            const bool is_dist_z_in_range = dist_z <= cell.radius + reg_alpha;
                             if (is_dist_x_in_range && is_dist_y_in_range && is_dist_z_in_range)
                             {
                                 bodiesIndicesReg[k].push_back(body_idx);
-                                bxyz_ts[k].push_back({is_x_fully_in, is_y_fully_in, is_z_fully_in});
-                                is_within_ts[k].push_back({dist_x <= cell.radius, dist_y <= cell.radius, dist_z <= cell.radius});
+                                w_flags[k].emplace_back(is_x_fully_in, is_y_fully_in, is_z_fully_in, dist_x <= cell.radius, dist_y <= cell.radius, dist_z <= cell.radius);
                             }
                         }
                     }
@@ -119,25 +117,27 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
     {
         const FMMCell &cell = fmm_cells[k];
         const real region_of_tcell = cell.radius * 3;
+        const real red_region_tcell = region_of_tcell - reg_alpha;
+        const real width_of_tcell = cell.radius * 2;
         size_t bidxt = 0;
         for (const int &body_idx_tar : bodiesIndicesReg[k])
         {
+            const WeightFlags entry_tar_btar(w_flags[k][bidxt].bx, w_flags[k][bidxt].by, w_flags[k][bidxt].bz, w_flags[k][bidxt].x_in, w_flags[k][bidxt].y_in, w_flags[k][bidxt].z_in);
             for (const int body_idx_src : cell.bodiesIndices)
             {
-                PairListEntryTargetFlags entry_tar(bxyz_ts[k][bidxt][0], bxyz_ts[k][bidxt][1], bxyz_ts[k][bidxt][2], is_within_ts[k][bidxt][0], is_within_ts[k][bidxt][1],
-                                                   is_within_ts[k][bidxt][2]);
+                WeightFlags entry_tar = entry_tar_btar;                                    
                 if (body_idx_tar != body_idx_src)
                 {
-                    PairListEntrySrcFlags entry_src(true, true, true, true, true, true);
+                    WeightFlags entry_src(true, true, true, true, true, true);
 
                     auto &entry_map = pair_list_aux[body_idx_tar][body_idx_src];
-                    PairListEntryTargetFlags *entry_ref = entry_map.find(entry_src);
-                    if (entry_ref)
+                    WeightFlags *entry_pre = entry_map.find(entry_src);
+                    if (entry_pre)
                     {
-                        entry_ref->bx_tar |= (entry_tar.tx_within ^ entry_ref->tx_within);
-                        entry_ref->by_tar |= (entry_tar.ty_within ^ entry_ref->ty_within);
-                        entry_ref->bz_tar |= (entry_tar.tz_within ^ entry_ref->tz_within);
-                        entry_tar = *entry_ref;
+                        entry_pre->bx |= (entry_tar.x_in ^ entry_pre->x_in);
+                        entry_pre->by |= (entry_tar.y_in ^ entry_pre->y_in);
+                        entry_pre->bz |= (entry_tar.z_in ^ entry_pre->z_in);
+                        entry_tar = *entry_pre;
                     }
                     entry_map.insert(entry_src, entry_tar);
                 }
@@ -145,7 +145,7 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
             bidxt++;
         }
 
-        const real width_of_tcell = cell.radius * 2;
+        
 
         for (int dz = -2; dz <= 2; dz++)
         {
@@ -165,6 +165,7 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                     if (adj_cell_idx != -1)
                     {
                         const FMMCell &adj_cell = fmm_cells[adj_cell_idx];
+                        
 
                         const real dist_x = fabs(adj_cell.center[0] - cell.center[0]);
                         const real dist_y = fabs(adj_cell.center[1] - cell.center[1]);
@@ -174,18 +175,13 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                         const bool is_disty_largest = dist_y >= dist_x && dist_y >= dist_z;
                         const bool is_distz_largest = dist_z >= dist_x && dist_z >= dist_y;
 
-                        const bool is_disx_gty = dist_x > dist_y;
-                        const bool is_disx_gtz = dist_x > dist_z;
-
-                        const bool is_disy_gtx = dist_y > dist_x;
-                        const bool is_disy_gtz = dist_y > dist_z;
-
-                        const bool is_disz_gtx = dist_z > dist_x;
-                        const bool is_disz_gty = dist_z > dist_y;
-
                         const real interaction_region_x = dist_x - adj_cell.radius;
                         const real interaction_region_y = dist_y - adj_cell.radius;
                         const real interaction_region_z = dist_z - adj_cell.radius;
+
+                        const real ext_regionx_scell = interaction_region_x + reg_alpha;
+                        const real ext_regiony_scell = interaction_region_y + reg_alpha;
+                        const real ext_regionz_scell = interaction_region_z + reg_alpha;
 
                         short num_away = 1; // Default to "one away"
 
@@ -197,39 +193,40 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                         bidxt = 0;
                         for (const int &body_idx_tar : bodiesIndicesReg[k])
                         {
-
+                            const WeightFlags entry_tar_btar(w_flags[k][bidxt].bx, w_flags[k][bidxt].by, w_flags[k][bidxt].bz, w_flags[k][bidxt].x_in, w_flags[k][bidxt].y_in, w_flags[k][bidxt].z_in);
                             for (const int &body_idx_src : adj_cell.bodiesIndices)
                             {
+                                WeightFlags entry_tar = entry_tar_btar;
                                 const FBody &body_src = bodies_all_[body_idx_src];
-                                PairListEntryTargetFlags entry_tar(bxyz_ts[k][bidxt][0], bxyz_ts[k][bidxt][1], bxyz_ts[k][bidxt][2], is_within_ts[k][bidxt][0],
-                                                                   is_within_ts[k][bidxt][1], is_within_ts[k][bidxt][2]);
-
+                                
                                 const RVec ws = w_per_atom[body_idx_src];
-                                const bool bx = (ws[0] == 1) || (fabs(body_src.x[0] - cell.center[0]) + fmm_weights_eval_.getRegAlpha() <= region_of_tcell);
-                                const bool by = (ws[1] == 1) || (fabs(body_src.x[1] - cell.center[1]) + fmm_weights_eval_.getRegAlpha() <= region_of_tcell);
-                                const bool bz = (ws[2] == 1) || (fabs(body_src.x[2] - cell.center[2]) + fmm_weights_eval_.getRegAlpha() <= region_of_tcell);
 
                                 const real dist_x_bd = fabs(body_src.x[0] - cell.center[0]);
-                                const real dist_z_bd = fabs(body_src.x[2] - cell.center[2]);
                                 const real dist_y_bd = fabs(body_src.x[1] - cell.center[1]);
+                                const real dist_z_bd = fabs(body_src.x[2] - cell.center[2]);
+                                
+                                
+                                const bool bx = (ws[0] == 1) || (dist_x_bd <= red_region_tcell);
+                                const bool by = (ws[1] == 1) || (dist_y_bd <= red_region_tcell);
+                                const bool bz = (ws[2] == 1) || (dist_z_bd <= red_region_tcell);
 
-                                const bool dist_x_bd_in_region = dist_x_bd <= interaction_region_x + fmm_weights_eval_.getRegAlpha();
-                                const bool dist_y_bd_in_region = dist_y_bd <= interaction_region_y + fmm_weights_eval_.getRegAlpha();
-                                const bool dist_z_bd_in_region = dist_z_bd <= interaction_region_z + fmm_weights_eval_.getRegAlpha();
+                                const bool dist_x_bd_in_region = dist_x_bd <= ext_regionx_scell;
+                                const bool dist_y_bd_in_region = dist_y_bd <= ext_regiony_scell;
+                                const bool dist_z_bd_in_region = dist_z_bd <= ext_regionz_scell;
 
                                 if (num_away == 1)
                                 {
                                     if (body_idx_tar != body_idx_src)
                                     {
-                                        PairListEntrySrcFlags entry_src(bx, by, bz, true, true, true);
+                                        WeightFlags entry_src(bx, by, bz, true, true, true);
                                         auto &entry_map = pair_list_aux[body_idx_tar][body_idx_src];
-                                        PairListEntryTargetFlags *entry_ref = entry_map.find(entry_src);
-                                        if (entry_ref)
+                                        WeightFlags *entry_pre = entry_map.find(entry_src);
+                                        if (entry_pre)
                                         {
-                                            entry_ref->bx_tar |= (entry_tar.tx_within ^ entry_ref->tx_within);
-                                            entry_ref->by_tar |= (entry_tar.ty_within ^ entry_ref->ty_within);
-                                            entry_ref->bz_tar |= (entry_tar.tz_within ^ entry_ref->tz_within);
-                                            entry_tar = *entry_ref;
+                                            entry_pre->bx |= (entry_tar.x_in ^ entry_pre->x_in);
+                                            entry_pre->by |= (entry_tar.y_in ^ entry_pre->y_in);
+                                            entry_pre->bz |= (entry_tar.z_in ^ entry_pre->z_in);
+                                            entry_tar = *entry_pre;
                                         }
                                         entry_map.insert(entry_src, entry_tar);
                                     }
@@ -245,16 +242,16 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
 
                                     if (is_valid_interaction && (!sx_within || !sy_within || !sz_within))
                                     {
-                                        PairListEntrySrcFlags entry_src(bx, by, bz, sx_within, sy_within, sz_within);
+                                        WeightFlags entry_src(bx, by, bz, sx_within, sy_within, sz_within);
 
                                         auto &entry_map = pair_list_aux[body_idx_tar][body_idx_src];
-                                        PairListEntryTargetFlags *entry_ref = entry_map.find(entry_src);
-                                        if (entry_ref)
+                                        WeightFlags *entry_pre = entry_map.find(entry_src);
+                                        if (entry_pre)
                                         {
-                                            entry_ref->bx_tar |= (entry_tar.tx_within ^ entry_ref->tx_within);
-                                            entry_ref->by_tar |= (entry_tar.ty_within ^ entry_ref->ty_within);
-                                            entry_ref->bz_tar |= (entry_tar.tz_within ^ entry_ref->tz_within);
-                                            entry_tar = *entry_ref;
+                                            entry_pre->bx |= (entry_tar.x_in ^ entry_pre->x_in);
+                                            entry_pre->by |= (entry_tar.y_in ^ entry_pre->y_in);
+                                            entry_pre->bz |= (entry_tar.z_in ^ entry_pre->z_in);
+                                            entry_tar = *entry_pre;
                                         }
                                         entry_map.insert(entry_src, entry_tar);
                                     }
@@ -274,8 +271,8 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
         {
             for (const auto &[srcFlags, tarFlags] : pairListMap)
             {
-                pair_list[i].emplace_back(body_idx_src, srcFlags.bx_src, srcFlags.by_src, srcFlags.bz_src, srcFlags.sx_within, srcFlags.sy_within, srcFlags.sz_within,
-                                          tarFlags.bx_tar, tarFlags.by_tar, tarFlags.bz_tar, tarFlags.tx_within, tarFlags.ty_within, tarFlags.tz_within);
+                pair_list[i].emplace_back(body_idx_src, srcFlags.bx, srcFlags.by, srcFlags.bz, srcFlags.x_in, srcFlags.y_in, srcFlags.z_in,
+                                          tarFlags.bx, tarFlags.by, tarFlags.bz, tarFlags.x_in, tarFlags.y_in, tarFlags.z_in);
             }
         }
     }

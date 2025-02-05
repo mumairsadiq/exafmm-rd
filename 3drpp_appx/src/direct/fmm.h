@@ -13,101 +13,74 @@ namespace fmm
 {
 
 // Structure to hold source flags
-struct PairListEntrySrcFlags
+struct WeightFlags
 {
-    // Boolean flag to determine the source weights for each particle pair:
-    // - If bx_src, by_src, or bz_src is true, use a weight of 1.
-    // - Otherwise, the decision is based on sx_within, sy_within, or sz_within:
-    //   - If sx_within, sy_within, or sz_within is true, use weight w.
+    // Boolean flag to determine the weights for each particle pair:
+    // - If bx, by, or bz is true, use a weight of 1.
+    // - Otherwise, the decision is based on x_in, y_in, or z_in:
+    //   - If x_in, y_in, or z_in is true, use weight w.
     //   - If not, use weight (1 - w).
-    bool bx_src, by_src, bz_src;
+    bool bx, by, bz;
 
     // Boolean flag indicating whether the weight for a particle pair
     // should be taken within the source cell or outside it.
-    // Only valid if bx_src, by_src, or bz_src is false.
-    bool sx_within, sy_within, sz_within;
+    // Only valid if bx, by, or bz is false.
+    bool x_in, y_in, z_in;
 
     // Default constructor (sets all flags to true)
-    PairListEntrySrcFlags() : bx_src(true), by_src(true), bz_src(true), sx_within(true), sy_within(true), sz_within(true) {}
+    WeightFlags() : bx(true), by(true), bz(true), x_in(true), y_in(true), z_in(true) {}
 
     // Constructor with parameters
-    PairListEntrySrcFlags(bool x, bool y, bool z, bool sx, bool sy, bool sz) : bx_src(x), by_src(y), bz_src(z), sx_within(sx), sy_within(sy), sz_within(sz) {}
+    WeightFlags(bool bx, bool by, bool bz, bool x_in, bool y_in, bool z_in) : bx(bx), by(by), bz(bz), x_in(x_in), y_in(y_in), z_in(z_in) {}
 
     // Define equality operator for unordered_map key comparison
-    bool operator==(const PairListEntrySrcFlags &other) const
+    bool operator==(const WeightFlags &other) const
     {
-        return bx_src == other.bx_src && by_src == other.by_src && bz_src == other.bz_src && sx_within == other.sx_within && sy_within == other.sy_within &&
-               sz_within == other.sz_within;
+        return bx == other.bx && by == other.by && bz == other.bz && x_in == other.x_in && y_in == other.y_in &&
+               z_in == other.z_in;
     }
 };
 
-// Structure to hold target flags
-struct PairListEntryTargetFlags
-{
-    // Boolean flag to determine the target weights for each particle pair:
-    // - If bx_tar, by_tar, or bz_tar is true, use a weight of 1.
-    // - Otherwise, the decision is based on tx_within, ty_within, or tz_within:
-    //   - If tx_within, ty_within, or tz_within is true, use weight w.
-    //   - If not, use weight (1 - w).
-    bool bx_tar, by_tar, bz_tar;
-
-    // Boolean flag indicating whether the weight for a particle pair
-    // should be taken within the target cell or outside it.
-    // Only valid if bx_tar, by_tar, or bz_tar is false.
-    bool tx_within, ty_within, tz_within;
-
-    // Default constructor (sets all flags to true)
-    PairListEntryTargetFlags() : bx_tar(true), by_tar(true), bz_tar(true), tx_within(true), ty_within(true), tz_within(true) {}
-
-    // Constructor with parameters
-    PairListEntryTargetFlags(bool x, bool y, bool z, bool tx, bool ty, bool tz) : bx_tar(x), by_tar(y), bz_tar(z), tx_within(tx), ty_within(ty), tz_within(tz) {}
-};
-
-constexpr int MAX_ENTRIES_IN_FIXED_MAP = 8;
+constexpr int MAX_ENTRIES_IN_FIXED_MAP = 4;
 
 struct FixedPairListMap
 {
     struct Entry
     {
         int key = -1;
-        PairListEntrySrcFlags entry_src;
-        PairListEntryTargetFlags entry_tar;
+        WeightFlags wsrc_flgs;
+        WeightFlags wtar_flgs;
     };
 
     std::array<Entry, MAX_ENTRIES_IN_FIXED_MAP> data = {};
     int size = 0;
 
-    static constexpr int encode(const PairListEntrySrcFlags &entry)
+    static constexpr int encode(const WeightFlags &entry)
     {
-        return (entry.bx_src << 5) | (entry.by_src << 4) | (entry.bz_src << 3) | (entry.sx_within << 2) | (entry.sy_within << 1) | entry.sz_within;
+        return (entry.bx << 5) | (entry.by << 4) | (entry.bz << 3) | (entry.x_in << 2) | (entry.y_in << 1) | entry.z_in;
     }
 
-    PairListEntryTargetFlags *find(const PairListEntrySrcFlags &entry_src)
+    // return target flags for given source flags
+    WeightFlags*find(const WeightFlags &wsrc_flgs)
     {
-        int key = encode(entry_src);
+        int key = encode(wsrc_flgs);
         if (size > 0 && data[0].key == key)
-            return &data[0].entry_tar;
+            return &data[0].wtar_flgs;
         if (size > 1 && data[1].key == key)
-            return &data[1].entry_tar;
+            return &data[1].wtar_flgs;
         if (size > 2 && data[2].key == key)
-            return &data[2].entry_tar;
+            return &data[2].wtar_flgs;
         if (size > 3 && data[3].key == key)
-            return &data[3].entry_tar;
+            return &data[3].wtar_flgs;
         if (size > 4 && data[4].key == key)
-            return &data[4].entry_tar;
-        if (size > 5 && data[5].key == key)
-            return &data[5].entry_tar;
-        if (size > 6 && data[6].key == key)
-            return &data[6].entry_tar;
-        if (size > 7 && data[7].key == key)
-            return &data[7].entry_tar;
+            return &data[4].wtar_flgs;
         return nullptr;
     }
 
-    void insert(const PairListEntrySrcFlags &entry_src, const PairListEntryTargetFlags &entry_tar)
+    void insert(const WeightFlags &entry_src, const WeightFlags &entry_tar)
     {
         int key = encode(entry_src);
-        PairListEntryTargetFlags *existing = find(entry_src);
+        WeightFlags *existing = find(entry_src);
         if (existing)
         {
             *existing = entry_tar;
@@ -124,7 +97,7 @@ struct FixedPairListMap
         Entry *ptr;
         bool operator!=(const Iterator &other) const { return ptr != other.ptr; }
         void operator++() { ++ptr; }
-        std::pair<const PairListEntrySrcFlags &, PairListEntryTargetFlags &> operator*() { return {ptr->entry_src, ptr->entry_tar}; }
+        std::pair<const WeightFlags &, WeightFlags &> operator*() { return {ptr->wsrc_flgs, ptr->wtar_flgs}; }
     };
 
     struct ConstIterator
@@ -132,7 +105,7 @@ struct FixedPairListMap
         const Entry *ptr;
         bool operator!=(const ConstIterator &other) const { return ptr != other.ptr; }
         void operator++() { ++ptr; }
-        std::pair<const PairListEntrySrcFlags &, const PairListEntryTargetFlags &> operator*() const { return {ptr->entry_src, ptr->entry_tar}; }
+        std::pair<const WeightFlags &, const WeightFlags &> operator*() const { return {ptr->wsrc_flgs, ptr->wtar_flgs}; }
     };
 
     Iterator begin() { return {data.data()}; }
@@ -141,6 +114,7 @@ struct FixedPairListMap
     ConstIterator begin() const { return {data.data()}; }
     ConstIterator end() const { return {data.data() + size}; }
 };
+
 
 // Structure to hold flags for source and target weights for each particle pair
 struct PairListEntry
