@@ -34,11 +34,7 @@ struct WeightFlags
     WeightFlags(bool bx, bool by, bool bz, bool x_in, bool y_in, bool z_in) : bx(bx), by(by), bz(bz), x_in(x_in), y_in(y_in), z_in(z_in) {}
 
     // Define equality operator for unordered_map key comparison
-    bool operator==(const WeightFlags &other) const
-    {
-        return bx == other.bx && by == other.by && bz == other.bz && x_in == other.x_in && y_in == other.y_in &&
-               z_in == other.z_in;
-    }
+    bool operator==(const WeightFlags &other) const { return bx == other.bx && by == other.by && bz == other.bz && x_in == other.x_in && y_in == other.y_in && z_in == other.z_in; }
 };
 
 constexpr int MAX_ENTRIES_IN_FIXED_MAP = 4;
@@ -53,15 +49,14 @@ struct FixedPairListMap
     };
 
     std::array<Entry, MAX_ENTRIES_IN_FIXED_MAP> data = {};
-    int size = 0;
+    size_t size = 0;
 
-    static constexpr int encode(const WeightFlags &entry)
-    {
-        return (entry.bx << 5) | (entry.by << 4) | (entry.bz << 3) | (entry.x_in << 2) | (entry.y_in << 1) | entry.z_in;
-    }
+    static constexpr int encode(const WeightFlags &entry) { return (entry.bx << 5) | (entry.by << 4) | (entry.bz << 3) | (entry.x_in << 2) | (entry.y_in << 1) | entry.z_in; }
+
+    const size_t get_size() const { return size; }
 
     // return target flags for given source flags
-    WeightFlags*find(const WeightFlags &wsrc_flgs)
+    WeightFlags *find(const WeightFlags &wsrc_flgs)
     {
         int key = encode(wsrc_flgs);
         if (size > 0 && data[0].key == key)
@@ -115,7 +110,6 @@ struct FixedPairListMap
     ConstIterator end() const { return {data.data() + size}; }
 };
 
-
 // Structure to hold flags for source and target weights for each particle pair
 struct PairListEntry
 {
@@ -155,8 +149,6 @@ struct PairListEntry
     }
 };
 
-// Vector of unordered_maps indexed by `body_idx_tar`
-
 class FMMDirectInteractions
 {
   public:
@@ -172,6 +164,8 @@ class FMMDirectInteractions
 
     void rebuild_and_reprocess_tree();
 
+    u_int32_t get_num_groups();
+
   private:
     FBodies bodies_all_;
     FMMWeightEvaluator fmm_weights_eval_;
@@ -179,10 +173,13 @@ class FMMDirectInteractions
 
     std::vector<std::vector<PairListEntry>> pair_list;
 
-    // weight values for each atom within its original cell
-    std::vector<RVec> w_per_atom;
-
     void compute_weights_();
+
+    std::vector<int> group_bodies;
+
+    std::unordered_map<std::string, uint32_t> group_map;
+    uint32_t next_group_id = 0;
+    u_int32_t get_group_id(int ocell_idx, int a_cells_idxs[], size_t valid_size);
 };
 
 } // namespace fmm

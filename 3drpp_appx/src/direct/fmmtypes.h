@@ -22,8 +22,10 @@ using FPIndices = std::vector<int>;
 struct FBody
 {
     int idx;
+    u_int32_t gid;
     RVec x;
     real q;
+    RVec w;
 };
 
 struct OffsetAndNumber
