@@ -3,6 +3,7 @@
 #include <fstream>
 #include <functional>
 #include <iomanip>
+#include <map>
 #include <numeric>
 
 gmx::fmm::FMMDirectInteractions::FMMDirectInteractions(const std::vector<RVec> coordinates, const std::vector<real> charges, const RVec box_center, const real box_radius,
@@ -27,12 +28,16 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
     std::vector<FPIndices> bodies_indices_ext(fmm_cells.size());
     std::vector<std::vector<WeightFlags>> w_flags(fmm_cells.size());
 
+    bodies_cells.resize(bodies_all_.size(), -1);
+
     for (size_t k = 0; k < fmm_cells.size(); k++)
     {
         const FMMCell &cell = fmm_cells[k];
         for (const int &body_idx : cell.bodiesIndices)
         {
+
             FBody &body = bodies_all_[body_idx];
+            bodies_cells[body_idx] = k;
             const RVec ws = fmm_weights_eval_.compute_weight_in_cell(body.x, cell.center, cell.radius, false);
             const real w = ws[0] * ws[1] * ws[2];
             body.w = ws;
@@ -113,8 +118,13 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
     for (const FBody &body : bodies_all_)
     {
         int group_id = body.gid;
-        if (group_bodies[group_id] == -1)
+        int pre_group_bidx = group_bodies[group_id];
+        if (pre_group_bidx == -1 || body.idx < pre_group_bidx)
         {
+            if (pre_group_bidx != -1)
+            {
+                should_compute_w[pre_group_bidx] = false;
+            }
             group_bodies[group_id] = body.idx;
             should_compute_w[body.idx] = true;
         }
@@ -193,7 +203,9 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
     boundary_bodies_idxs.clear();
     w_flags = std::move(w_flags_filt);
 
-    std::vector<std::unordered_map<int, FixedPairListMap>> pair_list_aux(num_groups);
+    std::vector<std::map<int, FixedPairListMap>> pair_list_aux(num_groups);
+    std::vector<bool> is_cell_visited(fmm_cells.size(), false);
+
     for (size_t k = 0; k < fmm_cells.size(); k++)
     {
         const FMMCell &cell = fmm_cells[k];
@@ -211,7 +223,7 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
             {
                 const FBody &body_src = bodies_all_[body_idx_src];
                 WeightFlags entry_tar = entry_tar_btar;
-                if (body_tar.gid != body_src.gid)
+                if (body_tar.gid != body_src.gid && body_idx_tar < body_idx_src)
                 {
                     WeightFlags entry_src(true, true, true, true, true, true);
 
@@ -271,25 +283,25 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                             }
                             for (const int &body_idx_src : adj_cell.bodiesIndices)
                             {
-                                WeightFlags entry_tar = entry_tar_btar;
                                 const FBody &body_src = bodies_all_[body_idx_src];
-
-                                const RVec ws = body_src.w;
-                                const real dist_x_bd = fabs(body_src.x[0] - cell.center[0]);
-                                const real dist_y_bd = fabs(body_src.x[1] - cell.center[1]);
-                                const real dist_z_bd = fabs(body_src.x[2] - cell.center[2]);
-
-                                const bool bx = (ws[0] == 1) || (dist_x_bd <= red_region_tcell);
-                                const bool by = (ws[1] == 1) || (dist_y_bd <= red_region_tcell);
-                                const bool bz = (ws[2] == 1) || (dist_z_bd <= red_region_tcell);
-
-                                const bool dist_x_bd_in_region = dist_x_bd <= ext_regionx_scell;
-                                const bool dist_y_bd_in_region = dist_y_bd <= ext_regiony_scell;
-                                const bool dist_z_bd_in_region = dist_z_bd <= ext_regionz_scell;
-
-                                if (num_away == 1)
+                                if (body_src.gid != body_tar.gid && body_idx_tar < body_idx_src)
                                 {
-                                    if (body_src.gid != body_tar.gid)
+                                    WeightFlags entry_tar = entry_tar_btar;
+
+                                    const RVec ws = body_src.w;
+                                    const real dist_x_bd = fabs(body_src.x[0] - cell.center[0]);
+                                    const real dist_y_bd = fabs(body_src.x[1] - cell.center[1]);
+                                    const real dist_z_bd = fabs(body_src.x[2] - cell.center[2]);
+
+                                    const bool bx = (ws[0] == 1) || (dist_x_bd <= red_region_tcell);
+                                    const bool by = (ws[1] == 1) || (dist_y_bd <= red_region_tcell);
+                                    const bool bz = (ws[2] == 1) || (dist_z_bd <= red_region_tcell);
+
+                                    const bool dist_x_bd_in_region = dist_x_bd <= ext_regionx_scell;
+                                    const bool dist_y_bd_in_region = dist_y_bd <= ext_regiony_scell;
+                                    const bool dist_z_bd_in_region = dist_z_bd <= ext_regionz_scell;
+
+                                    if (num_away == 1)
                                     {
                                         WeightFlags entry_src(bx, by, bz, true, true, true);
                                         auto &entry_map = pair_list_aux[body_tar.gid][body_idx_src];
@@ -303,30 +315,30 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                         }
                                         entry_map.insert(entry_src, entry_tar);
                                     }
-                                }
-                                else if (num_away == 2)
-                                {
-
-                                    const bool sx_within = !(is_distx_largest && dist_x_bd_in_region);
-                                    const bool sy_within = !(is_disty_largest && dist_y_bd_in_region);
-                                    const bool sz_within = !(is_distz_largest && dist_z_bd_in_region);
-                                    const bool is_valid_interaction =
-                                        !((is_distx_largest && !dist_x_bd_in_region) || (is_disty_largest && !dist_y_bd_in_region) || (is_distz_largest && !dist_z_bd_in_region));
-
-                                    if (is_valid_interaction && (!sx_within || !sy_within || !sz_within))
+                                    else if (num_away == 2)
                                     {
-                                        WeightFlags entry_src(bx, by, bz, sx_within, sy_within, sz_within);
 
-                                        auto &entry_map = pair_list_aux[body_tar.gid][body_idx_src];
-                                        WeightFlags *entry_pre = entry_map.find(entry_src);
-                                        if (entry_pre)
+                                        const bool sx_within = !(is_distx_largest && dist_x_bd_in_region);
+                                        const bool sy_within = !(is_disty_largest && dist_y_bd_in_region);
+                                        const bool sz_within = !(is_distz_largest && dist_z_bd_in_region);
+                                        const bool is_valid_interaction = !((is_distx_largest && !dist_x_bd_in_region) || (is_disty_largest && !dist_y_bd_in_region) ||
+                                                                            (is_distz_largest && !dist_z_bd_in_region));
+
+                                        if (is_valid_interaction && (!sx_within || !sy_within || !sz_within))
                                         {
-                                            entry_pre->bx |= (entry_tar.x_in ^ entry_pre->x_in);
-                                            entry_pre->by |= (entry_tar.y_in ^ entry_pre->y_in);
-                                            entry_pre->bz |= (entry_tar.z_in ^ entry_pre->z_in);
-                                            entry_tar = *entry_pre;
+                                            WeightFlags entry_src(bx, by, bz, sx_within, sy_within, sz_within);
+
+                                            auto &entry_map = pair_list_aux[body_tar.gid][body_idx_src];
+                                            WeightFlags *entry_pre = entry_map.find(entry_src);
+                                            if (entry_pre)
+                                            {
+                                                entry_pre->bx |= (entry_tar.x_in ^ entry_pre->x_in);
+                                                entry_pre->by |= (entry_tar.y_in ^ entry_pre->y_in);
+                                                entry_pre->bz |= (entry_tar.z_in ^ entry_pre->z_in);
+                                                entry_tar = *entry_pre;
+                                            }
+                                            entry_map.insert(entry_src, entry_tar);
                                         }
-                                        entry_map.insert(entry_src, entry_tar);
                                     }
                                 }
                             }
@@ -335,6 +347,7 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                 }
             }
 
+            is_cell_visited[k] = true;
             bidxt++;
         }
     }
@@ -457,6 +470,11 @@ u_int32_t gmx::fmm::FMMDirectInteractions::get_group_id(int ocell_idx, int a_cel
 
 void gmx::fmm::FMMDirectInteractions::execute_direct_kernel(real *forces_and_potentials)
 {
+    std::vector<real> p_opp(bodies_all_.size(), 0);
+    std::vector<real> fx_opp(bodies_all_.size(), 0);
+    std::vector<real> fy_opp(bodies_all_.size(), 0);
+    std::vector<real> fz_opp(bodies_all_.size(), 0);
+
     for (size_t i = 0, btidx = 0; i < bodies_all_.size(); i++, btidx += 4)
     {
         const FBody &body_tar = bodies_all_[i];
@@ -471,10 +489,26 @@ void gmx::fmm::FMMDirectInteractions::execute_direct_kernel(real *forces_and_pot
 
         real pji = 0.0;
         real fxji = 0.0, fyji = 0.0, fzji = 0.0;
+        // std::cout << body_tar.idx << "--" << body_tar.gid << "--" << bodies_cells[body_tar.idx] << std::endl;
 
-        size_t ix = 0;
-        for (auto &ent : pair_list_bits_[gidt])
+        // if (body_tar.idx == 993)
+        // {
+        //     std::cout << "check: " << pair_list_bidx_srcs_[gidt].size() << std::endl;
+        //     for (auto& b: pair_list_bidx_srcs_[gidt])
+        //     {
+        //         std::cout << "checked: " << b << std::endl;
+        //     }
+        // }
+
+        const auto &bidx_srcs = pair_list_bidx_srcs_[gidt];
+        const auto &bits = pair_list_bits_[gidt];
+
+        for (size_t ix = 0; ix < bidx_srcs.size() && body_tar.idx < bidx_srcs[ix]; ++ix)
         {
+            const int body_src_idx = bidx_srcs[ix];
+            FBody &body_src = bodies_all_[body_src_idx];
+            const PairListEntry &ent = bits[ix];
+
             const BVec bxyz_src = {static_cast<bool>((ent.packed_flags >> PairListEntry::shiftBXS) & 1), static_cast<bool>((ent.packed_flags >> PairListEntry::shiftBYS) & 1),
                                    static_cast<bool>((ent.packed_flags >> PairListEntry::shiftBZS) & 1)};
 
@@ -487,14 +521,11 @@ void gmx::fmm::FMMDirectInteractions::execute_direct_kernel(real *forces_and_pot
             const BVec is_within_tar = {static_cast<bool>((ent.packed_flags >> PairListEntry::shiftTXW) & 1), static_cast<bool>((ent.packed_flags >> PairListEntry::shiftTYW) & 1),
                                         static_cast<bool>((ent.packed_flags >> PairListEntry::shiftTZW) & 1)};
 
-            const int body_src_idx = pair_list_bidx_srcs_[gidt][ix];
+            const RVec wsrc_ws = body_src.w;
 
-            gmx::fmm::FBody &asrc = bodies_all_[body_src_idx];
-            const RVec wsrc_ws = asrc.w;
-
-            const real xs = asrc.x[0];
-            const real ys = asrc.x[1];
-            const real zs = asrc.x[2];
+            const real xs = body_src.x[0];
+            const real ys = body_src.x[1];
+            const real zs = body_src.x[2];
 
             const real dx = xt - xs;
             const real dy = yt - ys;
@@ -510,11 +541,12 @@ void gmx::fmm::FMMDirectInteractions::execute_direct_kernel(real *forces_and_pot
             const real wtar_z = bxyz_tar[2] == 1 ? 1 : (is_within_tar[2] ? wtar_ws[2] : 1 - wtar_ws[2]);
 
             const real wtar = wtar_x * wtar_y * wtar_z;
+            std::cout << ",,," << body_tar.idx << "--" << body_src.idx << "--" << wtar << "--" << wsrc << std::endl;
 
             const real r2 = dx * dx + dy * dy + dz * dz;
             const real invr = 1.0 / std::sqrt(r2);
 
-            const real qs = asrc.q * wsrc;
+            const real qs = body_src.q * wsrc;
             const real qsinvr = qs * invr;
             const real qsinvr3 = qsinvr * invr * invr;
 
@@ -523,13 +555,28 @@ void gmx::fmm::FMMDirectInteractions::execute_direct_kernel(real *forces_and_pot
             fyji += qsinvr3 * dy * wtar;
             fzji += qsinvr3 * dz * wtar;
 
-            ix++;
+            const real qtinvr = qt * invr * wtar;
+            const real qtinvr3 = qtinvr * invr * invr;
+
+            const size_t bsidx = body_src.idx;
+            p_opp[bsidx] += qtinvr * wsrc;
+            fx_opp[bsidx] += qtinvr3 * -dx * wsrc;
+            fy_opp[bsidx] += qtinvr3 * -dy * wsrc;
+            fz_opp[bsidx] += qtinvr3 * -dz * wsrc;
         }
 
         forces_and_potentials[btidx] -= fxji;
         forces_and_potentials[btidx + 1] -= fyji;
         forces_and_potentials[btidx + 2] -= fzji;
         forces_and_potentials[btidx + 3] += pji;
+    }
+
+    for (size_t i = 0, btidx = 0; i < bodies_all_.size(); i++, btidx += 4)
+    {
+        forces_and_potentials[btidx] -= fx_opp[i];
+        forces_and_potentials[btidx + 1] -= fy_opp[i];
+        forces_and_potentials[btidx + 2] -= fz_opp[i];
+        forces_and_potentials[btidx + 3] += p_opp[i];
     }
 
     std::vector<FBody> sbodies = bodies_all_;

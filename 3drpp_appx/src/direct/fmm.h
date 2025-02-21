@@ -161,7 +161,7 @@ class FMMDirectInteractions
   public:
     FMMDirectInteractions(const std::vector<RVec> coordinates, const std::vector<real> charges, const RVec box_center, const real box_radius, const size_t max_depth,
                           const real reg_alpha);
-                          
+
     void execute_direct_kernel(real *forces_and_potentials);
 
     void compute_group_interactions_(const std::vector<FBody> &sbodies, const std::vector<size_t> &group_counts, const std::vector<size_t> &group_prefix_sum,
@@ -177,6 +177,7 @@ class FMMDirectInteractions
     FBodies bodies_all_;
     FMMWeightEvaluator fmm_weights_eval_;
     FMMDirectInteractionsTree fmm_direct_interactions_tree_;
+    std::vector<int> bodies_cells;
 
     std::vector<std::vector<PairListEntry>> pair_list_bits_;
     std::vector<std::vector<int>> pair_list_bidx_srcs_;
