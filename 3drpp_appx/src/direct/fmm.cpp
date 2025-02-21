@@ -107,7 +107,7 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
     group_map.clear();
     std::vector<bool> should_compute_w(bodies_all_.size(), false);
 
-    int num_groups = get_num_groups();
+    const u_int32_t num_groups = get_num_groups();
     std::vector<int> group_bodies;
     group_bodies.resize(num_groups, -1);
     for (const FBody &body : bodies_all_)
@@ -193,7 +193,7 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
     boundary_bodies_idxs.clear();
     w_flags = std::move(w_flags_filt);
 
-    std::vector<std::unordered_map<int, FixedPairListMap>> pair_list_aux(group_bodies.size());
+    std::vector<std::unordered_map<int, FixedPairListMap>> pair_list_aux(num_groups);
     for (size_t k = 0; k < fmm_cells.size(); k++)
     {
         const FMMCell &cell = fmm_cells[k];
@@ -339,10 +339,10 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
         }
     }
 
-    pair_list_bits_.resize(group_bodies.size());
-    pair_list_bidx_srcs_.resize(group_bodies.size());
+    pair_list_bits_.resize(num_groups);
+    pair_list_bidx_srcs_.resize(num_groups);
 
-    for (size_t i = 0; i < group_bodies.size(); i++)
+    for (size_t i = 0; i < num_groups; i++)
     {
         for (const auto &[body_idx_src, pairListMap] : pair_list_aux[i])
         {
