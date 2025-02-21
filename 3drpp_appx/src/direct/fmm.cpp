@@ -216,8 +216,9 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
 
             for (const int body_idx_src : cell.bodiesIndices)
             {
+                const FBody &body_src = bodies_all_[body_idx_src];
                 WeightFlags entry_tar = entry_tar_btar;
-                if (body_idx_tar != body_idx_src)
+                if (body_tar.gid != body_src.gid)
                 {
                     WeightFlags entry_src(true, true, true, true, true, true);
 
@@ -306,7 +307,7 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
 
                                 if (num_away == 1)
                                 {
-                                    if (body_idx_tar != body_idx_src)
+                                    if (body_src.gid != body_tar.gid)
                                     {
                                         WeightFlags entry_src(bx, by, bz, true, true, true);
                                         auto &entry_map = pair_list_aux[body_tar.gid][body_idx_src];
@@ -374,6 +375,81 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
     pair_list_aux.clear();
 }
 
+void gmx::fmm::FMMDirectInteractions::compute_group_interactions_(const std::vector<FBody> &sbodies, const std::vector<size_t> &group_counts,
+                                                                  const std::vector<size_t> &group_prefix_sum, real *forces_potentials)
+{
+
+    const u_int32_t num_groups = get_num_groups();
+    for (size_t g_num = 0; g_num < num_groups; ++g_num)
+    {
+        size_t k = group_prefix_sum[g_num];
+
+        const size_t num_particles_in_grp = group_counts[g_num];
+        const size_t num_particles_in_grp_m1 = num_particles_in_grp - 1;
+
+        std::vector<real> p_opp(num_particles_in_grp, 0);
+        std::vector<real> fx_opp(num_particles_in_grp, 0);
+        std::vector<real> fy_opp(num_particles_in_grp, 0);
+        std::vector<real> fz_opp(num_particles_in_grp, 0);
+
+        for (size_t kit = 0; kit < num_particles_in_grp_m1; ++kit)
+        {
+            const FBody &btar = sbodies[k + kit];
+            const real qt = btar.q;
+
+            real pji = 0.0;
+            real fxji = 0.0, fyji = 0.0, fzji = 0.0;
+
+            for (size_t ki = kit + 1; ki < num_particles_in_grp; ++ki)
+            {
+                const FBody &body_src = sbodies[k + ki];
+
+                const real dx = btar.x[0] - body_src.x[0];
+                const real dy = btar.x[1] - body_src.x[1];
+                const real dz = btar.x[2] - body_src.x[2];
+
+                const real r2 = dx * dx + dy * dy + dz * dz;
+                const real invr = 1.0 / std::sqrt(r2);
+
+                const real qsinvr = body_src.q * invr;
+                const real qsinvr3 = qsinvr * invr * invr;
+
+                pji += qsinvr;
+                fxji += qsinvr3 * dx;
+                fyji += qsinvr3 * dy;
+                fzji += qsinvr3 * dz;
+
+                const real qtinvr = qt * invr;
+                const real qtinvr3 = qtinvr * invr * invr;
+
+                const real fxij = qtinvr3 * -dx;
+                const real fyij = qtinvr3 * -dy;
+                const real fzij = qtinvr3 * -dz;
+
+                p_opp[ki] += qtinvr;
+                fx_opp[ki] += fxij;
+                fy_opp[ki] += fyij;
+                fz_opp[ki] += fzij;
+            }
+
+            const size_t btidx = btar.idx * 4;
+            forces_potentials[btidx] -= fxji;
+            forces_potentials[btidx + 1] -= fyji;
+            forces_potentials[btidx + 2] -= fzji;
+            forces_potentials[btidx + 3] += pji;
+        }
+
+        for (size_t ki = 0; ki < num_particles_in_grp; ++ki)
+        {
+            const size_t bsidx = sbodies[k + ki].idx * 4;
+            forces_potentials[bsidx] -= fx_opp[ki];
+            forces_potentials[bsidx + 1] -= fy_opp[ki];
+            forces_potentials[bsidx + 2] -= fz_opp[ki];
+            forces_potentials[bsidx + 3] += p_opp[ki];
+        }
+    }
+}
+
 u_int32_t gmx::fmm::FMMDirectInteractions::get_group_id(int ocell_idx, int a_cells_idxs[], size_t validSize)
 {
     std::sort(a_cells_idxs, a_cells_idxs + validSize);
@@ -398,28 +474,28 @@ u_int32_t gmx::fmm::FMMDirectInteractions::get_group_id(int ocell_idx, int a_cel
 
 void gmx::fmm::FMMDirectInteractions::execute_direct_kernel(real *forces_and_potentials)
 {
-    size_t fp_idx = 0;
-    for (size_t i = 0; i < bodies_all_.size(); i++)
+    for (size_t i = 0, btidx = 0; i < bodies_all_.size(); i++, btidx += 4)
     {
         const FBody &body_tar = bodies_all_[i];
+
         const real xt = body_tar.x[0];
         const real yt = body_tar.x[1];
         const real zt = body_tar.x[2];
+
         const RVec wtar_ws = body_tar.w;
-        const int gIdt = body_tar.gid;
+        const int gidt = body_tar.gid;
+        const real qt = body_tar.q;
 
-        real pj_effective = 0.0;
-        real fxj_effective = 0.0, fyj_effective = 0.0, fzj_effective = 0.0;
+        real pji = 0.0;
+        real fxji = 0.0, fyji = 0.0, fzji = 0.0;
 
-        // std::cout << body_tar.gid << "--" << pair_list.size() << std::endl;
-
-        for (auto &ent : pair_list[gIdt])
+        for (auto &ent : pair_list[gidt])
         {
             const BVec bxyz_src = {ent.bx_src, ent.by_src, ent.bz_src};
             const BVec bxyz_tar = {ent.bx_tar, ent.by_tar, ent.bz_tar};
-            const BVec is_wihin_src = {ent.sx_within, ent.sy_within, ent.sz_within};
+            const BVec is_within_src = {ent.sx_within, ent.sy_within, ent.sz_within};
             const BVec is_within_tar = {ent.tx_within, ent.ty_within, ent.tz_within};
-            const int body_src_idx = ent.body_idx_src ^ ((ent.body_idx_src ^ group_bodies[gIdt]) & -(ent.body_idx_src == body_tar.idx));
+            const int body_src_idx = ent.body_idx_src;
 
             gmx::fmm::FBody &asrc = bodies_all_[body_src_idx];
             const RVec wsrc_ws = asrc.w;
@@ -432,46 +508,59 @@ void gmx::fmm::FMMDirectInteractions::execute_direct_kernel(real *forces_and_pot
             const real dy = yt - ys;
             const real dz = zt - zs;
 
-            real wsrc_x = (bxyz_src[0] == 1) + (bxyz_src[0] != 1) * ((is_wihin_src[0] == 1) * wsrc_ws[0] + (is_wihin_src[0] != 1) * (1 - wsrc_ws[0]));
-            real wsrc_y = (bxyz_src[1] == 1) + (bxyz_src[1] != 1) * ((is_wihin_src[1] == 1) * wsrc_ws[1] + (is_wihin_src[1] != 1) * (1 - wsrc_ws[1]));
-            real wsrc_z = (bxyz_src[2] == 1) + (bxyz_src[2] != 1) * ((is_wihin_src[2] == 1) * wsrc_ws[2] + (is_wihin_src[2] != 1) * (1 - wsrc_ws[2]));
-            real wsrc = wsrc_x * wsrc_y * wsrc_z;
+            const real wsrc_x = bxyz_src[0] == 1 ? 1 : (is_within_src[0] ? wsrc_ws[0] : 1 - wsrc_ws[0]);
+            const real wsrc_y = bxyz_src[1] == 1 ? 1 : (is_within_src[1] ? wsrc_ws[1] : 1 - wsrc_ws[1]);
+            const real wsrc_z = bxyz_src[2] == 1 ? 1 : (is_within_src[2] ? wsrc_ws[2] : 1 - wsrc_ws[2]);
+            const real wsrc = wsrc_x * wsrc_y * wsrc_z;
 
-            real wtar_x = (bxyz_tar[0] == 1) + (bxyz_tar[0] != 1) * ((is_within_tar[0] == 1) * wtar_ws[0] + (is_within_tar[0] != 1) * (1 - wtar_ws[0]));
-            real wtar_y = (bxyz_tar[1] == 1) + (bxyz_tar[1] != 1) * ((is_within_tar[1] == 1) * wtar_ws[1] + (is_within_tar[1] != 1) * (1 - wtar_ws[1]));
-            real wtar_z = (bxyz_tar[2] == 1) + (bxyz_tar[2] != 1) * ((is_within_tar[2] == 1) * wtar_ws[2] + (is_within_tar[2] != 1) * (1 - wtar_ws[2]));
+            const real wtar_x = bxyz_tar[0] == 1 ? 1 : (is_within_tar[0] ? wtar_ws[0] : 1 - wtar_ws[0]);
+            const real wtar_y = bxyz_tar[1] == 1 ? 1 : (is_within_tar[1] ? wtar_ws[1] : 1 - wtar_ws[1]);
+            const real wtar_z = bxyz_tar[2] == 1 ? 1 : (is_within_tar[2] ? wtar_ws[2] : 1 - wtar_ws[2]);
+
             const real wtar = wtar_x * wtar_y * wtar_z;
 
-            real pj = 0.0;
-            real fxj = 0.0, fyj = 0.0, fzj = 0.0;
+            const real r2 = dx * dx + dy * dy + dz * dz;
+            const real invr = 1.0 / std::sqrt(r2);
 
-            // Compute squared distance
-            real invr = dx * dx + dy * dy + dz * dz;
+            const real qs = asrc.q * wsrc;
+            const real qsinvr = qs * invr;
+            const real qsinvr3 = qsinvr * invr * invr;
 
-            invr = 1.0 / std::sqrt(invr); // Compute inverse distance
-
-            const real qi = asrc.q * wsrc;
-
-            real qinvr = qi * invr;
-            pj = qinvr;
-            qinvr = qinvr * invr * invr;
-
-            fxj = qinvr * dx;
-            fyj = qinvr * dy;
-            fzj = qinvr * dz;
-
-            pj_effective += pj * wtar;
-            fxj_effective += fxj * wtar;
-            fyj_effective += fyj * wtar;
-            fzj_effective += fzj * wtar;
+            pji += qsinvr * wtar;
+            fxji += qsinvr3 * dx * wtar;
+            fyji += qsinvr3 * dy * wtar;
+            fzji += qsinvr3 * dz * wtar;
         }
 
-        // Apply accumulated forces and potential to target bodies
-        forces_and_potentials[fp_idx++] = -fxj_effective;
-        forces_and_potentials[fp_idx++] = -fyj_effective;
-        forces_and_potentials[fp_idx++] = -fzj_effective;
-        forces_and_potentials[fp_idx++] = pj_effective;
+        forces_and_potentials[btidx] -= fxji;
+        forces_and_potentials[btidx + 1] -= fyji;
+        forces_and_potentials[btidx + 2] -= fzji;
+        forces_and_potentials[btidx + 3] += pji;
     }
+
+    std::vector<FBody> sbodies = bodies_all_;
+
+    std::sort(sbodies.begin(), sbodies.end(), [](const FBody &a, const FBody &b) { return a.gid < b.gid; });
+
+    const uint32_t num_groups = get_num_groups();
+
+    std::vector<size_t> group_counts(num_groups, 0);
+    std::vector<size_t> group_prefix_sum(num_groups, 0);
+
+    for (size_t i = 0, g = 0; i < sbodies.size(); ++i)
+    {
+        if (i > 0 && sbodies[i].gid != sbodies[i - 1].gid)
+        {
+
+            ++g;
+        }
+
+        group_counts[g]++;
+    }
+
+    std::exclusive_scan(group_counts.begin(), group_counts.end(), group_prefix_sum.begin(), 0);
+
+    compute_group_interactions_(sbodies, group_counts, group_prefix_sum, forces_and_potentials);
 }
 
 void gmx::fmm::FMMDirectInteractions::recompute_weights() { compute_weights_(); }

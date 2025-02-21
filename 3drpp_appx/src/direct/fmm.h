@@ -160,6 +160,9 @@ class FMMDirectInteractions
     // returns forces and potentials pair
     void execute_direct_kernel(real *forces_and_potentials);
 
+    void compute_group_interactions_(const std::vector<FBody> &sbodies, const std::vector<size_t> &group_counts, const std::vector<size_t> &group_prefix_sum,
+                                     real *forces_potentials);
+
     void recompute_weights();
 
     void rebuild_and_reprocess_tree();
