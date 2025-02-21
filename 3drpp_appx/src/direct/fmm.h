@@ -110,42 +110,49 @@ struct FixedPairListMap
     ConstIterator end() const { return {data.data() + size}; }
 };
 
-// Structure to hold flags for source and target weights for each particle pair
+/**
+ * @brief Represents packed flags for source and target particle pair weights.
+ *
+ * This structure encodes source and target weighting conditions into a single 32-bit integer (`packed_flags`).
+ * Each bit represents a condition affecting the weight assignment:
+ *
+ * - **Source Weights:** If any of `bx_src`, `by_src`, or `bz_src` is set, weight = 1.
+ *   Otherwise, weight is determined by `sx_within`, `sy_within`, or `sz_within`:
+ *   - If set, weight = w; otherwise, weight = (1 - w).
+ *
+ * - **Target Weights:** If any of `bx_tar`, `by_tar`, or `bz_tar` is set, weight = 1.
+ *   Otherwise, weight is determined by `tx_within`, `ty_within`, or `tz_within`:
+ *   - If set, weight = w; otherwise, weight = (1 - w).
+ *
+ * - The "within" flags (`sx_within`, `sy_within`, etc.) only apply if the corresponding `bx_*` or `bz_*` flag is not set.
+ */
 struct PairListEntry
 {
-    // Source body ID
-    int body_idx_src;
 
-    // Boolean flag to determine the source weights for each particle pair:
-    // - If bx_src, by_src, or bz_src is true, use a weight of 1.
-    // - Otherwise, the decision is based on sx_within, sy_within, or sz_within:
-    //   - If sx_within, sy_within, or sz_within is true, use weight w.
-    //   - If not, use weight (1 - w).
-    bool bx_src, by_src, bz_src;
+    int32_t packed_flags;
 
-    // Boolean flag indicating whether the weight for a particle pair
-    // should be taken within the source cell or outside it.
-    // Only valid if bx_src, by_src, or bz_src is false.
-    bool sx_within, sy_within, sz_within;
-
-    // Boolean flag to determine the target weights for each particle pair:
-    // - If bx_tar, by_tar, or bz_tar is true, use a weight of 1.
-    // - Otherwise, the decision is based on tx_within, ty_within, or tz_within:
-    //   - If tx_within, ty_within, or tz_within is true, use weight w.
-    //   - If not, use weight (1 - w).
-    bool bx_tar, by_tar, bz_tar;
-
-    // Boolean flag indicating whether the weight for a particle pair
-    // should be taken within the target cell or outside it.
-    // Only valid if bx_tar, by_tar, or bz_tar is false.
-    bool tx_within, ty_within, tz_within;
+    static constexpr int shiftBXS = 0;
+    static constexpr int shiftBYS = 1;
+    static constexpr int shiftBZS = 2;
+    static constexpr int shiftSXW = 3;
+    static constexpr int shiftSYW = 4;
+    static constexpr int shiftSZW = 5;
+    static constexpr int shiftBXT = 6;
+    static constexpr int shiftBYT = 7;
+    static constexpr int shiftBZT = 8;
+    static constexpr int shiftTXW = 9;
+    static constexpr int shiftTYW = 10;
+    static constexpr int shiftTZW = 11;
 
     PairListEntry() = default;
 
-    PairListEntry(int bd_src_id, bool bx_s, bool by_s, bool bz_s, bool sx_w, bool sy_w, bool sz_w, bool bx_t, bool by_t, bool bz_t, bool tx_w, bool ty_w, bool tz_w)
-        : body_idx_src(bd_src_id), bx_src(bx_s), by_src(by_s), bz_src(bz_s), sx_within(sx_w), sy_within(sy_w), sz_within(sz_w), bx_tar(bx_t), by_tar(by_t), bz_tar(bz_t),
-          tx_within(tx_w), ty_within(ty_w), tz_within(tz_w)
+    PairListEntry(bool bx_s, bool by_s, bool bz_s, bool sx_w, bool sy_w, bool sz_w, bool bx_t, bool by_t, bool bz_t, bool tx_w, bool ty_w, bool tz_w)
     {
+        packed_flags = false;
+
+        packed_flags = (bx_s ? (1 << shiftBXS) : 0) | (by_s ? (1 << shiftBYS) : 0) | (bz_s ? (1 << shiftBZS) : 0) | (sx_w ? (1 << shiftSXW) : 0) | (sy_w ? (1 << shiftSYW) : 0) |
+                       (sz_w ? (1 << shiftSZW) : 0) | (bx_t ? (1 << shiftBXT) : 0) | (by_t ? (1 << shiftBYT) : 0) | (bz_t ? (1 << shiftBZT) : 0) | (tx_w ? (1 << shiftTXW) : 0) |
+                       (ty_w ? (1 << shiftTYW) : 0) | (tz_w ? (1 << shiftTZW) : 0);
     }
 };
 
@@ -174,11 +181,10 @@ class FMMDirectInteractions
     FMMWeightEvaluator fmm_weights_eval_;
     FMMDirectInteractionsTree fmm_direct_interactions_tree_;
 
-    std::vector<std::vector<PairListEntry>> pair_list;
+    std::vector<std::vector<PairListEntry>> pair_list_bits_;
+    std::vector<std::vector<int>> pair_list_bidx_srcs_;
 
     void compute_weights_();
-
-    std::vector<int> group_bodies;
 
     std::unordered_map<std::string, uint32_t> group_map;
     uint32_t next_group_id = 0;
