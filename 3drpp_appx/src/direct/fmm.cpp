@@ -14,14 +14,6 @@ gmx::fmm::FMMDirectInteractions::FMMDirectInteractions(const std::vector<RVec> c
     TIME_END(weights_time_new);
 }
 
-bool gmx::fmm::FMMDirectInteractions::is_point_within_radius(const RVec &point1, const RVec &point2, double radius)
-{
-    RVec dx = {point1[0] - point2[0], point1[1] - point2[1], point1[2] - point2[2]};
-    double distance_squared = dx[0] * dx[0] + dx[1] * dx[1] + dx[2] * dx[2];
-    double radius_squared = radius * radius;
-    return distance_squared <= radius_squared;
-}
-
 void gmx::fmm::FMMDirectInteractions::compute_weights_()
 {
     const real reg_alpha = fmm_weights_eval_.getRegAlpha();
