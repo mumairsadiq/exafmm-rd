@@ -234,48 +234,56 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                     entry_map.insert(entry_src, entry_tar);
                 }
             }
+            bidxt++;
+        }
 
-            for (int dz = -2; dz <= 2; dz++)
+        for (int dz = -2; dz <= 2; dz++)
+        {
+            for (int dy = -2; dy <= 2; dy++)
             {
-                for (int dy = -2; dy <= 2; dy++)
+                for (int dx = -2; dx <= 2; dx++)
                 {
-                    for (int dx = -2; dx <= 2; dx++)
+                    // Skip the current cell
+                    if (dx == 0 && dy == 0 && dz == 0)
                     {
-                        // Skip the current cell
-                        if (dx == 0 && dy == 0 && dz == 0)
+                        continue;
+                    }
+                    const RVec neighbor_center = cell.center + RVec(dx * width_of_tcell, dy * width_of_tcell, dz * width_of_tcell);
+
+                    const int adj_cell_idx = fmm_direct_interactions_tree_.get_neighbour_idx(neighbor_center);
+
+                    if (adj_cell_idx != -1)
+                    {
+                        const FMMCell &adj_cell = fmm_cells[adj_cell_idx];
+
+                        const real dist_x = fabs(adj_cell.center[0] - cell.center[0]);
+                        const real dist_y = fabs(adj_cell.center[1] - cell.center[1]);
+                        const real dist_z = fabs(adj_cell.center[2] - cell.center[2]);
+
+                        const bool is_distx_largest = dist_x >= dist_y && dist_x >= dist_z;
+                        const bool is_disty_largest = dist_y >= dist_x && dist_y >= dist_z;
+                        const bool is_distz_largest = dist_z >= dist_x && dist_z >= dist_y;
+
+                        const real interaction_region_x = dist_x - adj_cell.radius;
+                        const real interaction_region_y = dist_y - adj_cell.radius;
+                        const real interaction_region_z = dist_z - adj_cell.radius;
+
+                        const real ext_regionx_scell = interaction_region_x + reg_alpha;
+                        const real ext_regiony_scell = interaction_region_y + reg_alpha;
+                        const real ext_regionz_scell = interaction_region_z + reg_alpha;
+
+                        short num_away = 1; // Default to "one away"
+
+                        if (std::abs(dx) == 2 || std::abs(dy) == 2 || std::abs(dz) == 2)
                         {
-                            continue;
+                            num_away = 2; // If any direction is "two away"
                         }
-                        const RVec neighbor_center = cell.center + RVec(dx * width_of_tcell, dy * width_of_tcell, dz * width_of_tcell);
-
-                        const int adj_cell_idx = fmm_direct_interactions_tree_.get_neighbour_idx(neighbor_center);
-
-                        if (adj_cell_idx != -1)
+                        size_t bidxt_in = 0;
+                        for (const int &body_idx_tar : bodies_idxs_to_comp[k])
                         {
-                            const FMMCell &adj_cell = fmm_cells[adj_cell_idx];
-
-                            const real dist_x = fabs(adj_cell.center[0] - cell.center[0]);
-                            const real dist_y = fabs(adj_cell.center[1] - cell.center[1]);
-                            const real dist_z = fabs(adj_cell.center[2] - cell.center[2]);
-
-                            const bool is_distx_largest = dist_x >= dist_y && dist_x >= dist_z;
-                            const bool is_disty_largest = dist_y >= dist_x && dist_y >= dist_z;
-                            const bool is_distz_largest = dist_z >= dist_x && dist_z >= dist_y;
-
-                            const real interaction_region_x = dist_x - adj_cell.radius;
-                            const real interaction_region_y = dist_y - adj_cell.radius;
-                            const real interaction_region_z = dist_z - adj_cell.radius;
-
-                            const real ext_regionx_scell = interaction_region_x + reg_alpha;
-                            const real ext_regiony_scell = interaction_region_y + reg_alpha;
-                            const real ext_regionz_scell = interaction_region_z + reg_alpha;
-
-                            short num_away = 1; // Default to "one away"
-
-                            if (std::abs(dx) == 2 || std::abs(dy) == 2 || std::abs(dz) == 2)
-                            {
-                                num_away = 2; // If any direction is "two away"
-                            }
+                            const FBody &body_tar = bodies_all_[body_idx_tar];
+                            const WeightFlags entry_tar_btar(w_flags[k][bidxt_in].bx, w_flags[k][bidxt_in].by, w_flags[k][bidxt_in].bz, w_flags[k][bidxt_in].x_in,
+                                                             w_flags[k][bidxt_in].y_in, w_flags[k][bidxt_in].z_in);
                             for (const int &body_idx_src : adj_cell.bodiesIndices)
                             {
                                 const FBody &body_src = bodies_all_[body_idx_src];
@@ -337,6 +345,7 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                     }
                                 }
                             }
+                            bidxt_in++;
                         }
                     }
                 }
