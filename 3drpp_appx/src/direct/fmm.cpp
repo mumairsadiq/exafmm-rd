@@ -119,12 +119,8 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
     {
         int group_id = body.gid;
         int pre_group_bidx = group_bodies[group_id];
-        if (pre_group_bidx == -1 || body.idx < pre_group_bidx)
+        if (pre_group_bidx == -1)
         {
-            if (pre_group_bidx != -1)
-            {
-                should_compute_w[pre_group_bidx] = false;
-            }
             group_bodies[group_id] = body.idx;
             should_compute_w[body.idx] = true;
         }
@@ -203,7 +199,7 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
     boundary_bodies_idxs.clear();
     w_flags = std::move(w_flags_filt);
 
-    std::vector<std::map<int, FixedPairListMap>> pair_list_aux(num_groups);
+    std::vector<std::map<int, FixedPairListMap, std::greater<int>>> pair_list_aux(num_groups);
     std::vector<bool> is_cell_visited(fmm_cells.size(), false);
 
     for (size_t k = 0; k < fmm_cells.size(); k++)
@@ -470,11 +466,6 @@ u_int32_t gmx::fmm::FMMDirectInteractions::get_group_id(int ocell_idx, int a_cel
 
 void gmx::fmm::FMMDirectInteractions::execute_direct_kernel(real *forces_and_potentials)
 {
-    std::vector<real> p_opp(bodies_all_.size(), 0);
-    std::vector<real> fx_opp(bodies_all_.size(), 0);
-    std::vector<real> fy_opp(bodies_all_.size(), 0);
-    std::vector<real> fz_opp(bodies_all_.size(), 0);
-
     for (size_t i = 0, btidx = 0; i < bodies_all_.size(); i++, btidx += 4)
     {
         const FBody &body_tar = bodies_all_[i];
@@ -489,16 +480,6 @@ void gmx::fmm::FMMDirectInteractions::execute_direct_kernel(real *forces_and_pot
 
         real pji = 0.0;
         real fxji = 0.0, fyji = 0.0, fzji = 0.0;
-        // std::cout << body_tar.idx << "--" << body_tar.gid << "--" << bodies_cells[body_tar.idx] << std::endl;
-
-        // if (body_tar.idx == 993)
-        // {
-        //     std::cout << "check: " << pair_list_bidx_srcs_[gidt].size() << std::endl;
-        //     for (auto& b: pair_list_bidx_srcs_[gidt])
-        //     {
-        //         std::cout << "checked: " << b << std::endl;
-        //     }
-        // }
 
         const auto &bidx_srcs = pair_list_bidx_srcs_[gidt];
         const auto &bits = pair_list_bits_[gidt];
@@ -541,7 +522,6 @@ void gmx::fmm::FMMDirectInteractions::execute_direct_kernel(real *forces_and_pot
             const real wtar_z = bxyz_tar[2] == 1 ? 1 : (is_within_tar[2] ? wtar_ws[2] : 1 - wtar_ws[2]);
 
             const real wtar = wtar_x * wtar_y * wtar_z;
-            std::cout << ",,," << body_tar.idx << "--" << body_src.idx << "--" << wtar << "--" << wsrc << std::endl;
 
             const real r2 = dx * dx + dy * dy + dz * dz;
             const real invr = 1.0 / std::sqrt(r2);
@@ -558,25 +538,17 @@ void gmx::fmm::FMMDirectInteractions::execute_direct_kernel(real *forces_and_pot
             const real qtinvr = qt * invr * wtar;
             const real qtinvr3 = qtinvr * invr * invr;
 
-            const size_t bsidx = body_src.idx;
-            p_opp[bsidx] += qtinvr * wsrc;
-            fx_opp[bsidx] += qtinvr3 * -dx * wsrc;
-            fy_opp[bsidx] += qtinvr3 * -dy * wsrc;
-            fz_opp[bsidx] += qtinvr3 * -dz * wsrc;
+            const size_t bsidx = body_src.idx * 4;
+            forces_and_potentials[bsidx] += qtinvr3 * -dx * wsrc;
+            forces_and_potentials[bsidx + 1] += qtinvr3 * -dy * wsrc;
+            forces_and_potentials[bsidx + 2] += qtinvr3 * -dz * wsrc;
+            forces_and_potentials[bsidx + 3] += qtinvr * wsrc;
         }
 
         forces_and_potentials[btidx] -= fxji;
         forces_and_potentials[btidx + 1] -= fyji;
         forces_and_potentials[btidx + 2] -= fzji;
         forces_and_potentials[btidx + 3] += pji;
-    }
-
-    for (size_t i = 0, btidx = 0; i < bodies_all_.size(); i++, btidx += 4)
-    {
-        forces_and_potentials[btidx] -= fx_opp[i];
-        forces_and_potentials[btidx + 1] -= fy_opp[i];
-        forces_and_potentials[btidx + 2] -= fz_opp[i];
-        forces_and_potentials[btidx + 3] += p_opp[i];
     }
 
     std::vector<FBody> sbodies = bodies_all_;
