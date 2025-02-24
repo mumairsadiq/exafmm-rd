@@ -227,70 +227,80 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                     entry_map.insert(entry_src, entry_tar);
                 }
             }
+            bidxt++;
+        }
 
-            for (int dz = -2; dz <= 2; dz++)
+        for (int dz = -2; dz <= 2; dz++)
+        {
+            for (int dy = -2; dy <= 2; dy++)
             {
-                for (int dy = -2; dy <= 2; dy++)
+                for (int dx = -2; dx <= 2; dx++)
                 {
-                    for (int dx = -2; dx <= 2; dx++)
+                    // Skip the current cell
+                    if (dx == 0 && dy == 0 && dz == 0)
                     {
-                        // Skip the current cell
-                        if (dx == 0 && dy == 0 && dz == 0)
+                        continue;
+                    }
+                    const RVec neighbor_center = cell.center + RVec(dx * width_of_tcell, dy * width_of_tcell, dz * width_of_tcell);
+
+                    const int adj_cell_idx = fmm_direct_interactions_tree_.get_neighbour_idx(neighbor_center);
+
+                    if (adj_cell_idx != -1)
+                    {
+                        const FMMCell &adj_cell = fmm_cells[adj_cell_idx];
+
+                        const real dist_x = fabs(adj_cell.center[0] - cell.center[0]);
+                        const real dist_y = fabs(adj_cell.center[1] - cell.center[1]);
+                        const real dist_z = fabs(adj_cell.center[2] - cell.center[2]);
+
+                        const bool is_distx_largest = dist_x >= dist_y && dist_x >= dist_z;
+                        const bool is_disty_largest = dist_y >= dist_x && dist_y >= dist_z;
+                        const bool is_distz_largest = dist_z >= dist_x && dist_z >= dist_y;
+
+                        const real interaction_region_x = dist_x - adj_cell.radius;
+                        const real interaction_region_y = dist_y - adj_cell.radius;
+                        const real interaction_region_z = dist_z - adj_cell.radius;
+
+                        const real ext_regionx_scell = interaction_region_x + reg_alpha;
+                        const real ext_regiony_scell = interaction_region_y + reg_alpha;
+                        const real ext_regionz_scell = interaction_region_z + reg_alpha;
+
+                        short num_away = 1; // Default to "one away"
+
+                        if (std::abs(dx) == 2 || std::abs(dy) == 2 || std::abs(dz) == 2)
                         {
-                            continue;
+                            num_away = 2; // If any direction is "two away"
                         }
-                        const RVec neighbor_center = cell.center + RVec(dx * width_of_tcell, dy * width_of_tcell, dz * width_of_tcell);
 
-                        const int adj_cell_idx = fmm_direct_interactions_tree_.get_neighbour_idx(neighbor_center);
-
-                        if (adj_cell_idx != -1)
+                        size_t bidxt_in = 0;
+                        for (const int &body_idx_tar : bodies_idxs_to_comp[k])
                         {
-                            const FMMCell &adj_cell = fmm_cells[adj_cell_idx];
-
-                            const real dist_x = fabs(adj_cell.center[0] - cell.center[0]);
-                            const real dist_y = fabs(adj_cell.center[1] - cell.center[1]);
-                            const real dist_z = fabs(adj_cell.center[2] - cell.center[2]);
-
-                            const bool is_distx_largest = dist_x >= dist_y && dist_x >= dist_z;
-                            const bool is_disty_largest = dist_y >= dist_x && dist_y >= dist_z;
-                            const bool is_distz_largest = dist_z >= dist_x && dist_z >= dist_y;
-
-                            const real interaction_region_x = dist_x - adj_cell.radius;
-                            const real interaction_region_y = dist_y - adj_cell.radius;
-                            const real interaction_region_z = dist_z - adj_cell.radius;
-
-                            const real ext_regionx_scell = interaction_region_x + reg_alpha;
-                            const real ext_regiony_scell = interaction_region_y + reg_alpha;
-                            const real ext_regionz_scell = interaction_region_z + reg_alpha;
-
-                            short num_away = 1; // Default to "one away"
-
-                            if (std::abs(dx) == 2 || std::abs(dy) == 2 || std::abs(dz) == 2)
-                            {
-                                num_away = 2; // If any direction is "two away"
-                            }
+                            const FBody &body_tar = bodies_all_[body_idx_tar];
+                            const WeightFlags entry_tar_btar(w_flags[k][bidxt_in].bx, w_flags[k][bidxt_in].by, w_flags[k][bidxt_in].bz, w_flags[k][bidxt_in].x_in,
+                                                             w_flags[k][bidxt_in].y_in, w_flags[k][bidxt_in].z_in);
                             for (const int &body_idx_src : adj_cell.bodiesIndices)
                             {
-                                WeightFlags entry_tar = entry_tar_btar;
                                 const FBody &body_src = bodies_all_[body_idx_src];
-
-                                const RVec ws = body_src.w;
-                                const real dist_x_bd = fabs(body_src.x[0] - cell.center[0]);
-                                const real dist_y_bd = fabs(body_src.x[1] - cell.center[1]);
-                                const real dist_z_bd = fabs(body_src.x[2] - cell.center[2]);
-
-                                const bool bx = (ws[0] == 1) || (dist_x_bd <= red_region_tcell);
-                                const bool by = (ws[1] == 1) || (dist_y_bd <= red_region_tcell);
-                                const bool bz = (ws[2] == 1) || (dist_z_bd <= red_region_tcell);
-
-                                const bool dist_x_bd_in_region = dist_x_bd <= ext_regionx_scell;
-                                const bool dist_y_bd_in_region = dist_y_bd <= ext_regiony_scell;
-                                const bool dist_z_bd_in_region = dist_z_bd <= ext_regionz_scell;
-
-                                if (num_away == 1)
+                                if (body_src.gid != body_tar.gid)
                                 {
-                                    if (body_src.gid != body_tar.gid)
+                                    WeightFlags entry_tar = entry_tar_btar;
+
+                                    const RVec ws = body_src.w;
+                                    const real dist_x_bd = fabs(body_src.x[0] - cell.center[0]);
+                                    const real dist_y_bd = fabs(body_src.x[1] - cell.center[1]);
+                                    const real dist_z_bd = fabs(body_src.x[2] - cell.center[2]);
+
+                                    const bool bx = (ws[0] == 1) || (dist_x_bd <= red_region_tcell);
+                                    const bool by = (ws[1] == 1) || (dist_y_bd <= red_region_tcell);
+                                    const bool bz = (ws[2] == 1) || (dist_z_bd <= red_region_tcell);
+
+                                    const bool dist_x_bd_in_region = dist_x_bd <= ext_regionx_scell;
+                                    const bool dist_y_bd_in_region = dist_y_bd <= ext_regiony_scell;
+                                    const bool dist_z_bd_in_region = dist_z_bd <= ext_regionz_scell;
+
+                                    if (num_away == 1)
                                     {
+
                                         WeightFlags entry_src(bx, by, bz, true, true, true);
                                         auto &entry_map = pair_list_aux[body_tar.gid][body_idx_src];
                                         WeightFlags *entry_pre = entry_map.find(entry_src);
@@ -303,39 +313,38 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                         }
                                         entry_map.insert(entry_src, entry_tar);
                                     }
-                                }
-                                else if (num_away == 2)
-                                {
-
-                                    const bool sx_within = !(is_distx_largest && dist_x_bd_in_region);
-                                    const bool sy_within = !(is_disty_largest && dist_y_bd_in_region);
-                                    const bool sz_within = !(is_distz_largest && dist_z_bd_in_region);
-                                    const bool is_valid_interaction =
-                                        !((is_distx_largest && !dist_x_bd_in_region) || (is_disty_largest && !dist_y_bd_in_region) || (is_distz_largest && !dist_z_bd_in_region));
-
-                                    if (is_valid_interaction && (!sx_within || !sy_within || !sz_within))
+                                    else if (num_away == 2)
                                     {
-                                        WeightFlags entry_src(bx, by, bz, sx_within, sy_within, sz_within);
 
-                                        auto &entry_map = pair_list_aux[body_tar.gid][body_idx_src];
-                                        WeightFlags *entry_pre = entry_map.find(entry_src);
-                                        if (entry_pre)
+                                        const bool sx_within = !(is_distx_largest && dist_x_bd_in_region);
+                                        const bool sy_within = !(is_disty_largest && dist_y_bd_in_region);
+                                        const bool sz_within = !(is_distz_largest && dist_z_bd_in_region);
+                                        const bool is_valid_interaction = !((is_distx_largest && !dist_x_bd_in_region) || (is_disty_largest && !dist_y_bd_in_region) ||
+                                                                            (is_distz_largest && !dist_z_bd_in_region));
+
+                                        if (is_valid_interaction && (!sx_within || !sy_within || !sz_within))
                                         {
-                                            entry_pre->bx |= (entry_tar.x_in ^ entry_pre->x_in);
-                                            entry_pre->by |= (entry_tar.y_in ^ entry_pre->y_in);
-                                            entry_pre->bz |= (entry_tar.z_in ^ entry_pre->z_in);
-                                            entry_tar = *entry_pre;
+                                            WeightFlags entry_src(bx, by, bz, sx_within, sy_within, sz_within);
+
+                                            auto &entry_map = pair_list_aux[body_tar.gid][body_idx_src];
+                                            WeightFlags *entry_pre = entry_map.find(entry_src);
+                                            if (entry_pre)
+                                            {
+                                                entry_pre->bx |= (entry_tar.x_in ^ entry_pre->x_in);
+                                                entry_pre->by |= (entry_tar.y_in ^ entry_pre->y_in);
+                                                entry_pre->bz |= (entry_tar.z_in ^ entry_pre->z_in);
+                                                entry_tar = *entry_pre;
+                                            }
+                                            entry_map.insert(entry_src, entry_tar);
                                         }
-                                        entry_map.insert(entry_src, entry_tar);
                                     }
                                 }
                             }
+                            bidxt_in++;
                         }
                     }
                 }
             }
-
-            bidxt++;
         }
     }
 
