@@ -536,10 +536,9 @@ void gmx::fmm::FMMDirectInteractions::execute_direct_kernel(real *forces_and_pot
             const real qtinvr3 = qtinvr * invr * invr;
 
             const size_t bsidx = body_src.idx * 4;
-
-            forces_and_potentials[bsidx] += qtinvr3 * -dx * wsrc;
-            forces_and_potentials[bsidx + 1] += qtinvr3 * -dy * wsrc;
-            forces_and_potentials[bsidx + 2] += qtinvr3 * -dz * wsrc;
+            forces_and_potentials[bsidx] -= qtinvr3 * -dx * wsrc;
+            forces_and_potentials[bsidx + 1] -= qtinvr3 * -dy * wsrc;
+            forces_and_potentials[bsidx + 2] -= qtinvr3 * -dz * wsrc;
             forces_and_potentials[bsidx + 3] += qtinvr * wsrc;
         }
 
