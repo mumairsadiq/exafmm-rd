@@ -200,7 +200,6 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
     w_flags = std::move(w_flags_filt);
 
     std::vector<std::map<int, FixedPairListMap, std::greater<int>>> pair_list_aux(num_groups);
-    std::vector<bool> is_cell_visited(fmm_cells.size(), false);
 
     for (size_t k = 0; k < fmm_cells.size(); k++)
     {
@@ -342,8 +341,6 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                     }
                 }
             }
-
-            is_cell_visited[k] = true;
             bidxt++;
         }
     }
@@ -539,6 +536,7 @@ void gmx::fmm::FMMDirectInteractions::execute_direct_kernel(real *forces_and_pot
             const real qtinvr3 = qtinvr * invr * invr;
 
             const size_t bsidx = body_src.idx * 4;
+
             forces_and_potentials[bsidx] += qtinvr3 * -dx * wsrc;
             forces_and_potentials[bsidx + 1] += qtinvr3 * -dy * wsrc;
             forces_and_potentials[bsidx + 2] += qtinvr3 * -dz * wsrc;
