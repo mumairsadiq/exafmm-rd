@@ -350,7 +350,6 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                     }
                 }
             }
-            bidxt++;
         }
     }
 
