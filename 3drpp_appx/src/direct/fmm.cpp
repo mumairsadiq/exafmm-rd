@@ -198,7 +198,8 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
     {
         const FMMCell &cell = fmm_cells[k];
         const real region_of_tcell = cell.radius * 3;
-        const real red_region_tcell = region_of_tcell - reg_alpha;
+        const real ext_region_tcell = region_of_tcell + reg_alpha;
+        const real rdu_region_tcell = region_of_tcell - reg_alpha;
         const real width_of_tcell = cell.radius * 2;
         size_t bidxt = 0;
         for (const int &body_idx_tar : bodies_idxs_to_comp[k])
@@ -253,17 +254,11 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                         const real dist_y = fabs(adj_cell.center[1] - cell.center[1]);
                         const real dist_z = fabs(adj_cell.center[2] - cell.center[2]);
 
-                        const bool is_distx_largest = dist_x >= dist_y && dist_x >= dist_z;
-                        const bool is_disty_largest = dist_y >= dist_x && dist_y >= dist_z;
-                        const bool is_distz_largest = dist_z >= dist_x && dist_z >= dist_y;
+                        const bool is_distx_largest = ((dist_x >= dist_y || fabs(dist_x - dist_y) <= tol) && (dist_x >= dist_z || fabs(dist_x - dist_z) <= tol));
 
-                        const real interaction_region_x = dist_x - adj_cell.radius;
-                        const real interaction_region_y = dist_y - adj_cell.radius;
-                        const real interaction_region_z = dist_z - adj_cell.radius;
+                        const bool is_disty_largest = ((dist_y >= dist_x || fabs(dist_y - dist_x) <= tol) && (dist_y >= dist_z || fabs(dist_y - dist_z) <= tol));
 
-                        const real ext_regionx_scell = interaction_region_x + reg_alpha;
-                        const real ext_regiony_scell = interaction_region_y + reg_alpha;
-                        const real ext_regionz_scell = interaction_region_z + reg_alpha;
+                        const bool is_distz_largest = ((dist_z >= dist_x || fabs(dist_z - dist_x) <= tol) && (dist_z >= dist_y || fabs(dist_z - dist_y) <= tol));
 
                         short num_away = 1; // Default to "one away"
 
@@ -290,13 +285,13 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                     const real dist_y_bd = fabs(body_src.x[1] - cell.center[1]);
                                     const real dist_z_bd = fabs(body_src.x[2] - cell.center[2]);
 
-                                    const bool bx = (ws[0] == 1) || (dist_x_bd <= red_region_tcell);
-                                    const bool by = (ws[1] == 1) || (dist_y_bd <= red_region_tcell);
-                                    const bool bz = (ws[2] == 1) || (dist_z_bd <= red_region_tcell);
+                                    const bool bx = (ws[0] == 1) || (dist_x_bd <= rdu_region_tcell);
+                                    const bool by = (ws[1] == 1) || (dist_y_bd <= rdu_region_tcell);
+                                    const bool bz = (ws[2] == 1) || (dist_z_bd <= rdu_region_tcell);
 
-                                    const bool dist_x_bd_in_region = dist_x_bd <= ext_regionx_scell;
-                                    const bool dist_y_bd_in_region = dist_y_bd <= ext_regiony_scell;
-                                    const bool dist_z_bd_in_region = dist_z_bd <= ext_regionz_scell;
+                                    const bool dist_x_bd_in_region = dist_x_bd <= ext_region_tcell;
+                                    const bool dist_y_bd_in_region = dist_y_bd <= ext_region_tcell;
+                                    const bool dist_z_bd_in_region = dist_z_bd <= ext_region_tcell;
 
                                     if (num_away == 1)
                                     {
@@ -319,8 +314,7 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                         const bool sx_within = !(is_distx_largest && dist_x_bd_in_region);
                                         const bool sy_within = !(is_disty_largest && dist_y_bd_in_region);
                                         const bool sz_within = !(is_distz_largest && dist_z_bd_in_region);
-                                        const bool is_valid_interaction = !((is_distx_largest && !dist_x_bd_in_region) || (is_disty_largest && !dist_y_bd_in_region) ||
-                                                                            (is_distz_largest && !dist_z_bd_in_region));
+                                        const bool is_valid_interaction = dist_x_bd_in_region && dist_y_bd_in_region && dist_z_bd_in_region;
 
                                         if (is_valid_interaction && (!sx_within || !sy_within || !sz_within))
                                         {
@@ -466,6 +460,7 @@ u_int32_t gmx::fmm::FMMDirectInteractions::get_group_id(int ocell_idx, int a_cel
 
 void gmx::fmm::FMMDirectInteractions::execute_direct_kernel(real *forces_and_potentials)
 {
+    u_int32_t num_pairs = 0;
     for (size_t i = 0, btidx = 0; i < bodies_all_.size(); i++, btidx += 4)
     {
         const FBody &body_tar = bodies_all_[i];
@@ -531,7 +526,8 @@ void gmx::fmm::FMMDirectInteractions::execute_direct_kernel(real *forces_and_pot
             fxji += qsinvr3 * dx * wtar;
             fyji += qsinvr3 * dy * wtar;
             fzji += qsinvr3 * dz * wtar;
-
+            num_pairs++;
+            // std::cout << "Pair : " << body_tar.x << "--" << asrc.x << "--" << wtar << "--" << wsrc << std::endl;
             ix++;
         }
 
@@ -540,6 +536,7 @@ void gmx::fmm::FMMDirectInteractions::execute_direct_kernel(real *forces_and_pot
         forces_and_potentials[btidx + 2] -= fzji;
         forces_and_potentials[btidx + 3] += pji;
     }
+    std::cout << "Num pairs: " << num_pairs << std::endl;
 
     std::vector<FBody> sbodies = bodies_all_;
 

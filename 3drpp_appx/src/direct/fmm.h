@@ -5,12 +5,13 @@
 #include <array>
 #include <functional>
 
-constexpr int MAX_ENTRIES = 8;
-
 namespace gmx
 {
 namespace fmm
 {
+
+constexpr int MAX_ENTRIES_IN_FIXED_MAP = 4;
+constexpr real tol = 1e-6;
 
 // Structure to hold source flags
 struct WeightFlags
@@ -36,8 +37,6 @@ struct WeightFlags
     // Define equality operator for unordered_map key comparison
     bool operator==(const WeightFlags &other) const { return bx == other.bx && by == other.by && bz == other.bz && x_in == other.x_in && y_in == other.y_in && z_in == other.z_in; }
 };
-
-constexpr int MAX_ENTRIES_IN_FIXED_MAP = 4;
 
 struct FixedPairListMap
 {
