@@ -200,7 +200,7 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
     w_flags = std::move(w_flags_filt);
 
     std::vector<std::map<int, FixedPairListMap, std::greater<int>>> pair_list_aux(num_groups);
-    
+
     for (size_t k = 0; k < fmm_cells.size(); k++)
     {
         const FMMCell &cell = fmm_cells[k];

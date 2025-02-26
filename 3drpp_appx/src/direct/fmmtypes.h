@@ -6,10 +6,10 @@
 #include <iostream>
 #include <queue>
 #include <stack>
+#include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-#include <type_traits>
 
 namespace gmx
 {
@@ -20,7 +20,6 @@ namespace fmm
 {
 
 constexpr real tolf = std::is_same<real, float>::value ? 1e-6F : 1e-12;
-
 
 using FPIndices = std::vector<int>;
 struct FBody
@@ -112,7 +111,8 @@ struct FMMCell
 
 using FMMCells = std::vector<FMMCell>;
 
-struct TreeCoordHashOffsets {
+struct TreeCoordHashOffsets
+{
     static constexpr int64_t IX_OFFSET = (1LL << 21); // 22 bits
     static constexpr int64_t IY_OFFSET = (1LL << 20); // 21 bits
     static constexpr int64_t IZ_OFFSET = (1LL << 20); // 21 bits
