@@ -73,9 +73,9 @@ class FMMWeightEvaluator
         if (is_periodic == false)
         {
             RVec dx_simcenter_inter = body_x - box_center_;
-            dx_simcenter_inter[0] = fabs(dx_simcenter_inter[0]);
-            dx_simcenter_inter[1] = fabs(dx_simcenter_inter[1]);
-            dx_simcenter_inter[2] = fabs(dx_simcenter_inter[2]);
+            dx_simcenter_inter[0] = std::abs(dx_simcenter_inter[0]);
+            dx_simcenter_inter[1] = std::abs(dx_simcenter_inter[1]);
+            dx_simcenter_inter[2] = std::abs(dx_simcenter_inter[2]);
             const RVec dx_simcenter(dx_simcenter_inter[0] + reg_alpha_, dx_simcenter_inter[1] + reg_alpha_, dx_simcenter_inter[2] + reg_alpha_);
 
             for (int d = 0; d <= 2; d++)
@@ -97,9 +97,9 @@ class FMMWeightEvaluator
         if (is_periodic == false)
         {
             RVec dx_simcenter_inter = body_x - box_center_;
-            dx_simcenter_inter[0] = fabs(dx_simcenter_inter[0]);
-            dx_simcenter_inter[1] = fabs(dx_simcenter_inter[1]);
-            dx_simcenter_inter[2] = fabs(dx_simcenter_inter[2]);
+            dx_simcenter_inter[0] = std::abs(dx_simcenter_inter[0]);
+            dx_simcenter_inter[1] = std::abs(dx_simcenter_inter[1]);
+            dx_simcenter_inter[2] = std::abs(dx_simcenter_inter[2]);
             const RVec dx_simcenter(dx_simcenter_inter[0] + reg_alpha_, dx_simcenter_inter[1] + reg_alpha_, dx_simcenter_inter[2] + reg_alpha_);
 
             for (int d = 0; d <= 2; d++)
@@ -124,9 +124,9 @@ class FMMWeightEvaluator
             if (w_temp != 0)
             {
                 RVec dx_simcenter_inter = body_x - box_center_;
-                dx_simcenter_inter[0] = fabs(dx_simcenter_inter[0]);
-                dx_simcenter_inter[1] = fabs(dx_simcenter_inter[1]);
-                dx_simcenter_inter[2] = fabs(dx_simcenter_inter[2]);
+                dx_simcenter_inter[0] = std::abs(dx_simcenter_inter[0]);
+                dx_simcenter_inter[1] = std::abs(dx_simcenter_inter[1]);
+                dx_simcenter_inter[2] = std::abs(dx_simcenter_inter[2]);
                 const RVec dx_simcenter(dx_simcenter_inter[0] + reg_alpha_, dx_simcenter_inter[1] + reg_alpha_, dx_simcenter_inter[2] + reg_alpha_);
 
                 for (int d = 0; d <= 2; d++)

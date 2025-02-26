@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+#include <type_traits>
 
 namespace gmx
 {
@@ -17,6 +18,9 @@ using RVec = rtfmm::vec3r;
 using BVec = rtfmm::vec<3, bool>;
 namespace fmm
 {
+
+constexpr real tolf = std::is_same<real, float>::value ? 1e-6F : 1e-12;
+
 
 using FPIndices = std::vector<int>;
 struct FBody
@@ -108,21 +112,27 @@ struct FMMCell
 
 using FMMCells = std::vector<FMMCell>;
 
-#ifndef _PRECISION_FMM_Adj
-#define _PRECISION_FMM_Adj 1e-3
-#endif
+struct TreeCoordHashOffsets {
+    static constexpr int64_t IX_OFFSET = (1LL << 21); // 22 bits
+    static constexpr int64_t IY_OFFSET = (1LL << 20); // 21 bits
+    static constexpr int64_t IZ_OFFSET = (1LL << 20); // 21 bits
+};
 
-inline long coord_to_long(const RVec x, const RVec x_, const real r)
+inline int64_t coord_to_hashvalue(const RVec x, const RVec x_, const real r)
 {
-    // Define the origin of the box (corner) based on center and radius
+    // Define the origin of the box (corner)
     real ox = x_[0] - r;
     real oy = x_[1] - r;
     real oz = x_[2] - r;
 
-    // Quantize coordinates directly
-    long ix = static_cast<long>((x[0] - ox) / _PRECISION_FMM_Adj);
-    long iy = static_cast<long>((x[1] - oy) / _PRECISION_FMM_Adj);
-    long iz = static_cast<long>((x[2] - oz) / _PRECISION_FMM_Adj);
+    // Quantize coordinates
+    int64_t ix = static_cast<int64_t>((x[0] - ox) / tolf);
+    int64_t iy = static_cast<int64_t>((x[1] - oy) / tolf);
+    int64_t iz = static_cast<int64_t>((x[2] - oz) / tolf);
+
+    ix += TreeCoordHashOffsets::IX_OFFSET;
+    iy += TreeCoordHashOffsets::IY_OFFSET;
+    iz += TreeCoordHashOffsets::IZ_OFFSET;
 
     return (ix << 42) | (iy << 21) | iz;
 }

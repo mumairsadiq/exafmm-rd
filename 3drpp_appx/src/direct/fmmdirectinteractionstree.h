@@ -21,7 +21,7 @@ class FMMDirectInteractionsTree : public FMMTree
     void rebuild_and_reprocess_tree();
 
   private:
-    std::unordered_map<long, int> cells_map;
+    std::unordered_map<int64_t, int> cells_map;
 
     void process_tree_();
 };
