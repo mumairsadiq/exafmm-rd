@@ -18,7 +18,7 @@ gmx::fmm::FMMDirectInteractionsTree::FMMDirectInteractionsTree(const FBodies &bo
 int gmx::fmm::FMMDirectInteractionsTree::get_neighbour_idx(RVec neighbor_center_coord)
 {
     int neighbor_idx = -1;
-    long neighbor_center = coord_to_long(neighbor_center_coord, box_center_, box_radius_);
+    int64_t neighbor_center = coord_to_hashvalue(neighbor_center_coord, box_center_, box_radius_);
     if (cells_map.find(neighbor_center) != cells_map.end())
     {
         neighbor_idx = cells_map[neighbor_center];
@@ -40,6 +40,6 @@ void gmx::fmm::FMMDirectInteractionsTree::process_tree_()
     for (size_t i = 0; i < fmm_cells_.size(); i++)
     {
         const auto &current_cell = fmm_cells_[i];
-        cells_map[coord_to_long(current_cell.center, box_center_, box_radius_)] = current_cell.index;
+        cells_map[coord_to_hashvalue(current_cell.center, box_center_, box_radius_)] = current_cell.index;
     }
 }
