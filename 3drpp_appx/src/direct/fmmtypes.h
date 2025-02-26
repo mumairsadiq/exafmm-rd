@@ -17,7 +17,7 @@ using RVec = rtfmm::vec3r;
 using BVec = rtfmm::vec<3, bool>;
 namespace fmm
 {
-    constexpr real tolf = std::is_same<real, float>::value ? 1e-6F : 1e-12;
+constexpr real tolf = std::is_same<real, float>::value ? 1e-6F : 1e-12;
 
 using FPIndices = std::vector<int>;
 struct FBody
