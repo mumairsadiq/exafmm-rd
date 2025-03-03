@@ -37,16 +37,17 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
             const real w = ws[0] * ws[1] * ws[2];
             body.w = ws;
 
-            if (w < 1)
+            if (ws[0] < 1 || ws[1] < 1 || ws[2] < 1)
             {
                 boundary_bodies_idxs[k].push_back(body_idx);
                 is_reg_body[body_idx] = true;
             }
+
             bodies_indices_ext[k].push_back(body_idx);
-            const bool is_x_fully_in = ws[0] == 1;
-            const bool is_y_fully_in = ws[1] == 1;
-            const bool is_z_fully_in = ws[2] == 1;
-            w_flags[k].emplace_back(is_x_fully_in, is_y_fully_in, is_z_fully_in, 1, 1, 1);
+            const bool is_xnt_fully_in = ws[0] < 1;
+            const bool is_ynt_fully_in = ws[1] < 1;
+            const bool is_znt_fully_in = ws[2] < 1;
+            w_flags[k].emplace_back(!is_xnt_fully_in, !is_ynt_fully_in, !is_znt_fully_in, 1, 1, 1);
         }
     }
 
@@ -60,6 +61,10 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
             int belongs_to_cells[7] = {-1, -1, -1, -1, -1, -1, -1};
             size_t btc_idx = 0;
             FBody &body_tar = bodies_all_[body_idx_tar];
+
+            const bool is_xnt_fully_in = body_tar.w[0] < 1;
+            const bool is_ynt_fully_in = body_tar.w[1] < 1;
+            const bool is_znt_fully_in = body_tar.w[2] < 1;
 
             if (is_reg_body[body_idx_tar])
             {
@@ -87,9 +92,9 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                 const real dist_y = std::abs(dx[1]);
                                 const real dist_z = std::abs(dx[2]);
 
-                                const bool is_dist_x_in_range = dist_x <= adj_cell.radius + reg_alpha;
-                                const bool is_dist_y_in_range = dist_y <= adj_cell.radius + reg_alpha;
-                                const bool is_dist_z_in_range = dist_z <= adj_cell.radius + reg_alpha;
+                                const bool is_dist_x_in_range = dist_x <= adj_cell.radius || (is_xnt_fully_in && dist_x < adj_cell.radius + reg_alpha);
+                                const bool is_dist_y_in_range = dist_y <= adj_cell.radius || (is_ynt_fully_in && dist_y < adj_cell.radius + reg_alpha);
+                                const bool is_dist_z_in_range = dist_z <= adj_cell.radius || (is_znt_fully_in && dist_z < adj_cell.radius + reg_alpha);
 
                                 if (is_dist_x_in_range && is_dist_y_in_range && is_dist_z_in_range)
                                 {
@@ -145,9 +150,10 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                         for (const int &body_idx : boundary_bodies_idxs[adj_cell_idx])
                         {
                             const RVec ws = bodies_all_[body_idx].w;
-                            const bool is_x_fully_in = ws[0] == 1;
-                            const bool is_y_fully_in = ws[1] == 1;
-                            const bool is_z_fully_in = ws[2] == 1;
+
+                            const bool is_xnt_fully_in = ws[0] < 1;
+                            const bool is_ynt_fully_in = ws[1] < 1;
+                            const bool is_znt_fully_in = ws[2] < 1;
 
                             const FBody &body = bodies_all_[body_idx];
                             const RVec dx = body.x - cell.center;
@@ -156,13 +162,14 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                             const real dist_y = std::abs(dx[1]);
                             const real dist_z = std::abs(dx[2]);
 
-                            const bool is_dist_x_in_range = dist_x <= cell.radius + reg_alpha;
-                            const bool is_dist_y_in_range = dist_y <= cell.radius + reg_alpha;
-                            const bool is_dist_z_in_range = dist_z <= cell.radius + reg_alpha;
+                            const bool is_dist_x_in_range = dist_x <= cell.radius || (is_xnt_fully_in && dist_x < cell.radius + reg_alpha);
+                            const bool is_dist_y_in_range = dist_y <= cell.radius || (is_ynt_fully_in && dist_y < cell.radius + reg_alpha);
+                            const bool is_dist_z_in_range = dist_z <= cell.radius || (is_znt_fully_in && dist_z < cell.radius + reg_alpha);
+
                             if (is_dist_x_in_range && is_dist_y_in_range && is_dist_z_in_range)
                             {
                                 bodies_indices_ext[k].push_back(body_idx);
-                                w_flags[k].emplace_back(is_x_fully_in, is_y_fully_in, is_z_fully_in, dist_x <= cell.radius, dist_y <= cell.radius, dist_z <= cell.radius);
+                                w_flags[k].emplace_back(!is_xnt_fully_in, !is_ynt_fully_in, !is_znt_fully_in, dist_x <= cell.radius, dist_y <= cell.radius, dist_z <= cell.radius);
                             }
                         }
                     }
@@ -285,13 +292,13 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                     const real dist_y_bd = std::abs(body_src.x[1] - cell.center[1]);
                                     const real dist_z_bd = std::abs(body_src.x[2] - cell.center[2]);
 
-                                    const bool bx = (ws[0] == 1) || (dist_x_bd <= rdu_region_tcell);
-                                    const bool by = (ws[1] == 1) || (dist_y_bd <= rdu_region_tcell);
-                                    const bool bz = (ws[2] == 1) || (dist_z_bd <= rdu_region_tcell);
+                                    const bool is_xnt_fully_in = ws[0] < 1;
+                                    const bool is_ynt_fully_in = ws[1] < 1;
+                                    const bool is_znt_fully_in = ws[2] < 1;
 
-                                    const bool dist_x_bd_in_region = dist_x_bd <= ext_region_tcell;
-                                    const bool dist_y_bd_in_region = dist_y_bd <= ext_region_tcell;
-                                    const bool dist_z_bd_in_region = dist_z_bd <= ext_region_tcell;
+                                    const bool bx = !is_xnt_fully_in || dist_x_bd < rdu_region_tcell;
+                                    const bool by = !is_ynt_fully_in || dist_y_bd < rdu_region_tcell;
+                                    const bool bz = !is_znt_fully_in || dist_z_bd < rdu_region_tcell;
 
                                     if (num_away == 1)
                                     {
@@ -311,9 +318,14 @@ void gmx::fmm::FMMDirectInteractions::compute_weights_()
                                     else if (num_away == 2)
                                     {
 
+                                        const bool dist_x_bd_in_region = dist_x_bd <= region_of_tcell || (is_xnt_fully_in && dist_x_bd < ext_region_tcell);
+                                        const bool dist_y_bd_in_region = dist_y_bd <= region_of_tcell || (is_ynt_fully_in && dist_y_bd < ext_region_tcell);
+                                        const bool dist_z_bd_in_region = dist_z_bd <= region_of_tcell || (is_znt_fully_in && dist_z_bd < ext_region_tcell);
+
                                         const bool sx_within = !(is_distx_largest && dist_x_bd_in_region);
                                         const bool sy_within = !(is_disty_largest && dist_y_bd_in_region);
                                         const bool sz_within = !(is_distz_largest && dist_z_bd_in_region);
+
                                         const bool is_valid_interaction = dist_x_bd_in_region && dist_y_bd_in_region && dist_z_bd_in_region;
 
                                         if (is_valid_interaction && (!sx_within || !sy_within || !sz_within))
